@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist"
+  },
+  "include": ["db/**/*.ts" ,"./**/*.ts", "./**/*.tsx"],
+  "exclude": ["node_modules", "**/*.test.ts"]
+}
