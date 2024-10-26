@@ -1,13 +1,14 @@
 import { Routes, Route } from "react-router-dom";
 
 import { ApartmentsScreen, HomeScreen, SettingsScreen } from "./screens";
-import { TenantsScreen } from "./screens/tenants";
+import { AddTenant, TenantsScreen } from "./screens/tenants";
 import { Navigation } from "./components";
 
 const App = () => {
   const routes = [
     { path: "/", element: <HomeScreen /> },
     { path: "/tenants", element: <TenantsScreen /> },
+    { path: "/tenants/add", element: <AddTenant /> },
     { path: "/apartments", element: <ApartmentsScreen /> },
     { path: "/settings", element: <SettingsScreen /> },
   ];

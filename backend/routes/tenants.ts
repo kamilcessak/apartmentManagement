@@ -19,15 +19,15 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
     try {
-        const { firstName, lastName, address, apartmentId, rentDueDate, rentAmount } = req.body;
+        const { firstName, lastName, address, email, phoneNumber, personalId } = req.body;
 
         const newTenant = {
             firstName,
             lastName,
             address,
-            apartmentId,
-            rentDueDate: new Date(rentDueDate),
-            rentAmount
+            email,
+            phoneNumber,
+            personalId
         };
 
         const collection = db.collection("tenants");
@@ -40,6 +40,26 @@ router.post("/", async (req, res) => {
         res.status(500).send("Error adding tenant");
     }
 });
+
+router.delete('/:id', async(req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const collection = db.collection("tenants");
+        const tenantObjectId = new ObjectId(tenantId);
+
+        const deleteTenant = await collection.deleteOne({ _id: tenantObjectId });
+
+        if(deleteTenant.deletedCount === 0){
+            return res.status(404).send("Tenant not found");
+        }else{
+            return res.status(204).send();
+        }
+    }
+    catch(error){
+        console.error("Error deleting tenant:", error);
+        res.status(500).send("Error deleting tenant");
+    }
+})
 
 router.patch("/:id", async (req, res) => {
     try {
