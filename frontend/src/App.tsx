@@ -1,20 +1,33 @@
 import { Routes, Route } from "react-router-dom";
 
-import { HomeScreen, TenantsScreen } from "./screens";
+import {
+  ApartmentsScreen,
+  HomeScreen,
+  SettingsScreen,
+  TenantsScreen,
+} from "./screens";
 import { Navigation } from "./components";
 
-function App() {
+const App = () => {
+  const routes = [
+    { path: "/", element: <HomeScreen /> },
+    { path: "/tenants", element: <TenantsScreen /> },
+    { path: "/apartments", element: <ApartmentsScreen /> },
+    { path: "/settings", element: <SettingsScreen /> },
+  ];
+
   return (
-    <div className="flex flex-row">
+    <div className="flex flex-1 flex-row">
       <Navigation />
-      <div>
+      <div className="flex flex-1">
         <Routes>
-          <Route path="/" element={<HomeScreen />} />
-          <Route path="/tenants" element={<TenantsScreen />} />
+          {routes.map(({ path, element }, i) => (
+            <Route key={`route-${path}-${i}`} path={path} element={element} />
+          ))}
         </Routes>
       </div>
     </div>
   );
-}
+};
 
 export default App;

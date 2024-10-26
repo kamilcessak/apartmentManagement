@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import axios from "axios";
+import { RouteContent } from "../components/common";
 
 export const TenantsScreen = () => {
   const getTenants = async () => {
@@ -16,8 +17,8 @@ export const TenantsScreen = () => {
   }, []);
 
   return (
-    <div>
-      <h1>Tenants screen</h1>
-    </div>
+    <RouteContent>
+      <h1>List of your tenants:</h1>
+    </RouteContent>
   );
 };

@@ -6,10 +6,10 @@ import {
   MdSettings,
   MdLogout,
 } from "react-icons/md";
-import { IconProps } from "./types.ts";
+import { IconProps } from "../types.ts";
 import { NavItem } from "./NavItem.tsx";
-import { Divider } from "./Divider.tsx";
-import { UserItem } from "./UserItem.tsx";
+import { Divider } from "../common/Divider.tsx";
+import { UserItem } from "../common/UserItem.tsx";
 
 export const Navigation = () => {
   const location = useLocation();

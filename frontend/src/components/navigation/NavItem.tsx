@@ -1,6 +1,6 @@
 import React, { FC } from "react";
 import { Link } from "react-router-dom";
-import { IconProps } from "./types.ts";
+import { IconProps } from "../types.ts";
 
 type Props = {
   link?: string;
