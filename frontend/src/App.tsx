@@ -5,12 +5,14 @@ import { Navigation } from "./components";
 
 function App() {
   return (
-    <div>
+    <div className="flex flex-row">
       <Navigation />
-      <Routes>
-        <Route path="/" element={<HomeScreen />} />
-        <Route path="/tenants" element={<TenantsScreen />} />
-      </Routes>
+      <div>
+        <Routes>
+          <Route path="/" element={<HomeScreen />} />
+          <Route path="/tenants" element={<TenantsScreen />} />
+        </Routes>
+      </div>
     </div>
   );
 }
