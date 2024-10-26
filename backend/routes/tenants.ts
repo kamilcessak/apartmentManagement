@@ -8,7 +8,9 @@ router.get("/", async (req, res) => {
     try {
         const collection = db.collection("tenants");
         const tenants = await collection.find({}).toArray();
-        res.status(200).json(tenants);
+        setTimeout(async () => {
+            res.status(200).json(tenants);
+        }, 2000);
     } catch (error) {
         console.error(error);
         res.status(500).send("Error fetching tenants");

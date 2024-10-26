@@ -51,7 +51,7 @@ export const Navigation = () => {
         <h3 className="font-extrabold text-wrap w-4/5 text-center">
           Apartment Management
         </h3>
-        <ul className="flex flex-1 flex-col border-red-600 w-full">
+        <ul className="flex flex-1 gap-2 flex-col border-red-600 w-full">
           {topNavItems.map((e, i) => {
             return (
               <NavItem

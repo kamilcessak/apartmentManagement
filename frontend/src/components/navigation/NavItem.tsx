@@ -16,7 +16,7 @@ export const NavItem: FC<Props> = ({ link, active, title, icon, onClick }) => {
   return (
     <Wrapper
       {...(link ? { to: link } : { onClick })}
-      className={`${active ? "text-white" : "text-black"} font-semibold ${onClick ? "cursor-pointer" : ""}`}
+      className={`${active ? "text-white" : "text-black"} font-semibold ${onClick ? "cursor-pointer" : ""} hover:border-black hover:border hover:rounded-full transition-all duration-300 ease-in-out`}
     >
       <li
         className={`flex flex-row items-center gap-2 p-4 border-black rounded-full ${active ? "border bg-gray-800" : ""}`}
