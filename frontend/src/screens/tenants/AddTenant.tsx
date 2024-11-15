@@ -119,7 +119,7 @@ export const AddTenant = () => {
                 className="h-20"
                 key={`field-${e.label}-${i}`}
                 {...e}
-                {...register(registerName as any)}
+                {...register(registerName)}
                 id={e.label}
                 variant="standard"
               />

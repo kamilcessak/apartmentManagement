@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   MdHome,
   MdGroups,
@@ -13,10 +13,16 @@ import { UserItem } from "../common/UserItem.tsx";
 
 export const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const logOut = () => {
+    sessionStorage.removeItem("token");
+    navigate("/", { replace: true });
+  };
 
   const topNavItems = [
     {
-      link: "/",
+      link: "/home",
       title: "Home",
       icon: (props: IconProps) => <MdHome {...props} />,
     },
@@ -41,7 +47,7 @@ export const Navigation = () => {
     {
       title: "Sign Out",
       icon: () => <MdLogout size={30} />,
-      onClick: () => {},
+      onClick: logOut,
     },
   ];
 
