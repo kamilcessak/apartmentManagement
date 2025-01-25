@@ -1,22 +1,20 @@
-import { MongoClient, ServerApiVersion } from "mongodb";
-import { ATLAS_URI } from "../config";
+import mongoose from 'mongoose';
+import { ATLAS_URI } from '../config';
 
-const client = new MongoClient(ATLAS_URI, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    },
-});
-
-try {
-    await client.connect();
-    await client.db("admin").command({ ping: 1 });
-    console.log("Successfully connected to MongoDB!");
-} catch(err) {
-    console.error(err);
-}
-
-let db = client.db("");
-
-export default db;
+export const initializeDatabase = async () => {
+    try {
+        await mongoose.connect(ATLAS_URI!, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 10000,
+            dbName: 'apartmentManagement',
+        });
+        console.log('Successfully connected to MongoDB!');
+    } catch (error) {
+        console.error(
+            'An error occurred while initializing the database',
+            error
+        );
+        throw error;
+    }
+};

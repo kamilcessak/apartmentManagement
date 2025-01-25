@@ -1,16 +1,29 @@
 import express from 'express';
 import cors from 'cors';
-import tenants from './routes/tenants';
-import authorizationRoutes from './routes/authorization';
 
-const PORT = process.env.PORT || 5050;
+import authRoutes from './routes/auth.routes';
+import apartmentRoutes from './routes/apartment.routes';
+import { initializeDatabase } from './db/connection';
+
 const app = express();
-
 app.use(cors());
 app.use(express.json());
-app.use('/tenants', tenants);
-app.use('/', authorizationRoutes);
 
-app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-});
+const startServer = async () => {
+    try {
+        await initializeDatabase();
+
+        app.use('/', authRoutes);
+        app.use('/', apartmentRoutes);
+
+        const PORT = process.env.PORT || 5050;
+        app.listen(PORT, () => {
+            console.log(`Server listening on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Failed to start the application:', error);
+        process.exit(1);
+    }
+};
+
+startServer();
