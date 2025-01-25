@@ -4,12 +4,18 @@ import bcrypt from 'bcryptjs';
 export interface UserSchemaType extends Document {
     email: string;
     password: string;
+    phoneNumber: string;
+    invitationCode?: string;
+    role: string;
     comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 const userSchema = new Schema<UserSchemaType>({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    phoneNumber: { type: String, required: true },
+    role: { type: String, required: true },
+    invitationCode: { type: String },
 });
 
 userSchema.pre('save', async function (next) {
