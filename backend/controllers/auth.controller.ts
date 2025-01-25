@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/user.model';
-import { jwtSecret } from '../config';
+import { FRONTEND_URL, jwtSecret } from '../config';
+import { sendEmail } from '../services/email.service';
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -57,6 +58,17 @@ export const registerUser = async (
         }
 
         const newUser = await UserModel.create(userData);
+
+        const verificationToken = jwt.sign({ id: newUser._id }, jwtSecret, {
+            expiresIn: '1h',
+        });
+        const verificationLink = `${FRONTEND_URL}/verify-email?token=${verificationToken}`;
+
+        await sendEmail(
+            email,
+            `Confirm your email`,
+            `<div style={{display: 'flex', flexDirection: 'column'}}><h1>Please confirm your email address</h1><p>Click the link below to verify your email:</p><a href={${verificationLink}}>${verificationLink}</a></div>`
+        );
 
         res.status(201).json({
             message: 'User registered successfully',
