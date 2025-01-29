@@ -6,6 +6,7 @@ export interface UserSchemaType extends Document {
     password: string;
     phoneNumber: string;
     invitationCode?: string;
+    isEmailVerified: boolean;
     role: string;
     comparePassword(candidatePassword: string): Promise<boolean>;
 }

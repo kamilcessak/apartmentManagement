@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/user.model';
 import { FRONTEND_URL, jwtSecret } from '../config';
 import { sendEmail } from '../services/email.service';
+import { UserType } from '../types/user.types';
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -46,7 +47,12 @@ export const registerUser = async (
             return;
         }
 
-        const userData = { email, password, phoneNumber };
+        const userData = {
+            email,
+            password,
+            phoneNumber,
+            isEmailVerified: false,
+        };
 
         if (req.body?.invitationCode) {
             Object.assign(userData, {
@@ -79,5 +85,46 @@ export const registerUser = async (
         res.status(500).json({
             error: 'An error occurred during user registration',
         });
+    }
+};
+
+export const activateAccount = async (
+    req: Request,
+    res: Response
+): Promise<void> => {
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            res.status(400).json({ error: 'Activation token is required' });
+            return;
+        }
+
+        const decoded = jwt.verify(token as string, jwtSecret) as UserType;
+
+        const user = await UserModel.findById(decoded.id);
+
+        if (!user) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+        }
+
+        if (user.isEmailVerified) {
+            res.status(400).json({ error: 'Account is already verified' });
+        }
+
+        user.isEmailVerified = true;
+
+        await user.save();
+
+        res.status(200).json({ message: 'Account activated successfully' });
+    } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError) {
+            res.status(400).json({
+                error: 'Invalid or expired activation token',
+            });
+        } else {
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 };
