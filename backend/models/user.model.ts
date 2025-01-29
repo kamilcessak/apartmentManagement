@@ -17,6 +17,7 @@ const userSchema = new Schema<UserSchemaType>({
     phoneNumber: { type: String, required: true },
     role: { type: String, required: true },
     invitationCode: { type: String },
+    isEmailVerified: { type: Boolean, default: false },
 });
 
 userSchema.pre('save', async function (next) {
