@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.routes';
 import apartmentRoutes from './routes/apartment.routes';
 import tenantRoutes from './routes/tenant.routes';
 import rentalRoutes from './routes/rental.routes';
+import invoiceRoutes from './routes/invoice.routes';
 import { initializeDatabase } from './db/connection';
 
 const app = express();
@@ -19,6 +20,7 @@ const startServer = async () => {
         app.use('/', apartmentRoutes);
         app.use('/', tenantRoutes);
         app.use('/', rentalRoutes);
+        app.use('/', invoiceRoutes);
 
         const PORT = process.env.PORT || 5050;
         app.listen(PORT, () => {
