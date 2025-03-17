@@ -1,12 +1,12 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 
-import {
-  ApartmentsScreen,
-  HomeScreen,
-  SettingsScreen,
-  WelcomeScreen,
-} from "./screens";
+import { HomeScreen, SettingsScreen, WelcomeScreen } from "./screens";
 import { AddTenant, TenantsScreen } from "./screens/tenants";
+import {
+  ApartmentDetailsScreen,
+  ApartmentsScreen,
+  NewApartmentScreen,
+} from "./screens/apartments";
 import { Navigation } from "./components";
 import {
   LoginScreen,
@@ -72,6 +72,22 @@ const App = () => {
       element: (
         <ProtectedRoute isAuthenticated={isLoggedIn}>
           <ApartmentsScreen />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/apartments/new",
+      element: (
+        <ProtectedRoute isAuthenticated={isLoggedIn}>
+          <NewApartmentScreen />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/apartment/:id",
+      element: (
+        <ProtectedRoute isAuthenticated={isLoggedIn}>
+          <ApartmentDetailsScreen />
         </ProtectedRoute>
       ),
     },

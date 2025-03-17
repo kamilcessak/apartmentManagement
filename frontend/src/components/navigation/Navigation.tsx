@@ -24,17 +24,17 @@ export const Navigation = () => {
 
   const topNavItems = [
     {
-      link: "/home",
+      links: ["/home"],
       title: "Home",
       icon: (props: IconProps) => <MdHome {...props} />,
     },
     {
-      link: "/tenants",
+      links: ["/tenants"],
       title: "Tenants",
       icon: (props: IconProps) => <MdGroups {...props} />,
     },
     {
-      link: "/apartments",
+      links: ["/apartments", "/apartments/new"],
       title: "Apartments",
       icon: (props: IconProps) => <MdApartment {...props} />,
     },
@@ -42,7 +42,7 @@ export const Navigation = () => {
 
   const bottomNavItems = [
     {
-      link: "/settings",
+      links: ["/settings"],
       title: "Settings",
       icon: () => <MdSettings size={30} />,
     },
@@ -64,7 +64,7 @@ export const Navigation = () => {
             return (
               <NavItem
                 {...e}
-                active={e.link === location.pathname}
+                active={e.links.includes(location.pathname)}
                 key={`nav-item-${e.title}-${i}`}
               />
             );
@@ -77,7 +77,7 @@ export const Navigation = () => {
         {bottomNavItems.map((e, i) => (
           <NavItem
             {...e}
-            active={e?.link === location.pathname}
+            active={!!e?.links?.includes(location.pathname)}
             key={`nav-item-${e.title}-${i}`}
           />
         ))}

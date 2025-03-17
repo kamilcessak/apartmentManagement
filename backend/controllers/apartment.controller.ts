@@ -10,12 +10,11 @@ export const createApartment = async (req: Request, res: Response) => {
             return;
         }
 
-        const { address, metric, amount, roomCount, monthlyCost, description } =
+        const { address, metric, roomCount, monthlyCost, description } =
             req.body;
         const data = {
             address,
             metric,
-            amount,
             roomCount,
             monthlyCost,
             description,
