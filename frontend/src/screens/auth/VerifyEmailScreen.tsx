@@ -1,7 +1,7 @@
 import { CircularProgress } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -9,11 +9,12 @@ export const VerifyEmailScreen = () => {
   const [params] = useSearchParams();
   const token = params.get("token");
   const navigate = useNavigate();
+  const activationAttemptedRef = useRef(false);
 
   const { mutate: activateAccount, isError } = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (tokenParam: string) => {
       const result = await axios.get("http://localhost:5050/activate-account", {
-        params: { token },
+        params: { token: tokenParam },
       });
       return result;
     },
@@ -29,10 +30,11 @@ export const VerifyEmailScreen = () => {
   });
 
   useEffect(() => {
-    if (token?.length) {
-      activateAccount();
+    if (token?.length && !activationAttemptedRef.current) {
+      activationAttemptedRef.current = true;
+      activateAccount(token);
     }
-  }, []);
+  }, [token]);
 
   return (
     <div className="flex h-screen flex-1 items-center justify-center flex-col gap-8">
