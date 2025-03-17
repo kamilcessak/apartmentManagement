@@ -7,14 +7,15 @@ import { MdArrowBackIos } from "react-icons/md";
 
 import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 const schema = yup.object().shape({
-  login: yup.string().required("Login is required"),
+  email: yup.string().required("Email is required"),
   password: yup.string().required("Password is required"),
 });
 
 type FormValues = {
-  login: string;
+  email: string;
   password: string;
 };
 
@@ -41,10 +42,9 @@ export const LoginScreen = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: handleLogin,
     onSuccess: async (data) => {
-      console.log({ data });
       if (data?.data.token) {
         sessionStorage.setItem("token", data.data.token);
-        alert("Logged in sucessfully");
+        toast("Pomyślnie zalogowano do konta!", { type: "success" });
         navigate("/home", { replace: true, state: { loggedIn: true } });
       } else {
         alert("Login failed");
@@ -52,6 +52,7 @@ export const LoginScreen = () => {
     },
     onError: (error) => {
       console.error(error);
+      toast(error.response.data.error, { type: "error" });
     },
   });
 
@@ -67,11 +68,11 @@ export const LoginScreen = () => {
         >
           <TextField
             className="w-1/4"
-            label="Login"
+            label="Email"
             disabled={isPending}
-            {...register("login")}
-            error={!!errors.login}
-            helperText={errors.login?.message}
+            {...register("email")}
+            error={!!errors.email}
+            helperText={errors.email?.message}
           />
           <TextField
             className="w-1/4"

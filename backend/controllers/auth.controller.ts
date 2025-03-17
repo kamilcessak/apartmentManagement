@@ -73,7 +73,13 @@ export const registerUser = async (
         await sendEmail(
             email,
             `Confirm your email`,
-            `<div style={{display: 'flex', flexDirection: 'column'}}><h1>Please confirm your email address</h1><p>Click the link below to verify your email:</p><a href={${verificationLink}}>${verificationLink}</a></div>`
+            `
+                <div style="display: flex; flex-direction: column;">
+                    <h1>Please confirm your email address</h1>
+                    <p>Click the link below to verify your email:</p>
+                    <a href="${verificationLink}" style="color: blue; text-decoration: underline;">${verificationLink}</a>
+                </div>
+            `
         );
 
         res.status(201).json({

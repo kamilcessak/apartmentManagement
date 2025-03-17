@@ -10,6 +10,7 @@ import { IconProps } from "../types.ts";
 import { NavItem } from "./NavItem.tsx";
 import { Divider } from "../common/Divider.tsx";
 import { UserItem } from "../common/UserItem.tsx";
+import { toast } from "react-toastify";
 
 export const Navigation = () => {
   const location = useLocation();
@@ -17,6 +18,7 @@ export const Navigation = () => {
 
   const logOut = () => {
     sessionStorage.removeItem("token");
+    toast("Pomyślnie wylogowano uzytkownika", { type: "success" });
     navigate("/", { replace: true });
   };
 

@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "docker-compose up --build"
+    "start": "docker compose up --build",
+    "install-all": "cd backend && npm i && cd ../frontend && npm i && cd .."
   }
 }

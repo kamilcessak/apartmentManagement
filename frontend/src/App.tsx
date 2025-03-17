@@ -13,6 +13,7 @@ import {
   RegisterScreen,
   RegisterSuccessful,
   UnauthenticatedScreen,
+  VerifyEmailScreen,
 } from "./screens/auth";
 import { isAuthenticated } from "./utils";
 import { useState, useEffect } from "react";
@@ -39,6 +40,7 @@ const App = () => {
     { path: "/", element: <WelcomeScreen /> },
     { path: "/login", element: <LoginScreen /> },
     { path: "/register", element: <RegisterScreen /> },
+    { path: "/verify-email", element: <VerifyEmailScreen /> },
     { path: "/registerSuccess", element: <RegisterSuccessful /> },
     { path: "/404", element: <UnauthenticatedScreen /> },
     {
