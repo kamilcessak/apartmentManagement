@@ -101,11 +101,14 @@ export const ApartmentsScreen = () => {
                     flex={2}
                   />
                   <ApartmentListItem title={e.address} flex={4} />
-                  <ApartmentListItem title={e.metric} flex={1} />
+                  <ApartmentListItem title={`${e.metric}m²`} flex={1} />
                   <ApartmentListItem title={`${e.isAvailable}`} flex={1} />
                   <ApartmentListItem
                     content={
-                      <a href={`/apartment/${e._id}`}>
+                      <a
+                        className="cursor-pointer"
+                        href={`/apartment/${e._id}`}
+                      >
                         <MdVisibility size={24} />
                       </a>
                     }
