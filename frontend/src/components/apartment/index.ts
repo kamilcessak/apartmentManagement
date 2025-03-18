@@ -1,3 +1,3 @@
 export * from "./ApartmentListItem";
-export * from "./DetailsInformationItem";
-export * from "./DetailsSectionHeader";
+export * from "./details/DetailsInformationItem";
+export * from "./details/DetailsSectionHeader";

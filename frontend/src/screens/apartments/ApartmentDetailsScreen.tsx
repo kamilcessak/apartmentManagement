@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { CircularProgress, Divider, Typography, useTheme } from "@mui/material";
+import { CircularProgress, useTheme } from "@mui/material";
 import { MdChevronLeft } from "react-icons/md";
 
 import { RouteContent } from "../../components/common";
@@ -8,14 +8,20 @@ import api from "../../services/api";
 import { getApartmentIdFromAddress } from "../../utils/apartment";
 import { capitalizeFirstLetter } from "../../utils/common";
 import {
-  DetailsInformationItem,
-  DetailsSectionHeader,
-} from "../../components/apartment";
+  DetailsDescriptionSection,
+  DetailsPhotosSection,
+  DetailsInformationsSection,
+} from "../../components/apartment/details";
 
 export const ApartmentDetailsScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const theme = useTheme();
+  const queryClient = useQueryClient();
+
+  const handleRefreshGetApartment = () => {
+    queryClient.invalidateQueries({ queryKey: ["apartment", `${id}`] });
+  };
 
   const handleGetApartment = async () => {
     const result = await api.get(`http://localhost:5050/apartment/${id}`);
@@ -40,7 +46,7 @@ export const ApartmentDetailsScreen = () => {
   }
 
   return (
-    <RouteContent>
+    <RouteContent sectionStyle={{ height: "100vh" }}>
       <header className="flex flex-row items-center">
         <a className="cursor-pointer" onClick={() => navigate(-1)}>
           <MdChevronLeft size={51} />
@@ -51,60 +57,32 @@ export const ApartmentDetailsScreen = () => {
             "Details"}
         </h1>
       </header>
-      <main className="flex flex-1 flex-col gap-4 mt-4">
-        <section className="flex flex-col gap-4 border-2 border-gray-700 rounded-md p-4">
-          <DetailsSectionHeader
-            title={"Main informations"}
-            onClickButton={() => {}}
-          />
-          <Divider />
-          <div className="flex flex-1 flex-row items-center gap-4 justify-between w-full">
-            <DetailsInformationItem
-              title={"Apartment ID"}
-              subtitle={getApartmentIdFromAddress(data.address)}
-            />
-            <DetailsInformationItem
-              title={"Address"}
-              subtitle={`${data.address}`}
-            />
-            <DetailsInformationItem
-              title={"Metric"}
-              subtitle={`${data.metric} m²`}
-            />
-            <DetailsInformationItem
-              title={"Rooms count"}
-              subtitle={`${data.roomCount}`}
-            />
-            <DetailsInformationItem
-              title={"Monthly cost"}
-              subtitle={`${data.monthlyCost} zł`}
-            />
-            <DetailsInformationItem
-              title={"Status"}
-              subtitle={`${!!data.isAvailable}`}
-              content={
-                <div
-                  className="text-white p-1 rounded-md"
-                  style={{
-                    backgroundColor: data.isAvailable
-                      ? theme.palette.success.main
-                      : theme.palette.warning.main,
-                  }}
-                >
-                  {data.isAvailable ? "Available" : "Unavailable"}
-                </div>
-              }
-            />
-          </div>
-        </section>
-        <section className="flex flex-col gap-4 border-2 border-gray-700 rounded-md p-4">
-          <DetailsSectionHeader
-            title={"Description"}
-            onClickButton={() => {}}
-          />
-          <Divider />
-          <Typography variant="body1">{data.description}</Typography>
-        </section>
+      <main
+        className="flex flex-1 flex-col gap-4 mt-4 overflow-y-scroll"
+        style={{
+          paddingRight: "8px",
+          scrollbarWidth: "thin",
+          scrollbarColor: `${theme.palette.gray.main} transparent`,
+          "&::WebkitScrollbar": {
+            width: "8px",
+            height: "8px",
+          },
+          "&::WebkitScrollbarTrack": {
+            background: "transparent",
+            marginRight: "8px",
+          },
+          "&::WebkitScrollbarThumb": {
+            backgroundColor: theme.palette.gray.main,
+            borderRadius: "4px",
+          },
+        }}
+      >
+        <DetailsInformationsSection data={data} />
+        <DetailsDescriptionSection description={data.description} />
+        <DetailsPhotosSection
+          photos={data.photos}
+          handleRefreshGetApartment={handleRefreshGetApartment}
+        />
       </main>
     </RouteContent>
   );

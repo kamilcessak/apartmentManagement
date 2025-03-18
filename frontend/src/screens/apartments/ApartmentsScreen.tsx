@@ -23,6 +23,8 @@ export const ApartmentsScreen = () => {
     queryFn: handleGetApartments,
   });
 
+  console.log({ data });
+
   if (isLoading) {
     return (
       <RouteContent

@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 
 import { RouteContent } from "../../components/common";
 import api from "../../services/api";
+import { FilesSection } from "../../components/files";
 
 const schema = yup.object().shape({
   address: yup.string().required("Address of your apartment is required"),
@@ -28,6 +29,8 @@ type FormValues = {
   monthlyCost: number;
   description: string;
   equipment?: string;
+  photos?: string[];
+  documents?: string[];
 };
 
 export const NewApartmentScreen = () => {
@@ -38,10 +41,34 @@ export const NewApartmentScreen = () => {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(schema),
   });
+
+  const handleAddPhotoToForm = (url: string) => {
+    const currentPhotos = watch("photos") || [];
+    setValue("photos", [...currentPhotos, url]);
+  };
+
+  const handleRemovePhotoFromForm = (url: string) => {
+    const currentPhotos = watch("photos") || [];
+    const result = currentPhotos.filter((e) => e !== url);
+    setValue("photos", [...result]);
+  };
+
+  const handleAddDocumentToForm = (url: string) => {
+    const currentDocuments = watch("documents") || [];
+    setValue("documents", [...currentDocuments, url]);
+  };
+
+  const handleRemoveDocumentFromForm = (url: string) => {
+    const currentDocuments = watch("documents") || [];
+    const result = currentDocuments.filter((e) => e !== url);
+    setValue("documents", [...result]);
+  };
 
   const handlePostApartment = async (data: FormValues) => {
     const result = await api.post("http://localhost:5050/apartment", data);
@@ -86,15 +113,15 @@ export const NewApartmentScreen = () => {
             paddingRight: "8px",
             scrollbarWidth: "thin",
             scrollbarColor: `${theme.palette.gray.main} transparent`,
-            "&::-webkit-scrollbar": {
+            "&::WebkitScrollbar": {
               width: "8px",
               height: "8px",
             },
-            "&::-webkit-scrollbar-track": {
+            "&::WebkitScrollbarTrack": {
               background: "transparent",
               marginRight: "8px",
             },
-            "&::-webkit-scrollbar-thumb": {
+            "&::WebkitScrollbarThumb": {
               backgroundColor: theme.palette.gray.main,
               borderRadius: "4px",
             },
@@ -146,11 +173,23 @@ export const NewApartmentScreen = () => {
           />
           <TextField
             disabled={isPending}
+            multiline
+            minRows={3}
             label="Equipment"
             variant="outlined"
             {...register("equipment")}
             error={!!errors.equipment}
             helperText={errors.equipment?.message}
+          />
+          <FilesSection
+            title={"Photos"}
+            handleAddForm={handleAddPhotoToForm}
+            handleRemoveForm={handleRemovePhotoFromForm}
+          />
+          <FilesSection
+            title={"Documents"}
+            handleAddForm={handleAddDocumentToForm}
+            handleRemoveForm={handleRemoveDocumentFromForm}
           />
           <div className="flex flex-row justify-between gap-2">
             <Button

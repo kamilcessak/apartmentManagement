@@ -6,7 +6,9 @@ import apartmentRoutes from './routes/apartment.routes';
 import tenantRoutes from './routes/tenant.routes';
 import rentalRoutes from './routes/rental.routes';
 import invoiceRoutes from './routes/invoice.routes';
+import filesRoutes from './routes/files.routes';
 import { initializeDatabase } from './db/connection';
+import path from 'path';
 
 const app = express();
 app.use(cors());
@@ -21,6 +23,11 @@ const startServer = async () => {
         app.use('/', tenantRoutes);
         app.use('/', rentalRoutes);
         app.use('/', invoiceRoutes);
+        app.use('/', filesRoutes);
+        app.use(
+            '/uploads',
+            express.static(path.join(process.cwd(), 'uploads'))
+        );
 
         const PORT = process.env.PORT || 5050;
         app.listen(PORT, () => {

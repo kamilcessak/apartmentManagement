@@ -21,10 +21,10 @@ export const createApartment = async (req: Request, res: Response) => {
             owner: userID,
         };
 
-        if (req.body.photos) {
+        if (req.body.photos && Array.isArray(req.body.photos)) {
             Object.assign(data, { photos: req.body.photos });
         }
-        if (req.body.documents) {
+        if (req.body.documents && Array.isArray(req.body.documents)) {
             Object.assign(data, { documents: req.body.documents });
         }
         if (req.body.equipment) {

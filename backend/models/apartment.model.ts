@@ -31,8 +31,8 @@ const apartmentSchema = new Schema<ApartmentSchemaType>({
     monthlyCost: { type: Number, required: true },
     description: { type: String, required: true },
     equipment: { type: String },
-    photos: [{ type: Schema.Types.ObjectId, ref: 'File', default: [] }],
-    documents: [{ type: Schema.Types.ObjectId, ref: 'File', default: [] }],
+    photos: [{ type: String }],
+    documents: [{ type: String }],
     owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 });
 
