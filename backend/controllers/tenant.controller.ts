@@ -29,6 +29,7 @@ export const createTenant = async (req: Request, res: Response) => {
             isActive: true,
             invitationCode: generateInvitationCode(),
             owner: userID,
+            assignedApartmentID: null,
         };
 
         const newTenant = await TenantModel.create(data);
@@ -50,7 +51,6 @@ export const getTenants = async (req: Request, res: Response) => {
         }
 
         const tenants = await TenantModel.find({ owner: userID });
-        console.log('HEJKA', { userID, tenants });
         res.status(200).json(tenants);
     } catch (error) {
         res.status(500).json({
