@@ -7,6 +7,7 @@ import tenantRoutes from './routes/tenant.routes';
 import rentalRoutes from './routes/rental.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import filesRoutes from './routes/files.routes';
+import userRoutes from './routes/user.routes';
 import { initializeDatabase } from './db/connection';
 import path from 'path';
 
@@ -24,6 +25,7 @@ const startServer = async () => {
         app.use('/', rentalRoutes);
         app.use('/', invoiceRoutes);
         app.use('/', filesRoutes);
+        app.use('/', userRoutes);
         app.use(
             '/uploads',
             express.static(path.join(process.cwd(), 'uploads'))
