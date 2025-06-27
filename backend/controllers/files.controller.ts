@@ -61,19 +61,18 @@ export const uploadMultipleFiles = async (
 
 export const getFile = async (req: Request, res: Response) => {
     try {
-        console.log({ params: req.params });
         const fileUrl = path.join(
             process.cwd(),
             'uploads',
             req.params.filename
         );
-        console.log({ fileUrl });
 
         if (!existsSync(fileUrl)) {
             return res.status(404).json({ error: 'File not found' });
         }
-        const resultFileUrl = path.join('/uploads', req.params.filename);
-        res.status(200).json({ fileUrl: resultFileUrl });
+        res.status(200).json({
+            url: `${req.protocol}://${req.get('host')}/uploads/${req.params.filename}`,
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({

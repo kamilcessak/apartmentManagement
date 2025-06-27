@@ -35,6 +35,7 @@ export const createApartment = async (req: Request, res: Response) => {
 
         res.status(201).json(newApartment);
     } catch (error) {
+        console.error(error);
         res.status(500).json({
             error: 'An error occurred while creating a new apartment',
         });

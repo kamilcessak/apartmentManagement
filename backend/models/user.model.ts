@@ -9,6 +9,8 @@ export interface UserSchemaType extends Document {
     isEmailVerified: boolean;
     role: string;
     comparePassword(candidatePassword: string): Promise<boolean>;
+    firstName?: string;
+    lastName?: string;
 }
 
 const userSchema = new Schema<UserSchemaType>({
@@ -18,6 +20,8 @@ const userSchema = new Schema<UserSchemaType>({
     role: { type: String, required: true },
     invitationCode: { type: String },
     isEmailVerified: { type: Boolean, default: false },
+    firstName: { type: String },
+    lastName: { type: String },
 });
 
 userSchema.pre('save', async function (next) {

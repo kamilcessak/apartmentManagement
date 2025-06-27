@@ -22,7 +22,7 @@ const apartmentSchema = new Schema<ApartmentSchemaType>({
         required: true,
         validate: {
             validator: (value: string) => addressRegex.test(value),
-            message: 'Address must be in format "ul.Ulica 1/1, 00-000 Miasto"',
+            message: 'Address must be in format "ul.Ulica 1, 00-000 Miasto"',
         },
     },
     metric: { type: Number, required: true },
