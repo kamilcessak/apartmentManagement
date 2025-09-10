@@ -1,12 +1,14 @@
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { TextField } from "@mui/material";
+import { Button, CircularProgress, TextField } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-
-import { ActivityIndicator, RouteContent } from "../../components/common";
-import axios from "axios";
+import { toast } from "react-toastify";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { RouteContent } from "@components/common";
+import api from "@services/api";
+import { MdChevronLeft } from "react-icons/md";
 
 const schema = yup.object().shape({
   firstName: yup.string().required("First name is required"),
@@ -26,7 +28,7 @@ type FormValues = {
   address: string;
 };
 
-export const AddTenant = () => {
+export const NewTenantScreen = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -40,9 +42,11 @@ export const AddTenant = () => {
 
   const createTenant = async (data: FormValues) => {
     try {
-      await axios.post("http://localhost:5050/tenants", data);
+      const result = await api.post("/tenant", data);
+      return result;
     } catch (error) {
       console.error(error);
+      throw error;
     }
   };
 
@@ -52,11 +56,15 @@ export const AddTenant = () => {
       queryClient
         .invalidateQueries({ queryKey: ["tenants", "list"] })
         .then(() => {
-          navigate("/tenants");
+          toast("Tenant added successfully", { type: "success" });
+          navigate(-1);
         });
     },
     onError: (error) => {
       console.error(error);
+      toast("An error occured during adding new Tenant. Try again", {
+        type: "error",
+      });
     },
   });
 
@@ -102,46 +110,52 @@ export const AddTenant = () => {
   const onSubmit = (data: FormValues) => mutate(data);
 
   return (
-    <RouteContent
-      sectionStyle={{
-        flexDirection: "column",
-        gap: 16,
-        alignItems: "center",
-        padding: 32,
-      }}
-    >
-      <h1 className="text-2xl font-bold">Add new Tenant:</h1>
-      <form className="flex flex-1 w-3/4" onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-1 flex-col w-full justify-between gap-4">
-          <div className="flex flex-col">
-            {formFields.map(({ registerName, ...e }, i) => (
-              <TextField
-                className="h-20"
-                key={`field-${e.label}-${i}`}
-                {...e}
-                {...register(registerName)}
-                id={e.label}
-                variant="standard"
-              />
-            ))}
-          </div>
-          <div className="flex justify-end w-full gap-2">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="flex flex-1 justify-center items-center border-gray-600 border-2 text-black text-xl font-semibold hover:bg-gray-600 hover:text-white py-2 px-6 rounded-md transition-colors duration-300 ease-in-out"
-            >
-              Cancel
-            </button>
-            <button
-              className="flex flex-1 justify-center items-center border-blue-600 border-2 text-black text-xl font-semibold hover:bg-blue-600 hover:text-white py-2 px-6 rounded-md transition-colors duration-300 ease-in-out"
-              type="submit"
-            >
-              {isPending ? <ActivityIndicator style={{ height: 28 }} /> : "Add"}
-            </button>
-          </div>
+    <RouteContent>
+      <header className="flex flex-row items-center p-8 border-b-2 border-gray-200">
+        <a onClick={() => navigate(-1)}>
+          <MdChevronLeft size={48} />
+        </a>
+        <div className="flex flex-1 items-center justify-center">
+          <h1 className="text-3xl font-semibold">Add new Tenant</h1>
         </div>
-      </form>
+      </header>
+      <div className="flex flex-1 flex-col w-full overflow-y-scroll scrollbar-hide h-full gap-4 p-8">
+        <div className="flex flex-col">
+          {formFields.map(({ registerName, ...e }, i) => (
+            <TextField
+              className="h-20"
+              key={`field-${e.label}-${i}`}
+              {...e}
+              {...register(registerName)}
+              id={e.label}
+              variant="standard"
+            />
+          ))}
+        </div>
+        <div className="flex justify-end w-full gap-2">
+          <Button
+            className="flex flex-1"
+            color="success"
+            size="large"
+            variant="contained"
+            onClick={handleSubmit(onSubmit)}
+            disabled={isPending}
+            startIcon={
+              isPending ? <CircularProgress size={16} color="primary" /> : null
+            }
+          >
+            Add
+          </Button>
+          <Button
+            size="large"
+            className="flex flex-1"
+            variant="outlined"
+            onClick={() => navigate(-1)}
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
     </RouteContent>
   );
 };

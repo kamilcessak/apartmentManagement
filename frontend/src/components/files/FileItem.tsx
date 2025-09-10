@@ -20,6 +20,7 @@ type Props = {
   handleRemoveForm?: (url: string) => void;
   containerStyle?: CSSProperties;
   editMode?: boolean;
+  isPending?: boolean;
   onSuccess?: () => void;
 };
 
@@ -34,6 +35,7 @@ export const FileItem: FC<Props> = ({
   containerStyle,
   editMode,
   onSuccess,
+  isPending,
 }) => {
   const theme = useTheme();
 
@@ -100,7 +102,7 @@ export const FileItem: FC<Props> = ({
             editMode ? "justify-between" : "justify-center"
           }`}
         >
-          {!editMode ? null : isDeleteFilePending ? (
+          {!editMode ? null : isDeleteFilePending || isPending ? (
             <CircularProgress size={24} />
           ) : (
             <MdDeleteOutline

@@ -20,7 +20,7 @@ export const NavItem: FC<Props> = ({ links, active, title, icon, onClick }) => {
         active ? "text-white" : "text-black"
       } border font-semibold ${
         onClick ? "cursor-pointer" : ""
-      } hover:border-black hover:rounded-full transition-all duration-300 ease-in-out`}
+      } hover:border-black hover:rounded-full transition-all duration-300 ease-in-out border-blue-100`}
     >
       <li
         className={`flex flex-row items-center gap-2 p-4 border-black rounded-full ${

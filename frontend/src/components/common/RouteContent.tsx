@@ -8,7 +8,7 @@ export const RouteContent: FC<PropsWithChildren<Props>> = ({
   children,
   sectionStyle,
 }) => (
-  <section className="flex flex-1 w-full p-8 flex-col" style={sectionStyle}>
+  <section className="flex h-screen w-full flex-col" style={sectionStyle}>
     {children}
   </section>
 );

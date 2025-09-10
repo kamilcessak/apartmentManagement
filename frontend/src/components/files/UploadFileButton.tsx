@@ -1,12 +1,17 @@
 import { Button } from "@mui/material";
+import React from "react";
 import { MdAdd } from "react-icons/md";
 
 export const UploadFileButton = ({
   callback,
   size,
+  startIcon,
+  disabled,
 }: {
   callback: (file: File) => void;
   size?: "small" | "medium" | "large";
+  startIcon?: React.ReactNode;
+  disabled: boolean;
 }) => {
   return (
     <Button
@@ -14,10 +19,11 @@ export const UploadFileButton = ({
       role={undefined}
       variant="outlined"
       color="success"
+      disabled={disabled}
       size={size || "small"}
       tabIndex={-1}
       style={{ textTransform: "none" }}
-      startIcon={<MdAdd />}
+      startIcon={startIcon ? startIcon : <MdAdd />}
     >
       Add
       <input

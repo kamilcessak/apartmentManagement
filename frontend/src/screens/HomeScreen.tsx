@@ -1,3 +1,4 @@
+import React from "react";
 import { RouteContent } from "../components/common";
 
 export const HomeScreen = () => {

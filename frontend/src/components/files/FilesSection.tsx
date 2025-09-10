@@ -1,11 +1,12 @@
-import { Button, Typography } from "@mui/material";
-import { MdAdd } from "react-icons/md";
+import { Typography } from "@mui/material";
 import { FC, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 
 import { FileItem } from "./FileItem";
-import api from "../../services/api";
 import { UploadFileButton } from ".";
+
+import api from "@services/api";
+import { toast } from "react-toastify";
 
 type Props = {
   title: string;
@@ -29,25 +30,30 @@ export const FilesSection: FC<Props> = ({
   const [files, setfiles] = useState<FileType[]>([]);
 
   const handleUploadFile = async (file: File) => {
-    setUploadProgress(0);
+    try {
+      setUploadProgress(0);
 
-    const formData = new FormData();
-    formData.append("file", file);
+      const formData = new FormData();
+      formData.append("file", file);
 
-    setfiles((prev) => [...prev, { name: file.name, type: file.type }]);
+      setfiles((prev) => [...prev, { name: file.name, type: file.type }]);
 
-    const response = await api.post("/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      onUploadProgress: (progressEvent) => {
-        const progress = Math.round(
-          (progressEvent?.loaded / progressEvent.total) * 100
-        );
-        setUploadProgress(progress);
-      },
-    });
-    return response;
+      const response = await api.post("/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent?.loaded / progressEvent.total) * 100
+          );
+          setUploadProgress(progress);
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   const { mutate } = useMutation({
@@ -65,16 +71,20 @@ export const FilesSection: FC<Props> = ({
             : e
         )
       );
+      toast("Successfully uploaded file", { type: "success" });
     },
+    onError: () =>
+      toast("An error occurred during uploading file. Try again.", {
+        type: "error",
+      }),
   });
 
   return (
-    <section
-      className="border-gray-600 p-4 rounded-sm"
-      style={{ borderWidth: 1 }}
-    >
+    <section className="border-gray-300 p-4 rounded" style={{ borderWidth: 1 }}>
       <div className="flex flex-1 flex-row items-center justify-between">
-        <Typography variant="body1">{title}</Typography>
+        <Typography variant="body1" className="text-gray-800">
+          {title}
+        </Typography>
         <UploadFileButton callback={(file: File) => mutate(file)} />
       </div>
       <div className="flex flex-row flex-wrap gap-4">
