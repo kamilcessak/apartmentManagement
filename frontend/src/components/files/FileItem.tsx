@@ -40,19 +40,29 @@ export const FileItem: FC<Props> = ({
   const theme = useTheme();
 
   const handleGetFileToPreview = async () => {
-    const response = await api.get(`/upload/${fileName}`);
-    return response;
+    try {
+      const response = await api.get(`/upload/${fileName}`);
+      return response.data;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   const handleDeleteFile = async () => {
-    const response = await api.delete(`/upload/${fileName}`);
-    return response;
+    try {
+      const response = await api.delete(`/upload/${fileName}`);
+      return response;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   const { mutate: previewFile, isPending: isPreviewFilePending } = useMutation({
     mutationFn: handleGetFileToPreview,
     onSuccess: (data) => {
-      window.open(`http://localhost:5050${data.data.fileUrl}`, "_blank");
+      window.open(data.url, "_blank");
     },
   });
 

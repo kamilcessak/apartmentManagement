@@ -9,16 +9,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 type Props = {
-  photos: string[];
-  handleRefreshGetApartment: () => void;
+  files: string[];
   id: string;
+  type: "documents" | "photos";
+  title: string;
 };
 
-export const DetailsPhotosSection: FC<Props> = ({
-  photos,
-  id,
-  handleRefreshGetApartment,
-}) => {
+export const DetailsPhotosSection: FC<Props> = ({ files, id, type, title }) => {
   const queryClient = useQueryClient();
   const [editMode, seteditMode] = useState(false);
 
@@ -39,11 +36,14 @@ export const DetailsPhotosSection: FC<Props> = ({
     }
   };
 
-  const handlePatchApartment = async (photo: string) => {
+  const handlePatchApartment = async (file: string) => {
     try {
-      const result = await api.patch(`/apartment/${id}`, {
-        photos: [...photos, photo],
-      });
+      const resultFiles = [...files, file];
+      const data =
+        type === "documents"
+          ? { documents: resultFiles }
+          : { photos: resultFiles };
+      const result = await api.patch(`/apartment/${id}`, data);
       return result;
     } catch (error) {
       console.error(error);
@@ -51,11 +51,14 @@ export const DetailsPhotosSection: FC<Props> = ({
     }
   };
 
-  const handleDeletePhotoFromApartment = async (photo: string) => {
+  const handleDeletePhotoFromApartment = async (file: string) => {
     try {
-      const result = await api.patch(`/apartment/${id}`, {
-        photos: photos.filter((e) => e !== photo),
-      });
+      const resultFiles = files.filter((e) => e !== file);
+      const data =
+        type === "documents"
+          ? { photos: resultFiles }
+          : { photos: resultFiles };
+      const result = await api.patch(`/apartment/${id}`, data);
       return result;
     } catch (error) {
       console.error(error);
@@ -94,7 +97,6 @@ export const DetailsPhotosSection: FC<Props> = ({
     mutationFn: handleUploadFile,
     onSuccess: ({ data }) => {
       toast("Successfully uploaded file", { type: "success" });
-      console.log({ data });
       patchApartment(data.fileName);
     },
     onError: () =>
@@ -103,6 +105,8 @@ export const DetailsPhotosSection: FC<Props> = ({
       }),
   });
 
+  if (!files?.length) return null;
+
   return (
     <section
       className={`flex flex-col gap-4 border-2 ${
@@ -110,7 +114,7 @@ export const DetailsPhotosSection: FC<Props> = ({
       } rounded-md p-4`}
     >
       <DetailsSectionHeader
-        title={"Photos"}
+        title={title}
         editMode={editMode}
         editModeButton={
           <UploadFileButton
@@ -128,7 +132,7 @@ export const DetailsPhotosSection: FC<Props> = ({
       />
       <Divider />
       <div className="flex flex-row flex-wrap gap-4">
-        {photos.map((e, i) => (
+        {files.map((e, i) => (
           <FileItem
             key={`photo-file-${e}-${i}`}
             name={e}

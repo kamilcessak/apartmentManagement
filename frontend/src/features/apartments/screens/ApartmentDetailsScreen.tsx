@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { MdChevronLeft } from "react-icons/md";
 
@@ -7,6 +7,7 @@ import {
   DetailsDescriptionSection,
   DetailsInformationsSection,
 } from "../components";
+import { ApartmentType } from "../types/apartment.type";
 
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
 import api from "@services/api";
@@ -16,15 +17,10 @@ import { capitalizeFirstLetter } from "@utils/common";
 export const ApartmentDetailsScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  const handleRefreshGetApartment = () => {
-    queryClient.invalidateQueries({ queryKey: ["apartment", `${id}`] });
-  };
 
   const handleGetApartment = async () => {
     try {
-      const result = await api.get(`/apartment/${id}`);
+      const result = await api.get<ApartmentType>(`/apartment/${id}`);
       return result.data;
     } catch (error) {
       console.error(error);
@@ -37,10 +33,9 @@ export const ApartmentDetailsScreen = () => {
     queryFn: handleGetApartment,
   });
 
-  console.log({ data });
-
   if (isLoading) return <LoadingView />;
-  if (isError) return <ErrorView message={error.message} onClick={refetch} />;
+  if (isError || !data)
+    return <ErrorView message={`${error?.message}`} onClick={refetch} />;
 
   return (
     <RouteContent>
@@ -63,9 +58,16 @@ export const ApartmentDetailsScreen = () => {
           id={data._id}
         />
         <DetailsPhotosSection
-          photos={data.photos}
+          files={data.photos}
           id={data._id}
-          handleRefreshGetApartment={handleRefreshGetApartment}
+          type="photos"
+          title="Photos"
+        />
+        <DetailsPhotosSection
+          title="Documents"
+          files={data.documents}
+          id={data._id}
+          type="documents"
         />
       </main>
     </RouteContent>
