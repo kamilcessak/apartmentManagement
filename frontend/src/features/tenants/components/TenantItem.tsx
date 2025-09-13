@@ -2,6 +2,7 @@ import { toast } from "react-toastify";
 import { MdPhone, MdEmail, MdDelete, MdEdit } from "react-icons/md";
 import { CircularProgress, IconButton, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 import { TenantType } from "../types/tenant.type";
 
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export const TenantItem = ({ user }: Props) => {
+  const navigation = useNavigate();
   const queryClient = useQueryClient();
 
   const deleteTenant = async (id: string) => {
@@ -66,7 +68,10 @@ export const TenantItem = ({ user }: Props) => {
             <MdDelete size={32} />
           )}
         </IconButton>
-        <IconButton color="primary">
+        <IconButton
+          color="primary"
+          onClick={() => navigation(`/tenant/${user._id}`)}
+        >
           <MdEdit size={32} />
         </IconButton>
       </div>

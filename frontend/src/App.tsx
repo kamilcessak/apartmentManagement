@@ -1,7 +1,11 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 
 import { HomeScreen, SettingsScreen, WelcomeScreen } from "./screens";
-import { TenantsScreen, NewTenantScreen } from "@features/tenants/screens";
+import {
+  TenantsScreen,
+  NewTenantScreen,
+  TenantDetailsScreen,
+} from "@features/tenants/screens";
 import {
   ApartmentsScreen,
   NewApartmentScreen,
@@ -64,6 +68,14 @@ const App = () => {
       element: (
         <ProtectedRoute isAuthenticated={isLoggedIn}>
           <NewTenantScreen />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/tenant/:id",
+      element: (
+        <ProtectedRoute isAuthenticated={isLoggedIn}>
+          <TenantDetailsScreen />
         </ProtectedRoute>
       ),
     },

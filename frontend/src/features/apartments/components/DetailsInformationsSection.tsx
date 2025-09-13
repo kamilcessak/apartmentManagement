@@ -19,7 +19,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 import { DetailsInformationItem } from "./DetailsInformationItem";
-import { DetailsSectionHeader } from "./DetailsSectionHeader";
+import { DetailsSectionHeader } from "@components/header";
 import { ApartmentType } from "../types/apartment.type";
 
 import { getApartmentIdFromAddress } from "@utils/apartment";

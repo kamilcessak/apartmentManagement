@@ -1,7 +1,7 @@
 import { FC, useState } from "react";
 import { CircularProgress, Divider } from "@mui/material";
 
-import { DetailsSectionHeader } from "./DetailsSectionHeader";
+import { DetailsSectionHeader } from "@components/header";
 
 import { FileItem, UploadFileButton } from "@components/files";
 import api from "@services/api";

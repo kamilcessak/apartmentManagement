@@ -22,6 +22,14 @@ export const Navigation = () => {
     navigate("/", { replace: true });
   };
 
+  const pathMatches = (pathname: string, routes: string[]) => {
+    return routes.some((route) => {
+      // Zamiana np. "/location/:id" → /^\/location\/[^/]+$/
+      const regex = new RegExp("^" + route.replace(/:[^/]+/g, "[^/]+") + "$");
+      return regex.test(pathname);
+    });
+  };
+
   const topNavItems = [
     {
       links: ["/home"],
@@ -29,12 +37,12 @@ export const Navigation = () => {
       icon: (props: IconProps) => <MdHome {...props} />,
     },
     {
-      links: ["/tenants"],
+      links: ["/tenants", "/tenant/:id", "/tenants/add"],
       title: "Tenants",
       icon: (props: IconProps) => <MdGroups {...props} />,
     },
     {
-      links: ["/apartments", "/apartments/new"],
+      links: ["/apartments", "/apartments/new", "/apartment/:id"],
       title: "Apartments",
       icon: (props: IconProps) => <MdApartment {...props} />,
     },
@@ -64,7 +72,7 @@ export const Navigation = () => {
             return (
               <NavItem
                 {...e}
-                active={e.links.includes(location.pathname)}
+                active={pathMatches(location.pathname, e.links)}
                 key={`nav-item-${e.title}-${i}`}
               />
             );

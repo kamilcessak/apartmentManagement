@@ -1,7 +1,6 @@
 import { Button, Typography } from "@mui/material";
 import { FC } from "react";
 import { MdClose, MdEdit } from "react-icons/md";
-import { UploadFileButton } from "@components/files";
 
 type Props = {
   title: string;

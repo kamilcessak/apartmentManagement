@@ -12,7 +12,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-import { DetailsSectionHeader } from "./DetailsSectionHeader";
+import { DetailsSectionHeader } from "@components/header";
 
 import api from "@services/api";
 

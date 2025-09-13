@@ -12,3 +12,10 @@ export type TenantType = {
   email: string;
   phoneNumber: string;
 };
+
+export type TenantDetailsFormType = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+};
