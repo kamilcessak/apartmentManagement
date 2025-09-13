@@ -1,27 +1,10 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 
-import { HomeScreen, SettingsScreen, WelcomeScreen } from "./screens";
-import {
-  TenantsScreen,
-  NewTenantScreen,
-  TenantDetailsScreen,
-} from "@features/tenants/screens";
-import {
-  ApartmentsScreen,
-  NewApartmentScreen,
-  ApartmentDetailsScreen,
-} from "@features/apartments/screens";
 import { Navigation } from "./components";
-import {
-  LoginScreen,
-  RegisterScreen,
-  RegisterSuccessful,
-  UnauthenticatedScreen,
-  VerifyEmailScreen,
-} from "./screens/auth";
+
 import { isAuthenticated } from "./utils";
 import { useState, useEffect } from "react";
-import { ProtectedRoute } from "./components/routes/ProtectedRoute";
+import { getRoutes } from "@utils/routes";
 
 const App = () => {
   const location = useLocation();
@@ -40,78 +23,9 @@ const App = () => {
     });
   }, [location]);
 
-  const routes = [
-    { path: "/", element: <WelcomeScreen /> },
-    { path: "/login", element: <LoginScreen /> },
-    { path: "/register", element: <RegisterScreen /> },
-    { path: "/verify-email", element: <VerifyEmailScreen /> },
-    { path: "/registerSuccess", element: <RegisterSuccessful /> },
-    { path: "/404", element: <UnauthenticatedScreen /> },
-    {
-      path: "/home",
-      element: (
-        <ProtectedRoute isAuthenticated={isLoggedIn}>
-          <HomeScreen />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/tenants",
-      element: (
-        <ProtectedRoute isAuthenticated={isLoggedIn}>
-          <TenantsScreen />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/tenants/add",
-      element: (
-        <ProtectedRoute isAuthenticated={isLoggedIn}>
-          <NewTenantScreen />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/tenant/:id",
-      element: (
-        <ProtectedRoute isAuthenticated={isLoggedIn}>
-          <TenantDetailsScreen />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/apartments",
-      element: (
-        <ProtectedRoute isAuthenticated={isLoggedIn}>
-          <ApartmentsScreen />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/apartments/new",
-      element: (
-        <ProtectedRoute isAuthenticated={isLoggedIn}>
-          <NewApartmentScreen />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/apartment/:id",
-      element: (
-        <ProtectedRoute isAuthenticated={isLoggedIn}>
-          <ApartmentDetailsScreen />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: "/settings",
-      element: (
-        <ProtectedRoute isAuthenticated={isLoggedIn}>
-          <SettingsScreen />
-        </ProtectedRoute>
-      ),
-    },
-  ];
+  const routes = getRoutes(isLoggedIn);
+
+  console.log({ routes });
 
   return (
     <div className="flex flex-1 flex-row">
