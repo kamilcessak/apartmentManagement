@@ -1,8 +1,8 @@
 import { Schema, model, Document } from 'mongoose';
 
 export interface RentalSchemaType extends Document {
-    apartmentID: number;
-    tenantID: number;
+    apartmentID: string;
+    tenantID: string;
     startDate: Date;
     endDate: Date;
     rentalPaymentDay: number;
@@ -10,12 +10,15 @@ export interface RentalSchemaType extends Document {
     securityDeposit: number;
     description: string;
     documents: string[];
+    photos: string[];
     isActive: boolean;
+    owner: string;
 }
 
 const rentalSchema = new Schema<RentalSchemaType>({
-    apartmentID: { type: Number, required: true },
-    tenantID: { type: Number, required: true },
+    apartmentID: { type: String, required: true },
+    tenantID: { type: String, required: true },
+    owner: { type: String, required: true },
     monthlyCost: { type: Number, required: true },
     securityDeposit: { type: Number, required: true },
     rentalPaymentDay: { type: Number, required: true },
@@ -23,7 +26,8 @@ const rentalSchema = new Schema<RentalSchemaType>({
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     isActive: { type: Boolean, default: true },
-    documents: [{ type: Schema.Types.ObjectId, ref: 'File', default: [] }],
+    documents: [{ type: String }],
+    photos: [{ type: String }],
 });
 
 export const RentalModel = model<RentalSchemaType>('Rentals', rentalSchema);

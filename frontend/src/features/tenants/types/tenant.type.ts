@@ -19,3 +19,9 @@ export type TenantDetailsFormType = {
   email: string;
   phoneNumber: string;
 };
+
+export type TenantsListType = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+};

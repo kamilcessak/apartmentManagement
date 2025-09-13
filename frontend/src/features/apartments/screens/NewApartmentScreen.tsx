@@ -1,5 +1,5 @@
 import { MdChevronLeft } from "react-icons/md";
-import { Button, CircularProgress, TextField, useTheme } from "@mui/material";
+import { Button, CircularProgress, TextField } from "@mui/material";
 import * as yup from "yup";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -34,7 +34,6 @@ type FormValues = {
 };
 
 export const NewApartmentScreen = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

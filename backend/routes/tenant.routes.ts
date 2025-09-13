@@ -6,12 +6,14 @@ import {
     getTenant,
     getTenants,
     patchTenant,
+    getTenantsList
 } from '../controllers/tenant.controller';
 
 const router = Router();
 
 router.post('/tenant', authenticate, createTenant);
 router.get('/tenants', authenticate, getTenants);
+router.get('/tenantsList', authenticate, getTenantsList);
 router.get('/tenant/:id', authenticate, getTenant);
 router.delete('/tenant/:id', authenticate, deleteTenant);
 router.patch('/tenant/:id', authenticate, patchTenant);

@@ -31,6 +31,8 @@ export const createApartment = async (req: Request, res: Response) => {
             Object.assign(data, { equipment: req.body.equipment });
         }
 
+        console.log({data});
+
         const newApartment = await ApartmentModel.create(data);
 
         res.status(201).json(newApartment);
@@ -58,6 +60,23 @@ export const getApartments = async (req: Request, res: Response) => {
         });
     }
 };
+
+export const getApartmentsList = async (req: Request, res: Response) => {
+    try {
+        const userID = req.user?.id;
+        if(!userID){
+            res.status(403).json({ error: 'User not authenticated' });
+            return;
+        }
+
+        const apartments = await ApartmentModel.find({owner: userID, isAvailable: true}).select('_id address');
+        res.status(200).json(apartments);
+    } catch (error) {
+        res.status(500).json({
+            error: 'An error occurred while getting your apartments list',
+        });
+    }
+}
 
 export const getApartment = async (req: Request, res: Response) => {
     try {
@@ -136,6 +155,8 @@ export const patchApartment = async (req: Request, res: Response) => {
             res.status(400).json({ error: 'Invalid apartment ID format' });
             return;
         }
+
+        console.log({data: req.body});
 
         const updatedApartment = await ApartmentModel.findOneAndUpdate(
             { _id: apartmentID, owner: userID },

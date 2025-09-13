@@ -59,6 +59,23 @@ export const getTenants = async (req: Request, res: Response) => {
     }
 };
 
+export const getTenantsList = async (req: Request, res: Response) => {
+    try {
+        const userID = req.user?.id;
+        if(!userID){
+            res.status(403).json({ error: 'User not authenticated' });
+            return;
+        }
+
+        const tenants = await TenantModel.find({owner: userID, assignedApartmentID: null}).select('_id firstName lastName');
+        res.status(200).json(tenants);
+    } catch (error) {
+        res.status(500).json({
+            error: 'An error occurred while getting your tenants list',
+        });
+    }
+}
+
 export const getTenant = async (req: Request, res: Response) => {
     try {
         const tenantID = req.params.id;

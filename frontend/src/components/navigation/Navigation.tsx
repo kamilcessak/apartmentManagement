@@ -5,12 +5,14 @@ import {
   MdApartment,
   MdSettings,
   MdLogout,
+  MdRealEstateAgent,
 } from "react-icons/md";
+import { toast } from "react-toastify";
+
 import { IconProps } from "../types.ts";
 import { NavItem } from "./NavItem.tsx";
 import { Divider } from "../common/Divider.tsx";
 import { UserItem } from "../common/UserItem.tsx";
-import { toast } from "react-toastify";
 
 export const Navigation = () => {
   const location = useLocation();
@@ -24,7 +26,6 @@ export const Navigation = () => {
 
   const pathMatches = (pathname: string, routes: string[]) => {
     return routes.some((route) => {
-      // Zamiana np. "/location/:id" → /^\/location\/[^/]+$/
       const regex = new RegExp("^" + route.replace(/:[^/]+/g, "[^/]+") + "$");
       return regex.test(pathname);
     });
@@ -45,6 +46,11 @@ export const Navigation = () => {
       links: ["/apartments", "/apartments/new", "/apartment/:id"],
       title: "Apartments",
       icon: (props: IconProps) => <MdApartment {...props} />,
+    },
+    {
+      links: ["/rentals", "/rentals/new", "/rental/:id"],
+      title: "Rentals",
+      icon: (props: IconProps) => <MdRealEstateAgent {...props} />,
     },
   ];
 

@@ -11,3 +11,8 @@ export type ApartmentType = {
   photos: string[];
   roomCount: number;
 };
+
+export type ApartmentListType = {
+  _id: string;
+  address: string;
+};

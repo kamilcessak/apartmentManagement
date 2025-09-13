@@ -128,7 +128,7 @@ export const NewTenantScreen = () => {
               {...e}
               {...register(registerName)}
               id={e.label}
-              variant="standard"
+              variant="outlined"
             />
           ))}
         </div>
@@ -137,6 +137,7 @@ export const NewTenantScreen = () => {
             className="flex flex-1"
             color="success"
             size="large"
+            style={{ textTransform: "none" }}
             variant="contained"
             onClick={handleSubmit(onSubmit)}
             disabled={isPending}
@@ -150,6 +151,7 @@ export const NewTenantScreen = () => {
             size="large"
             className="flex flex-1"
             variant="outlined"
+            style={{ textTransform: "none" }}
             onClick={() => navigate(-1)}
           >
             Cancel

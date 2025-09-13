@@ -1,13 +1,10 @@
-import { Button, CircularProgress } from "@mui/material";
+import { Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Typography } from "@mui/material";
-import { MdAdd, MdVisibility } from "react-icons/md";
+import { MdAdd } from "react-icons/md";
 
 import { EmptyView, LoadingView, RouteContent } from "@components/common";
 import api from "@services/api";
-import { ApartmentListItem } from "@components/apartment";
-import { getApartmentIdFromAddress } from "@utils/apartment";
 import { ErrorView } from "@components/common";
 import { ApartmentType } from "../types/apartment.type";
 import { ApartmentItem } from "../components/ApartmentItem";
@@ -31,8 +28,6 @@ export const ApartmentsScreen = () => {
     queryFn: handleGetApartments,
   });
 
-  console.log({ data });
-
   if (isLoading) return <LoadingView />;
   if (isError) return <ErrorView message={error?.message} onClick={refetch} />;
 
@@ -44,6 +39,7 @@ export const ApartmentsScreen = () => {
           variant="outlined"
           color="primary"
           startIcon={<MdAdd />}
+          style={{ textTransform: "none" }}
           onClick={handleAddNewApartment}
         >
           {`Add new apartment`}

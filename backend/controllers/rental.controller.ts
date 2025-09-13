@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { RentalModel } from '../models/rental.model';
 import { ApartmentModel } from '../models/apartment.model';
 import { UserModel } from '../models/user.model';
+import { TenantModel } from '../models/tenant.model';
 
 export const createRental = async (req: Request, res: Response) => {
     try {
@@ -22,6 +23,7 @@ export const createRental = async (req: Request, res: Response) => {
             securityDeposit,
             description,
             documents,
+            photos,
         } = req.body;
         const data = {
             apartmentID,
@@ -33,6 +35,7 @@ export const createRental = async (req: Request, res: Response) => {
             monthlyCost,
             description,
             documents,
+            photos,
             owner: userID,
         };
 
@@ -47,7 +50,7 @@ export const createRental = async (req: Request, res: Response) => {
             return;
         }
 
-        const tenant = await UserModel.findOne({
+        const tenant = await TenantModel.findOne({
             _id: tenantID,
             owner: userID,
         });
@@ -58,12 +61,15 @@ export const createRental = async (req: Request, res: Response) => {
             return;
         }
 
+        console.log({data});
+
         const newRental = await RentalModel.create(data);
 
         res.status(201).json(newRental);
     } catch (error) {
+        console.log({error})
         res.status(500).json({
-            error: 'An error occurred while creating a new apartment',
+            error: 'An error occurred while creating a new rental',
         });
     }
 };
