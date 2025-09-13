@@ -24,6 +24,7 @@ import { ApartmentListType } from "@features/apartments/types/apartment.type";
 import { TenantsListType } from "@features/tenants/types/tenant.type";
 import { DatePicker } from "@mui/x-date-pickers";
 import { FilesSection } from "@components/files";
+import { getApartmentIdFromAddress } from "@utils/apartment";
 
 const schema = yup.object().shape({
   apartmentID: yup.string().required("Field is required"),
@@ -228,7 +229,7 @@ export const NewRentalScreen = () => {
                   >
                     {apartmentsList.map((e, i) => (
                       <MenuItem key={`apartment-${e._id}-${i}`} value={e._id}>
-                        {e.address}
+                        {getApartmentIdFromAddress(e.address)}
                       </MenuItem>
                     ))}
                   </Select>

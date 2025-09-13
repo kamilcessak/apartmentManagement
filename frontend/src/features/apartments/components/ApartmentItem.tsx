@@ -32,6 +32,7 @@ export const ApartmentItem = ({ apartment }: { apartment: ApartmentType }) => {
       toast("An error occurred during deleting apartment", { type: "error" });
     },
   });
+
   return (
     <div className="flex flex-row items-center justify-between border-gray-400 rounded-md border-2 p-4">
       <div className="flex flex-row items-center gap-4">

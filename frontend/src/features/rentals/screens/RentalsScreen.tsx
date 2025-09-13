@@ -8,6 +8,7 @@ import { RentalType } from "../types/rental.types";
 import { EmptyView, LoadingView, RouteContent } from "@components/common";
 import api from "@services/api";
 import { ErrorView } from "@components/common";
+import { RentalItem } from "../components";
 
 export const RentalsScreen = () => {
   const navigate = useNavigate();
@@ -49,7 +50,9 @@ export const RentalsScreen = () => {
       </header>
       <main className="flex h-full flex-col gap-4 bg-white p-8 overflow-y-scroll scrollbar-hide">
         {data?.length ? (
-          data.map((e, i) => <div />)
+          data.map((e, i) => (
+            <RentalItem key={`rental-item-${e._id}-${i}`} rental={e} />
+          ))
         ) : (
           <EmptyView message="No rentals added yet" />
         )}
