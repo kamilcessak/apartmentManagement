@@ -18,7 +18,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-import { DetailsInformationItem } from "./DetailsInformationItem";
+import { DetailsInformationItem } from "@components/sections";
 import { DetailsSectionHeader } from "@components/header";
 import { ApartmentType } from "../types/apartment.type";
 
