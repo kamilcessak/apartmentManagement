@@ -1,17 +1,18 @@
 import { FC } from "react";
-import {
-  Button,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
-import dayjs, { Dayjs } from "dayjs";
+import { Search, X } from "lucide-react";
 
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
 import { getApartmentIdFromAddress } from "@utils/apartment";
+
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { InvoiceFilters } from "../types";
 
@@ -21,27 +22,23 @@ type Props = {
   apartments: ApartmentListType[];
 };
 
+const ALL_APARTMENTS = "__ALL_APARTMENTS__";
+
 export const InvoicesFilters: FC<Props> = ({
   value,
   onChange,
   apartments,
 }) => {
-  const handleDueDateFromChange = (next: Dayjs | null) => {
-    onChange({
-      ...value,
-      dueDateFrom: next ? next.toISOString() : undefined,
-    });
-  };
-
-  const handleDueDateToChange = (next: Dayjs | null) => {
-    onChange({
-      ...value,
-      dueDateTo: next ? next.toISOString() : undefined,
-    });
-  };
+  const hasActiveFilters =
+    Boolean(value.search?.trim()) ||
+    Boolean(value.apartmentID) ||
+    (value.isPaid && value.isPaid !== "all") ||
+    Boolean(value.dueDateFrom) ||
+    Boolean(value.dueDateTo);
 
   const clearFilters = () =>
     onChange({
+      search: "",
       apartmentID: undefined,
       isPaid: "all",
       dueDateFrom: undefined,
@@ -49,78 +46,110 @@ export const InvoicesFilters: FC<Props> = ({
     });
 
   return (
-    <section className="flex flex-row flex-wrap gap-4 items-end border-2 border-gray-300 rounded-md p-4">
-      <FormControl style={{ minWidth: 220 }} size="small">
-        <InputLabel id="invoices-filter-apartment">Apartment</InputLabel>
-        <Select
-          labelId="invoices-filter-apartment"
-          label="Apartment"
-          value={value.apartmentID ?? ""}
+    <section className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="relative w-full lg:max-w-sm">
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+          aria-hidden
+        />
+        <Input
+          type="search"
+          placeholder="Szukaj po numerze faktury..."
+          value={value.search ?? ""}
           onChange={(event) =>
+            onChange({ ...value, search: event.target.value })
+          }
+          className="pl-9"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <Select
+          value={value.apartmentID ?? ALL_APARTMENTS}
+          onValueChange={(next) =>
             onChange({
               ...value,
-              apartmentID: event.target.value
-                ? String(event.target.value)
-                : undefined,
+              apartmentID: next === ALL_APARTMENTS ? undefined : next,
             })
           }
         >
-          <MenuItem value="">All apartments</MenuItem>
-          {apartments.map((apartment) => (
-            <MenuItem key={apartment._id} value={apartment._id}>
-              {getApartmentIdFromAddress(apartment.address)}
-            </MenuItem>
-          ))}
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Mieszkanie" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_APARTMENTS}>Wszystkie mieszkania</SelectItem>
+            {apartments.map((apartment) => (
+              <SelectItem key={apartment._id} value={apartment._id}>
+                {getApartmentIdFromAddress(apartment.address)}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
-      </FormControl>
-      <FormControl style={{ minWidth: 160 }} size="small">
-        <InputLabel id="invoices-filter-paid">Status</InputLabel>
+
         <Select
-          labelId="invoices-filter-paid"
-          label="Status"
           value={value.isPaid ?? "all"}
-          onChange={(event) =>
+          onValueChange={(next) =>
             onChange({
               ...value,
-              isPaid: event.target.value as InvoiceFilters["isPaid"],
+              isPaid: next as InvoiceFilters["isPaid"],
             })
           }
         >
-          <MenuItem value="all">All</MenuItem>
-          <MenuItem value="paid">Paid</MenuItem>
-          <MenuItem value="unpaid">Unpaid</MenuItem>
+          <SelectTrigger className="w-full sm:w-[160px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Wszystkie statusy</SelectItem>
+            <SelectItem value="paid">Opłacone</SelectItem>
+            <SelectItem value="unpaid">Nieopłacone</SelectItem>
+          </SelectContent>
         </Select>
-      </FormControl>
-      <DatePicker
-        label="Due from"
-        value={value.dueDateFrom ? dayjs(value.dueDateFrom) : null}
-        onChange={handleDueDateFromChange}
-        format="DD.MM.YYYY"
-        slotProps={{
-          textField: {
-            size: "small",
-          } as React.ComponentProps<typeof TextField>,
-        }}
-      />
-      <DatePicker
-        label="Due to"
-        value={value.dueDateTo ? dayjs(value.dueDateTo) : null}
-        onChange={handleDueDateToChange}
-        format="DD.MM.YYYY"
-        slotProps={{
-          textField: {
-            size: "small",
-          } as React.ComponentProps<typeof TextField>,
-        }}
-      />
-      <Button
-        variant="outlined"
-        size="small"
-        style={{ textTransform: "none" }}
-        onClick={clearFilters}
-      >
-        Clear filters
-      </Button>
+
+        <div className="flex items-center gap-2 rounded-md border border-input px-2 py-1 shadow-sm">
+          <span className="text-xs font-medium text-slate-500">Termin</span>
+          <Input
+            type="date"
+            aria-label="Termin od"
+            value={value.dueDateFrom ? value.dueDateFrom.slice(0, 10) : ""}
+            onChange={(event) =>
+              onChange({
+                ...value,
+                dueDateFrom: event.target.value
+                  ? new Date(event.target.value).toISOString()
+                  : undefined,
+              })
+            }
+            className="h-8 w-[140px] border-0 shadow-none focus-visible:ring-0"
+          />
+          <span className="text-slate-400">—</span>
+          <Input
+            type="date"
+            aria-label="Termin do"
+            value={value.dueDateTo ? value.dueDateTo.slice(0, 10) : ""}
+            onChange={(event) =>
+              onChange({
+                ...value,
+                dueDateTo: event.target.value
+                  ? new Date(event.target.value).toISOString()
+                  : undefined,
+              })
+            }
+            className="h-8 w-[140px] border-0 shadow-none focus-visible:ring-0"
+          />
+        </div>
+
+        {hasActiveFilters ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="text-slate-500 hover:text-slate-900"
+          >
+            <X />
+            Wyczyść
+          </Button>
+        ) : null}
+      </div>
     </section>
   );
 };

@@ -41,6 +41,7 @@ export type ApartmentInvoicesResponse = {
 };
 
 export type InvoiceFilters = {
+  search?: string;
   apartmentID?: string;
   isPaid?: "all" | "paid" | "unpaid";
   dueDateFrom?: string;
