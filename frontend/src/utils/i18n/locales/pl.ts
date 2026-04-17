@@ -252,6 +252,40 @@ const pl = {
         },
       },
     },
+    apartments: {
+      title: "Mieszkania",
+      subtitle: "Zarządzaj swoją listą apartamentów",
+      addApartment: "Dodaj mieszkanie",
+      searchPlaceholder: "Szukaj mieszkania...",
+      empty: "Brak mieszkań do wyświetlenia",
+      emptySearch: "Żadne mieszkanie nie pasuje do wyszukiwania",
+      status: {
+        available: "Dostępne",
+        occupied: "Zajęte",
+      },
+      parameters: {
+        roomCount_one: "{{count}} pokój",
+        roomCount_few: "{{count}} pokoje",
+        roomCount_many: "{{count}} pokoi",
+        roomCount_other: "{{count}} pokoi",
+        metric: "{{value}} m²",
+        monthlyCost: "{{value}} zł",
+      },
+      columns: {
+        apartment: "Mieszkanie",
+        parameters: "Parametry",
+        rent: "Czynsz",
+        status: "Status",
+        actions: "Akcje",
+      },
+      actions: {
+        details: "Szczegóły",
+        edit: "Edytuj",
+        delete: "Usuń",
+      },
+      deleteSuccess: "Mieszkanie zostało usunięte",
+      deleteError: "Nie udało się usunąć mieszkania",
+    },
   },
 };
 

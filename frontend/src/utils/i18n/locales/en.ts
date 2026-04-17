@@ -234,6 +234,38 @@ const en = {
         },
       },
     },
+    apartments: {
+      title: "Apartments",
+      subtitle: "Manage your apartments list",
+      addApartment: "Add apartment",
+      searchPlaceholder: "Search apartment...",
+      empty: "No apartments to display",
+      emptySearch: "No apartment matches your search",
+      status: {
+        available: "Available",
+        occupied: "Occupied",
+      },
+      parameters: {
+        roomCount_one: "{{count}} room",
+        roomCount_other: "{{count}} rooms",
+        metric: "{{value}} m²",
+        monthlyCost: "{{value}} zł",
+      },
+      columns: {
+        apartment: "Apartment",
+        parameters: "Parameters",
+        rent: "Rent",
+        status: "Status",
+        actions: "Actions",
+      },
+      actions: {
+        details: "Details",
+        edit: "Edit",
+        delete: "Delete",
+      },
+      deleteSuccess: "Apartment deleted successfully",
+      deleteError: "Unable to delete apartment",
+    },
   },
 };
 

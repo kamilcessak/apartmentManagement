@@ -1,92 +1,136 @@
-import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { FC } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Building, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@components/ui/avatar";
+import { Badge } from "@components/ui/badge";
+import { Button } from "@components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@components/ui/dropdown-menu";
+import { TableCell, TableRow } from "@components/ui/table";
 import api from "@services/api";
+
 import { ApartmentType } from "../types/apartment.type";
 
-export const ApartmentItem = ({ apartment }: { apartment: ApartmentType }) => {
+type Props = {
+  apartment: ApartmentType;
+};
+
+export const ApartmentItem: FC<Props> = ({ apartment }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const deleteApartment = async (id: string) => {
-    try {
-      const result = await api.delete(`/apartment/${id}`);
-      return result;
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
-  };
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: deleteApartment,
+  const { mutate: handleDeleteApartment, isPending: isDeleting } = useMutation({
+    mutationFn: async (id: string) => api.delete(`/apartment/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apartments", "list"] });
-      toast("Apartment deleted successfully", { type: "success" });
+      toast(t("apartments.deleteSuccess"), { type: "success" });
     },
     onError: () => {
-      toast("An error occurred during deleting apartment", { type: "error" });
+      toast(t("apartments.deleteError"), { type: "error" });
     },
   });
 
   const isAvailable = apartment.isAvailable;
 
-  return (
-    <Card className="flex flex-row items-center justify-between gap-4 border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <p className="truncate font-medium text-slate-900">
-            {apartment.address}
-          </p>
-          <Badge
-            variant={isAvailable ? "secondary" : "outline"}
-            className={
-              isAvailable
-                ? "border-transparent bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
-                : "border-slate-200 bg-slate-50 text-slate-600"
-            }
-          >
-            {isAvailable ? "Dostępne" : "Wynajęte"}
-          </Badge>
-        </div>
-        <p className="text-sm text-slate-500">
-          {apartment.metric ? `${apartment.metric} m²` : null}
-          {apartment.metric && apartment.monthlyCost ? " · " : null}
-          {apartment.monthlyCost ? `${apartment.monthlyCost} zł` : null}
-        </p>
-      </div>
+  const parameters = [
+    apartment.metric
+      ? t("apartments.parameters.metric", { value: apartment.metric })
+      : null,
+    apartment.roomCount
+      ? t("apartments.parameters.roomCount", { count: apartment.roomCount })
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" • ");
 
-      <div className="flex flex-row items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-          onClick={() => navigate(`/apartment/${apartment._id}`)}
-          aria-label="Edit apartment"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-          onClick={() => mutate(apartment._id)}
-          disabled={isPending}
-          aria-label="Delete apartment"
-        >
-          {isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Trash2 className="h-4 w-4" />
+  const goToDetails = () => navigate(`/apartment/${apartment._id}`);
+
+  return (
+    <TableRow className="border-b border-slate-100 transition-colors hover:bg-slate-50/50">
+      <TableCell className="py-3 pl-6">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10">
+            <AvatarFallback className="bg-indigo-50 text-indigo-600">
+              <Building className="h-5 w-5" />
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-sm font-medium text-slate-900">
+            {apartment.address}
+          </span>
+        </div>
+      </TableCell>
+
+      <TableCell className="py-3 text-sm text-slate-500">
+        {parameters || "—"}
+      </TableCell>
+
+      <TableCell className="py-3 text-sm font-medium text-slate-900">
+        {apartment.monthlyCost
+          ? t("apartments.parameters.monthlyCost", {
+              value: apartment.monthlyCost,
+            })
+          : "—"}
+      </TableCell>
+
+      <TableCell className="py-3">
+        <Badge
+          variant="secondary"
+          className={cn(
+            "rounded-full px-2.5 py-0.5 text-xs font-medium",
+            isAvailable
+              ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+              : "bg-indigo-50 text-indigo-700 hover:bg-indigo-50"
           )}
-        </Button>
-      </div>
-    </Card>
+        >
+          {isAvailable
+            ? t("apartments.status.available")
+            : t("apartments.status.occupied")}
+        </Badge>
+      </TableCell>
+
+      <TableCell className="py-3 pr-6 text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={isDeleting}
+              aria-label={t("apartments.columns.actions")}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={goToDetails}>
+              <Eye className="h-4 w-4" />
+              <span>{t("apartments.actions.details")}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={goToDetails}>
+              <Pencil className="h-4 w-4" />
+              <span>{t("apartments.actions.edit")}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => handleDeleteApartment(apartment._id)}
+              className="text-rose-600 focus:bg-rose-50 focus:text-rose-700"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>{t("apartments.actions.delete")}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </TableCell>
+    </TableRow>
   );
 };
