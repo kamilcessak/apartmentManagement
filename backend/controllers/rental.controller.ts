@@ -61,13 +61,11 @@ export const createRental = async (req: Request, res: Response) => {
             return;
         }
 
-        console.log({data});
-
         const newRental = await RentalModel.create(data);
 
         res.status(201).json(newRental);
     } catch (error) {
-        console.log({error})
+        console.error('Error creating rental:', error);
         res.status(500).json({
             error: 'An error occurred while creating a new rental',
         });

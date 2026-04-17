@@ -27,8 +27,6 @@ export const RentalDetailsScreen = () => {
     queryFn: handleGetRental,
   });
 
-  console.log({ data });
-
   if (isLoading) return <LoadingView />;
   if (isError || !data)
     return <ErrorView message={`${error?.message}`} onClick={refetch} />;

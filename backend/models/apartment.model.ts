@@ -16,25 +16,28 @@ export type ApartmentType = {
 
 export type ApartmentSchemaType = Document & ApartmentType;
 
-const apartmentSchema = new Schema<ApartmentSchemaType>({
-    address: {
-        type: String,
-        required: true,
-        validate: {
-            validator: (value: string) => addressRegex.test(value),
-            message: 'Address must be in format "ul.Ulica 1, 00-000 Miasto"',
+const apartmentSchema = new Schema<ApartmentSchemaType>(
+    {
+        address: {
+            type: String,
+            required: true,
+            validate: {
+                validator: (value: string) => addressRegex.test(value),
+                message: 'Address must be in format "ul.Ulica 1, 00-000 Miasto"',
+            },
         },
+        metric: { type: Number, required: true },
+        isAvailable: { type: Boolean, default: true },
+        roomCount: { type: Number, required: true },
+        monthlyCost: { type: Number, required: true },
+        description: { type: String, required: true },
+        equipment: { type: String },
+        photos: [{ type: String }],
+        documents: [{ type: String }],
+        owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     },
-    metric: { type: Number, required: true },
-    isAvailable: { type: Boolean, default: true },
-    roomCount: { type: Number, required: true },
-    monthlyCost: { type: Number, required: true },
-    description: { type: String, required: true },
-    equipment: { type: String },
-    photos: [{ type: String }],
-    documents: [{ type: String }],
-    owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-});
+    { timestamps: true }
+);
 
 export const ApartmentModel = model<ApartmentSchemaType>(
     'Apartment',

@@ -76,7 +76,6 @@ export const NewRentalScreen = () => {
 
   const handlePostRental = async (data: FormValues) => {
     try {
-      console.log({ data });
       const result = await api.post("/rental", data);
       return result;
     } catch (error) {
@@ -164,7 +163,6 @@ export const NewRentalScreen = () => {
   });
 
   const onSubmit = ({ startDate, endDate, ...data }: FormValues) => {
-    console.log({ data, startDate, endDate });
     mutate({
       ...data,
       startDate: `${

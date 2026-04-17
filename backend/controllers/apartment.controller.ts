@@ -31,8 +31,6 @@ export const createApartment = async (req: Request, res: Response) => {
             Object.assign(data, { equipment: req.body.equipment });
         }
 
-        console.log({data});
-
         const newApartment = await ApartmentModel.create(data);
 
         res.status(201).json(newApartment);
@@ -155,8 +153,6 @@ export const patchApartment = async (req: Request, res: Response) => {
             res.status(400).json({ error: 'Invalid apartment ID format' });
             return;
         }
-
-        console.log({data: req.body});
 
         const updatedApartment = await ApartmentModel.findOneAndUpdate(
             { _id: apartmentID, owner: userID },

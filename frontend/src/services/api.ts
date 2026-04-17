@@ -1,7 +1,9 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
 
 const api = axios.create({
-  baseURL: "http://localhost:5050",
+  baseURL: `${API_URL}/api/v1`,
 });
 
 api.interceptors.request.use(
@@ -15,6 +17,20 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      sessionStorage.removeItem("token");
+      const { pathname } = window.location;
+      if (pathname !== "/login" && pathname !== "/" && pathname !== "/register") {
+        window.location.replace("/login");
+      }
+    }
     return Promise.reject(error);
   }
 );

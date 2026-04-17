@@ -4,9 +4,10 @@ import * as yup from "yup";
 import { Button, CircularProgress, TextField } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 
-import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
 import { MdArrowBackIos } from "react-icons/md";
+
+import api from "@services/api";
 
 const schema = yup.object().shape({
   login: yup.string().required("Login is required"),
@@ -33,18 +34,18 @@ export const RegisterScreen = () => {
 
   const handleRegister = async (data: FormValues) => {
     try {
-      const response = axios.post("http://localhost:5050/register", data);
+      const response = await api.post("/register", data);
       return response;
     } catch (error) {
       console.error(error);
+      throw error;
     }
   };
 
   const { mutate, isPending } = useMutation({
     mutationFn: handleRegister,
-    onSuccess: async (data) => {
-      console.log({ data });
-      if (data.status === 201) {
+    onSuccess: (data) => {
+      if (data?.status === 201) {
         navigate("/registerSuccess", { replace: true });
       }
     },

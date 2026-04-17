@@ -52,8 +52,6 @@ export const RentalItem = ({ rental }: { rental: RentalType }) => {
     queryFn: handleGetTenantData,
   });
 
-  console.log({ apartmentData, tenantData });
-
   const { mutate, isPending } = useMutation({
     mutationFn: deleteRental,
     onSuccess: () => {

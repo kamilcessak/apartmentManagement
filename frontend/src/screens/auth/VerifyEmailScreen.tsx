@@ -1,9 +1,10 @@
 import { CircularProgress } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+
+import api from "@services/api";
 
 export const VerifyEmailScreen = () => {
   const [params] = useSearchParams();
@@ -13,7 +14,7 @@ export const VerifyEmailScreen = () => {
 
   const { mutate: activateAccount, isError } = useMutation({
     mutationFn: async (tokenParam: string) => {
-      const result = await axios.get("http://localhost:5050/activate-account", {
+      const result = await api.get("/activate-account", {
         params: { token: tokenParam },
       });
       return result;
@@ -24,8 +25,11 @@ export const VerifyEmailScreen = () => {
         navigate("/login", { replace: true });
       }
     },
-    onError: (data) => {
-      toast(data.response.data.error, { type: "error" });
+    onError: (error: unknown) => {
+      const message =
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? "Activation failed";
+      toast(message, { type: "error" });
     },
   });
 

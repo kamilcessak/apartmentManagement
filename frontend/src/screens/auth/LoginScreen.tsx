@@ -5,9 +5,10 @@ import { Button, CircularProgress, TextField } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { MdArrowBackIos } from "react-icons/md";
 
-import axios from "axios";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+
+import api from "@services/api";
 
 const schema = yup.object().shape({
   email: yup.string().required("Email is required"),
@@ -32,10 +33,11 @@ export const LoginScreen = () => {
 
   const handleLogin = async (data: FormValues) => {
     try {
-      const response = axios.post("http://localhost:5050/login", data);
+      const response = await api.post("/login", data);
       return response;
     } catch (error) {
       console.error(error);
+      throw error;
     }
   };
 
@@ -50,9 +52,12 @@ export const LoginScreen = () => {
         alert("Login failed");
       }
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error(error);
-      toast(error.response.data.error, { type: "error" });
+      const message =
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? "Login failed";
+      toast(message, { type: "error" });
     },
   });
 

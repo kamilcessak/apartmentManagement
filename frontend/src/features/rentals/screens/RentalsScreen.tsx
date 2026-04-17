@@ -29,8 +29,6 @@ export const RentalsScreen = () => {
     queryFn: handleGetRentals,
   });
 
-  console.log("hejka1", { data });
-
   if (isLoading) return <LoadingView />;
   if (isError) return <ErrorView message={error?.message} onClick={refetch} />;
 

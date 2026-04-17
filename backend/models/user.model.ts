@@ -13,16 +13,19 @@ export interface UserSchemaType extends Document {
     lastName?: string;
 }
 
-const userSchema = new Schema<UserSchemaType>({
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
-    role: { type: String, required: true },
-    invitationCode: { type: String },
-    isEmailVerified: { type: Boolean, default: false },
-    firstName: { type: String },
-    lastName: { type: String },
-});
+const userSchema = new Schema<UserSchemaType>(
+    {
+        email: { type: String, required: true, unique: true },
+        password: { type: String, required: true },
+        phoneNumber: { type: String, required: true },
+        role: { type: String, required: true },
+        invitationCode: { type: String },
+        isEmailVerified: { type: Boolean, default: false },
+        firstName: { type: String },
+        lastName: { type: String },
+    },
+    { timestamps: true }
+);
 
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();

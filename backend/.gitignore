@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Yarn Berry / PnP (project uses npm)
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -25,8 +25,6 @@ const App = () => {
 
   const routes = getRoutes(isLoggedIn);
 
-  console.log({ routes });
-
   return (
     <div className="flex flex-1 flex-row">
       {isLoggedIn && <Navigation />}

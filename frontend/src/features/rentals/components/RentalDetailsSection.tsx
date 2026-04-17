@@ -78,7 +78,7 @@ export const RentalDetailsSection = ({ rental }: { rental: RentalType }) => {
     },
   });
 
-  const onSubmit = (data) => console.log(data);
+  const onSubmit = (data: FormType) => mutate(data);
 
   return (
     <section
