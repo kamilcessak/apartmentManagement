@@ -16,7 +16,7 @@ import "./css/tailwind.css";
 import theme from "./css/muicss";
 import "./services/api";
 import "dayjs/locale/pl";
-import "@utils/i18n.ts";
+import "@utils/i18n";
 
 const queryClient = new QueryClient();
 
