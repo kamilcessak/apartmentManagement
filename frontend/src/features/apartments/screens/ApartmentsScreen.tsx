@@ -14,11 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from "@components/ui/table";
-import { ErrorView, LoadingView, RouteContent } from "@components/common";
+import { ErrorView, RouteContent } from "@components/common";
 import api from "@services/api";
 
 import { ApartmentType } from "../types/apartment.type";
-import { ApartmentItem } from "../components/ApartmentItem";
+import {
+  ApartmentItem,
+  ApartmentsListSkeleton,
+} from "../components";
 
 export const ApartmentsScreen = () => {
   const { t } = useTranslation();
@@ -37,15 +40,10 @@ export const ApartmentsScreen = () => {
     }
   };
 
-  const { data, isLoading, isRefetching, isError, error, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["apartments", "list"],
     queryFn: handleGetApartments,
   });
-
-  const isAnythingLoading = useMemo(
-    () => isLoading || isRefetching,
-    [isLoading, isRefetching]
-  );
 
   const filteredApartments = useMemo(() => {
     if (!data) return [];
@@ -64,7 +62,7 @@ export const ApartmentsScreen = () => {
     });
   }, [data, search]);
 
-  if (isAnythingLoading) return <LoadingView />;
+  if (isLoading) return <ApartmentsListSkeleton />;
   if (isError) return <ErrorView message={error?.message} onClick={refetch} />;
 
   const hasAnyApartments = (data?.length ?? 0) > 0;
