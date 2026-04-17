@@ -11,6 +11,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      "@": path.resolve(__dirname, "src"),
       "@components": path.resolve(__dirname, "src/components"),
       "@utils": path.resolve(__dirname, "src/utils"),
       "@assets": path.resolve(__dirname, "src/assets"),
@@ -18,6 +19,7 @@ export default defineConfig({
       "@services": path.resolve(__dirname, "src/services"),
       "@types": path.resolve(__dirname, "src/types"),
       "@features": path.resolve(__dirname, "src/features"),
+      "@lib": path.resolve(__dirname, "src/lib"),
     },
   },
 });

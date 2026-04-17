@@ -2,11 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
+@layer base {
+  :root {
+    /* Surfaces */
+    --background: 210 40% 98%; /* slate-50 #f8fafc */
+    --foreground: 222 47% 11%; /* slate-900 #0f172a */
+
+    --card: 0 0% 100%; /* white #ffffff */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary: Indigo 600 #4f46e5 */
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary / muted surfaces */
+    --secondary: 210 40% 96%; /* slate-100 */
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%; /* slate-100 */
+    --muted-foreground: 215 16% 47%; /* slate-500 */
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Destructive / Warning: Rose 600 #e11d48 */
+    --destructive: 347 77% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 347 77% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Success: Emerald 600 #059669 */
+    --success: 161 94% 30%;
+    --success-foreground: 0 0% 100%;
+
+    /* Lines, inputs, focus */
+    --border: 214 32% 91%; /* slate-200 */
+    --input: 214 32% 91%;
+    --ring: 243 75% 59%; /* primary */
+
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    @apply h-full;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
-  
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
