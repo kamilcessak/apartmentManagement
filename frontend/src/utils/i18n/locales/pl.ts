@@ -285,6 +285,57 @@ const pl = {
       },
       deleteSuccess: "Mieszkanie zostało usunięte",
       deleteError: "Nie udało się usunąć mieszkania",
+      newApartment: {
+        back: "Wróć",
+        title: "Dodaj nowe mieszkanie",
+        description:
+          "Wypełnij poniższe dane, aby dodać nieruchomość do systemu",
+        cancel: "Anuluj",
+        submit: "Zapisz",
+        successToast: "Mieszkanie zostało dodane",
+        errorToast:
+          "Wystąpił błąd podczas dodawania nowego mieszkania. Spróbuj ponownie",
+        fields: {
+          address: {
+            label: "Adres",
+            placeholder: "np. ul. Marszałkowska 1, 00-001 Warszawa",
+          },
+          metric: {
+            label: "Metraż",
+            placeholder: "np. 45",
+          },
+          roomCount: {
+            label: "Liczba pokoi",
+            placeholder: "np. 2",
+          },
+          monthlyCost: {
+            label: "Miesięczny czynsz",
+            placeholder: "np. 2500",
+          },
+          description: {
+            label: "Opis",
+            placeholder: "Dodaj krótki opis mieszkania",
+          },
+          equipment: {
+            label: "Wyposażenie",
+            placeholder: "Wymień wyposażenie mieszkania",
+          },
+        },
+        uploads: {
+          photosTitle: "Zdjęcia",
+          documentsTitle: "Dokumenty",
+          dropzoneTitle: "Kliknij lub przeciągnij pliki tutaj",
+          dropzoneHint: "Obsługiwane formaty: JPG, PNG, PDF",
+          uploading: "Wysyłanie...",
+        },
+        validation: {
+          addressRequired: "Adres mieszkania jest wymagany",
+          metricRequired: "Metraż mieszkania jest wymagany",
+          roomCountRequired: "Liczba pokoi jest wymagana",
+          monthlyCostRequired: "Miesięczny czynsz jest wymagany",
+          descriptionRequired: "Opis jest wymagany",
+        },
+      },
     },
   },
 };

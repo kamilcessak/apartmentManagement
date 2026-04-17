@@ -265,6 +265,55 @@ const en = {
       },
       deleteSuccess: "Apartment deleted successfully",
       deleteError: "Unable to delete apartment",
+      newApartment: {
+        back: "Back",
+        title: "Add new apartment",
+        description: "Fill in the details below to add a property to the system",
+        cancel: "Cancel",
+        submit: "Save",
+        successToast: "Apartment added successfully",
+        errorToast: "An error occurred while adding a new apartment. Try again",
+        fields: {
+          address: {
+            label: "Address",
+            placeholder: "e.g. 1 Main Street, 00-001 Springfield",
+          },
+          metric: {
+            label: "Area",
+            placeholder: "e.g. 45",
+          },
+          roomCount: {
+            label: "Rooms count",
+            placeholder: "e.g. 2",
+          },
+          monthlyCost: {
+            label: "Monthly cost",
+            placeholder: "e.g. 2500",
+          },
+          description: {
+            label: "Description",
+            placeholder: "Add a short description of the apartment",
+          },
+          equipment: {
+            label: "Equipment",
+            placeholder: "List the apartment equipment",
+          },
+        },
+        uploads: {
+          photosTitle: "Photos",
+          documentsTitle: "Documents",
+          dropzoneTitle: "Click or drag files here",
+          dropzoneHint: "Supported formats: JPG, PNG, PDF",
+          uploading: "Uploading...",
+        },
+        validation: {
+          addressRequired: "Apartment address is required",
+          metricRequired: "Apartment area is required",
+          roomCountRequired: "Rooms count is required",
+          monthlyCostRequired: "Monthly cost is required",
+          descriptionRequired: "Description is required",
+        },
+      },
     },
   },
 };
