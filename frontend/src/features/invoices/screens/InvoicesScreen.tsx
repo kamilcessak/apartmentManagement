@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 
-import { EmptyView, LoadingView, RouteContent, ErrorView } from "@components/common";
+import { EmptyView, RouteContent, ErrorView } from "@components/common";
 import api from "@services/api";
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
 import { getApartmentIdFromAddress } from "@utils/apartment";
@@ -24,7 +24,11 @@ import {
 } from "@/components/ui/table";
 
 import { InvoiceFilters, InvoiceType } from "../types";
-import { InvoicesFilters, InvoiceStatusChip } from "../components";
+import {
+  InvoicesFilters,
+  InvoiceStatusChip,
+  InvoicesScreenSkeleton,
+} from "../components";
 
 const formatCurrency = (value: number) => `${value.toFixed(2)} PLN`;
 
@@ -114,7 +118,7 @@ export const InvoicesScreen = () => {
     );
   }, [invoices, filters.search]);
 
-  if (isInvoicesLoading) return <LoadingView />;
+  if (isInvoicesLoading) return <InvoicesScreenSkeleton />;
   if (isError) return <ErrorView message={error?.message} onClick={refetch} />;
 
   return (
