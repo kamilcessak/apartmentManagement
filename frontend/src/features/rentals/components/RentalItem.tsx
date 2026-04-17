@@ -12,6 +12,7 @@ import api from "@services/api";
 import { getApartmentIdFromAddress } from "@utils/apartment";
 
 import { RentalType } from "../types/rental.types";
+import { RentalItemSkeleton } from "./RentalItemSkeleton";
 
 type Props = {
   rental: RentalType;
@@ -67,13 +68,7 @@ export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
   const isLoading = isApartmentDataLoading || isTenantDataLoading;
 
   if (isLoading) {
-    return (
-      <TableRow className="border-b border-slate-100 hover:bg-transparent">
-        <TableCell colSpan={4} className="py-4 pl-6">
-          <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-        </TableCell>
-      </TableRow>
-    );
+    return <RentalItemSkeleton />;
   }
 
   const unassignedLabel = t("rentals.unassigned");

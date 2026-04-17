@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -14,11 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ErrorView, LoadingView, RouteContent } from "@components/common";
+import { ErrorView, RouteContent } from "@components/common";
 import api from "@services/api";
 
 import { RentalType } from "../types/rental.types";
-import { RentalItem } from "../components";
+import { RentalItem, RentalsListSkeleton } from "../components";
 
 export const RentalsScreen = () => {
   const { t } = useTranslation();
@@ -37,17 +37,12 @@ export const RentalsScreen = () => {
     }
   };
 
-  const { data, isLoading, isRefetching, isError, error, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["rentals", "list"],
     queryFn: handleGetRentals,
   });
 
-  const isAnythingLoading = useMemo(
-    () => isLoading || isRefetching,
-    [isLoading, isRefetching]
-  );
-
-  if (isAnythingLoading) return <LoadingView />;
+  if (isLoading) return <RentalsListSkeleton />;
   if (isError) return <ErrorView message={error?.message} onClick={refetch} />;
 
   const hasAnyRentals = (data?.length ?? 0) > 0;
