@@ -48,7 +48,7 @@ Cel: wyrównać długi techniczne, zanim dokładamy nowe funkcje.
 
 #### Znane bugi wykryte przy M1 (zakres M2/M3)
 - ~~`invoice.controller.createInvoice` — weryfikacja apartamentu w `InvoiceModel` zamiast `ApartmentModel`~~ → **[done w M2]** poprawione razem z UI faktur (używa `ApartmentModel.findOne({ _id, owner })`, dodana walidacja `ObjectId`).
-- `rental.controller.patchRental` — walidacja `tenantID` przez `UserModel` zamiast `TenantModel` → do poprawki w M3/M4.
+- ~~`rental.controller.patchRental` — walidacja `tenantID` przez `UserModel` zamiast `TenantModel`~~ → **[done w M3]** poprawione razem z guardami wynajmów (`TenantModel.findOne({ _id, owner })`, import `UserModel` usunięty).
 
 ---
 
@@ -81,21 +81,35 @@ Cel: zamknięcie kluczowego gapu — na backendzie Invoice istnieje, **na fronte
 
 ---
 
-### M3 — Dashboard i przepływ wynajmu (2 tyg.)
+### M3 — Dashboard i przepływ wynajmu (2 tyg.) — **P0 ZAMKNIĘTE**
 
 Cel: zamienić aplikację z CRUDa w realne narzędzie zarządcze.
 
-| #    | Zadanie                                                                                                 | Priorytet |
-| ---- | ------------------------------------------------------------------------------------------------------- | --------- |
-| 3.1  | `HomeScreen` → prawdziwy dashboard: KPI (liczba mieszkań, zajętość %, MRR, należności przeterminowane)  | P0        |
-| 3.2  | Widget „Nadchodzące płatności" (na bazie `Rental.rentalPaymentDay` + `Invoice.dueDate`)                 | P0        |
-| 3.3  | Widget „Kończące się umowy" (`Rental.endDate` < 30 dni)                                                 | P1        |
-| 3.4  | Guard logiki: nie można utworzyć `Rental` dla mieszkania z aktywnym wynajmem (`isAvailable=false`)      | P0        |
-| 3.5  | Auto-toggle `Apartment.isAvailable` przy tworzeniu/zakończeniu `Rental` (transakcja)                    | P0        |
-| 3.6  | Akcja „Zakończ wynajem" (`Rental.isActive=false` + zwolnienie mieszkania)                               | P0        |
-| 3.7  | Generator faktur miesięcznych z aktywnego wynajmu (1 klik → draft invoice)                              | P1        |
+| #    | Zadanie                                                                                                 | Priorytet | Status |
+| ---- | ------------------------------------------------------------------------------------------------------- | --------- | ------ |
+| 3.1  | `HomeScreen` → prawdziwy dashboard: KPI (liczba mieszkań, zajętość %, MRR, należności przeterminowane)  | P0        | done   |
+| 3.2  | Widget „Nadchodzące płatności" (na bazie `Rental.rentalPaymentDay` + `Invoice.dueDate`)                 | P0        | done   |
+| 3.3  | Widget „Kończące się umowy" (`Rental.endDate` < 30 dni)                                                 | P1        | done   |
+| 3.4  | Guard logiki: nie można utworzyć `Rental` dla mieszkania z aktywnym wynajmem (`isAvailable=false`)      | P0        | done   |
+| 3.5  | Auto-toggle `Apartment.isAvailable` przy tworzeniu/zakończeniu `Rental` (transakcja)                    | P0        | done   |
+| 3.6  | Akcja „Zakończ wynajem" (`Rental.isActive=false` + zwolnienie mieszkania)                               | P0        | done   |
+| 3.7  | Generator faktur miesięcznych z aktywnego wynajmu (1 klik → draft invoice)                              | P1        | open   |
 
-**Definition of Done:** użytkownik po zalogowaniu widzi pełen obraz biznesu w 1 ekranie; stany mieszkań i wynajmów są spójne.
+**Definition of Done:** użytkownik po zalogowaniu widzi pełen obraz biznesu w 1 ekranie; stany mieszkań i wynajmów są spójne. **Osiągnięte dla P0** — dashboard z KPI i dwoma widgetami, guard `isAvailable` na tworzeniu wynajmu (atomowy `findOneAndUpdate`), endpoint `POST /rental/:id/end` zwalniający mieszkanie, sprzątanie przy `DELETE /rental/:id`.
+
+#### Szczegóły implementacji (M3 changelog — P0 + 3.3)
+
+- **3.1 / 3.2 / 3.3:** Backend — nowy endpoint `GET /api/v1/dashboard` (`dashboard.controller.ts` + `dashboard.routes.ts`) agregujący:
+  - KPI: `apartmentsCount`, `occupiedCount`, `occupancyRate`, `activeRentalsCount`, `mrr` (suma `monthlyCost` aktywnych wynajmów), `overdueAmount`/`overdueCount` (niepłacone faktury po `dueDate`).
+  - `upcomingPayments` (30 dni): połączone faktury (`invoice` — `invoiceID`, `invoiceType`, `amount`, `dueDate`) i płatności czynszu z aktywnych wynajmów (`rental` — wyliczony `nextPaymentDate` na podstawie `rentalPaymentDay`, z uwzględnieniem miesięcy krótszych niż 31 dni).
+  - `expiringLeases` (30 dni): aktywne wynajmy z `endDate` w horyzoncie 30 dni.
+  Frontend — nowa feature-folder `frontend/src/features/dashboard/` (`types`, `components`, `index.ts`); `HomeScreen.tsx` przepisany z `"Home screen"` placeholder na pełny dashboard: 4 `KpiCard` (Apartments, Occupancy %, MRR, Overdue) + `UpcomingPaymentsWidget` + `ExpiringLeasesWidget`, z lookupem po adresach mieszkań (z `/apartments`). Skoki w UI: zielona/bursztynowa/czerwona akcenta w zależności od progu.
+- **3.4 / 3.5:** `rental.controller.createRental` — po walidacji własności mieszkania i tenanta wykonuje atomowy `ApartmentModel.findOneAndUpdate({ _id, owner, isAvailable: true }, { $set: { isAvailable: false } })`. Gdy warunek niespełniony (mieszkanie już zajęte) — zwraca **HTTP 409** `Apartment already has an active rental`. MongoDB standalone w docker-compose nie wspiera transakcji multi-doc, więc zamiast `session.withTransaction` użyty został mechanizm atomowego locka + ręczny rollback (`{ isAvailable: true }`) gdy `RentalModel.create` się wywali. Frontend — `NewRentalScreen` łapie 409 i pokazuje toast z serwerowym `error`; `/apartmentsList` (używany w selekcie) już filtruje po `isAvailable: true`, więc user normalnie nie zobaczy zajętych mieszkań, a 409 zostaje jako hard-guard przeciwko race condition.
+- **3.6:** Nowy endpoint `POST /api/v1/rental/:id/end` (`endRental`) — weryfikuje własność, wymusza `isActive=true` (400 gdy już zakończony), ustawia `isActive=false`, `endDate=now` i zwalnia mieszkanie (`isAvailable=true`). `patchRental` odrzuca próbę ręcznej zmiany `isActive` (400 + komunikat „Use POST /rental/:id/end"), żeby uniemożliwić obejście logiki zwalniania. `deleteRental` — jeśli kasowany wynajem był aktywny, mieszkanie jest zwalniane w tle. Frontend — `RentalDetailsScreen` dostaje nagłówek z `Chip` (Active/Ended) i przycisk „End rental" (MUI `Dialog` z potwierdzeniem) wywołujący `POST /rental/:id/end`; invalidacja `["rental", id]`, `["rentals"]`, `["apartments"]`, `["dashboard"]`.
+- **Bug fix (z §7.1 dokumentacji):** `patchRental` walidował `tenantID` przez `UserModel.findById`. Zmienione na `TenantModel.findOne({ _id, owner: userID })` z 404 „Tenant not found or not owned by you". Import `UserModel` usunięty z `rental.controller.ts`.
+
+#### Out-of-scope w M3 (przeniesione dalej)
+- **3.7** — generator faktur miesięcznych z aktywnego wynajmu (P1) — zaplanowany na M3 finishing lub M4; nie blokuje DoD dla P0.
 
 ---
 
@@ -172,4 +186,4 @@ Cel: dokończyć model ról — obecnie model wspiera `Tenant`, ale nie ma dedyk
 
 **Sprint 1 (zamknięty):** ~~M1.1–M1.8~~ **[done]** + ~~M2.1–M2.7~~ **[done]**. Wszystkie zadania M1 i M2 zrealizowane, bug `invoice.controller.createInvoice` z changelogu M1 naprawiony razem z UI faktur.
 
-**Sprint 2 (w toku):** start M3 (dashboard, guard logiki wynajmów, auto-toggle `isAvailable`). Po tym sprincie aplikacja będzie **realnie demonstrowalna klientowi** jako MVP v0.9.
+**Sprint 2 (P0 zamknięte):** M3.1–M3.6 done (dashboard z KPI + 2 widgety, guard na tworzenie wynajmu, auto-toggle `Apartment.isAvailable`, „End rental" + sprzątanie na delete), bug `patchRental` (walidacja tenanta przez `TenantModel`) naprawiony. Pozostaje M3.7 (generator faktur miesięcznych, P1) — do przeniesienia do końcówki M3 lub M4. Aplikacja jest **realnie demonstrowalna klientowi** jako MVP v0.9.

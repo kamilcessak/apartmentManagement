@@ -126,7 +126,10 @@ Wszystkie endpointy (poza `auth`) wymagają nagłówka `Authorization: Bearer <J
 `POST /api/v1/tenant`, `GET /api/v1/tenants`, `GET /api/v1/tenantsList`, `GET /api/v1/tenant/:id`, `PATCH /api/v1/tenant/:id`, `DELETE /api/v1/tenant/:id`
 
 #### Rentals
-`POST /api/v1/rental`, `GET /api/v1/rentals`, `GET /api/v1/rental/:id`, `PATCH /api/v1/rental/:id`, `DELETE /api/v1/rental/:id`
+`POST /api/v1/rental`, `GET /api/v1/rentals`, `GET /api/v1/rental/:id`, `PATCH /api/v1/rental/:id`, `DELETE /api/v1/rental/:id`, `POST /api/v1/rental/:id/end`
+- `POST /rental` — atomowo blokuje mieszkanie (`Apartment.isAvailable: true → false`); zwraca **409** jeśli mieszkanie jest już zajęte (M3.4 / M3.5).
+- `POST /rental/:id/end` — ustawia `isActive=false`, `endDate=now` i zwalnia mieszkanie (`isAvailable=true`) (M3.6). `PATCH /rental/:id` nie pozwala ręcznie modyfikować `isActive` — trzeba użyć tego endpointu.
+- `DELETE /rental/:id` — jeśli wynajem był aktywny, zwalnia powiązane mieszkanie.
 
 #### Invoices
 `POST /api/v1/invoice`, `GET /api/v1/invoices`, `GET /api/v1/invoice/:id`, `PATCH /api/v1/invoice/:id`, `DELETE /api/v1/invoice/:id`
@@ -137,6 +140,12 @@ Statyczne pliki: `GET /uploads/:filename` (poza prefiksem `/api/v1`).
 
 #### User
 `GET /api/v1/user`, `PATCH /api/v1/user`
+
+#### Dashboard
+`GET /api/v1/dashboard` — agregat dla `HomeScreen`:
+- `kpi`: `apartmentsCount`, `occupiedCount`, `occupancyRate`, `activeRentalsCount`, `mrr` (suma `monthlyCost` aktywnych wynajmów), `overdueAmount`, `overdueCount`.
+- `upcomingPayments[]` (30 dni): połączone faktury (`kind: "invoice"`) i płatności czynszu (`kind: "rental"`, z wyliczonym `nextPaymentDate` z `rentalPaymentDay`).
+- `expiringLeases[]`: aktywne wynajmy z `endDate` w najbliższych 30 dniach.
 
 ### 3.5 Modele danych (Mongoose)
 
@@ -328,5 +337,5 @@ npm start             # docker compose up --build
 15. **README** — **[open]** brak na poziomie root i `backend/`. Zaplanowane w M6.8.
 
 ### 7.1 Znane bugi odkryte przy M1 (out-of-scope, do M2/M3)
-- `invoice.controller.createInvoice` — zapytanie weryfikujące apartament idzie do `InvoiceModel.findOne({ _id: apartmentID })` zamiast `ApartmentModel`. Do poprawki razem z budową UI faktur w **M2**.
-- `rental.controller.patchRental` — weryfikacja istnienia tenanta przez `UserModel.findById(tenantID)` zamiast `TenantModel`. Do poprawki w **M3** (logika spójności wynajmów) lub **M4** (flow ról).
+- ~~`invoice.controller.createInvoice` — zapytanie weryfikujące apartament idzie do `InvoiceModel.findOne({ _id: apartmentID })` zamiast `ApartmentModel`.~~ **[done M2]** — używa `ApartmentModel.findOne({ _id, owner })` + walidacja `ObjectId`.
+- ~~`rental.controller.patchRental` — weryfikacja istnienia tenanta przez `UserModel.findById(tenantID)` zamiast `TenantModel`.~~ **[done M3]** — zmienione na `TenantModel.findOne({ _id, owner: userID })` z 404 „Tenant not found or not owned by you"; import `UserModel` usunięty z `rental.controller.ts`.

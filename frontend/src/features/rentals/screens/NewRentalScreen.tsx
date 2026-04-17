@@ -5,6 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 import {
   Button,
   CircularProgress,
@@ -153,11 +154,22 @@ export const NewRentalScreen = () => {
     onSuccess: (data) => {
       if (data.status === 201) {
         queryClient.invalidateQueries({ queryKey: ["rentals", "list"] });
+        queryClient.invalidateQueries({ queryKey: ["apartments"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
         toast("Rental created successfully", { type: "success" });
         navigate(-1);
       }
     },
-    onError: () => {
+    onError: (err) => {
+      const axiosError = err as AxiosError<{ error?: string }>;
+      if (axiosError.response?.status === 409) {
+        toast(
+          axiosError.response.data?.error ??
+            "Selected apartment already has an active rental",
+          { type: "error" }
+        );
+        return;
+      }
       toast("An error occurred during creating new rental", { type: "error" });
     },
   });

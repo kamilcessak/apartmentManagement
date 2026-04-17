@@ -4,6 +4,7 @@ import { authenticate } from '../middlewares/auth.middleware';
 import {
     createRental,
     deleteRental,
+    endRental,
     getRental,
     getRentals,
     patchRental,
@@ -16,5 +17,6 @@ router.get('/rentals', authenticate, getRentals);
 router.get('/rental/:id', authenticate, getRental);
 router.delete('/rental/:id', authenticate, deleteRental);
 router.patch('/rental/:id', authenticate, patchRental);
+router.post('/rental/:id/end', authenticate, endRental);
 
 export default router;

@@ -14,6 +14,7 @@ import rentalRoutes from './routes/rental.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import filesRoutes from './routes/files.routes';
 import userRoutes from './routes/user.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 import { initializeDatabase } from './db/connection';
 
 const app = express();
@@ -33,6 +34,7 @@ const startServer = async () => {
         app.use(API_PREFIX, invoiceRoutes);
         app.use(API_PREFIX, filesRoutes);
         app.use(API_PREFIX, userRoutes);
+        app.use(API_PREFIX, dashboardRoutes);
 
         app.use(
             '/uploads',

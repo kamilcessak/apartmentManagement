@@ -12,4 +12,6 @@ export type RentalType = {
   securityDeposit: number;
   startDate: string;
   tenantID: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
