@@ -1,16 +1,21 @@
 import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { MdChevronLeft } from "react-icons/md";
+import { ChevronLeft } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 import api from "@services/api";
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+
 import { InvoiceForm, InvoiceFormValues } from "../components";
 
 export const NewInvoiceScreen = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -58,12 +63,12 @@ export const NewInvoiceScreen = () => {
             queryKey: ["apartment", prefilledApartmentID, "invoices"],
           });
         }
-        toast("Invoice created successfully", { type: "success" });
+        toast(t("invoices.newInvoice.successToast"), { type: "success" });
         navigate(-1);
       }
     },
     onError: () => {
-      toast("An error occurred during creating the invoice", { type: "error" });
+      toast(t("invoices.newInvoice.errorToast"), { type: "error" });
     },
   });
 
@@ -79,24 +84,38 @@ export const NewInvoiceScreen = () => {
 
   return (
     <RouteContent>
-      <header className="flex flex-row items-center p-8 border-b-2 border-gray-200">
-        <a className="cursor-pointer" onClick={() => navigate(-1)}>
-          <MdChevronLeft size={48} />
-        </a>
-        <div className="flex flex-1 items-center justify-center">
-          <h1 className="text-3xl">Add new invoice</h1>
+      <div className="flex h-full flex-col bg-slate-50">
+        <div className="flex-1 overflow-y-auto px-8 py-8">
+          <div className="mx-auto w-full max-w-4xl">
+            <header className="mb-6 flex flex-row items-center gap-3">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                aria-label={t("invoices.newInvoice.back")}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <h1 className="text-2xl font-semibold text-slate-900">
+                {t("invoices.newInvoice.title")}
+              </h1>
+            </header>
+
+            <Card className="border-slate-200 shadow-sm">
+              <InvoiceForm
+                apartments={apartments ?? []}
+                defaultValues={defaultValues}
+                submitLabel={t("invoices.newInvoice.submit")}
+                cancelLabel={t("invoices.newInvoice.cancel")}
+                isSubmitting={isPending}
+                lockApartment={!!prefilledApartmentID}
+                onSubmit={(values) => mutate(values)}
+                onCancel={() => navigate(-1)}
+              />
+            </Card>
+          </div>
         </div>
-      </header>
-      <div className="flex flex-1 flex-col w-full overflow-y-scroll scrollbar-hide h-full gap-4 p-8">
-        <InvoiceForm
-          apartments={apartments ?? []}
-          defaultValues={defaultValues}
-          submitLabel="Create invoice"
-          isSubmitting={isPending}
-          lockApartment={!!prefilledApartmentID}
-          onSubmit={(values) => mutate(values)}
-          onCancel={() => navigate(-1)}
-        />
       </div>
     </RouteContent>
   );

@@ -370,6 +370,75 @@ const en = {
         },
       },
     },
+    invoices: {
+      types: {
+        rent: "Rent",
+        electricity: "Electricity",
+        water: "Water",
+        gas: "Gas",
+        internet: "Internet",
+        heating: "Heating",
+        garbage: "Garbage",
+        other: "Other",
+      },
+      form: {
+        fields: {
+          apartment: {
+            label: "Apartment",
+            placeholder: "Select an apartment",
+          },
+          invoiceNumber: {
+            label: "Invoice number",
+            placeholder: "e.g. INV/2026/001",
+          },
+          type: {
+            label: "Type",
+            placeholder: "Select type",
+          },
+          amount: {
+            label: "Amount (PLN)",
+          },
+          dueDate: {
+            label: "Due date",
+          },
+        },
+        upload: {
+          label: "Invoice document (PDF)",
+          dragDropTitle: "Drag & drop a PDF file here",
+          dragDropHint: "or click to browse from your computer (PDF only)",
+          button: "Upload PDF",
+          onlyPdf: "Only PDF files are allowed",
+          uploadSuccess: "Document uploaded",
+          uploadError: "Failed to upload document",
+          remove: "Remove",
+        },
+        validation: {
+          apartmentRequired: "Apartment is required",
+          invoiceNumberRequired: "Invoice number is required",
+          typeRequired: "Type is required",
+          amountType: "Amount must be a number",
+          amountPositive: "Amount must be greater than zero",
+          amountRequired: "Amount is required",
+          dueDateRequired: "Due date is required",
+        },
+      },
+      newInvoice: {
+        back: "Back",
+        title: "Add new invoice",
+        cancel: "Cancel",
+        submit: "Create invoice",
+        successToast: "Invoice created successfully",
+        errorToast: "An error occurred during creating the invoice",
+      },
+      editInvoice: {
+        back: "Back",
+        title: "Edit invoice",
+        cancel: "Cancel",
+        submit: "Save changes",
+        successToast: "Invoice updated successfully",
+        errorToast: "An error occurred during updating the invoice",
+      },
+    },
     apartments: {
       title: "Apartments",
       subtitle: "Manage your apartments list",

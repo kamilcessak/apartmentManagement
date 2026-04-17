@@ -1,29 +1,35 @@
-import { FC, useMemo } from "react";
-import {
-  Button,
-  CircularProgress,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers";
+import { FC, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import dayjs from "dayjs";
-import { MdUploadFile } from "react-icons/md";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
+import {
+  FileText,
+  Loader2,
+  Trash2,
+  UploadCloud,
+} from "lucide-react";
 
 import api from "@services/api";
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
 import { getApartmentIdFromAddress } from "@utils/apartment";
-import { capitalizeFirstLetter } from "@utils/common";
 
-import { INVOICE_TYPES } from "../types";
+import { Button } from "@/components/ui/button";
+import { CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { INVOICE_TYPES, InvoiceCategory } from "../types";
 
 export type InvoiceFormValues = {
   apartmentID: string;
@@ -34,21 +40,28 @@ export type InvoiceFormValues = {
   document: string | null;
 };
 
-const schema = yup.object().shape({
-  apartmentID: yup.string().required("Apartment is required"),
-  invoiceID: yup.string().required("Invoice number is required"),
-  invoiceType: yup.string().required("Type is required"),
-  amount: yup
-    .number()
-    .typeError("Amount must be a number")
-    .positive("Amount must be greater than zero")
-    .required("Amount is required"),
-  dueDate: yup
-    .date()
-    .typeError("Due date is required")
-    .required("Due date is required"),
-  document: yup.string().nullable(),
-});
+const buildSchema = (t: TFunction) =>
+  yup.object().shape({
+    apartmentID: yup
+      .string()
+      .required(t("invoices.form.validation.apartmentRequired")),
+    invoiceID: yup
+      .string()
+      .required(t("invoices.form.validation.invoiceNumberRequired")),
+    invoiceType: yup
+      .string()
+      .required(t("invoices.form.validation.typeRequired")),
+    amount: yup
+      .number()
+      .typeError(t("invoices.form.validation.amountType"))
+      .positive(t("invoices.form.validation.amountPositive"))
+      .required(t("invoices.form.validation.amountRequired")),
+    dueDate: yup
+      .date()
+      .typeError(t("invoices.form.validation.dueDateRequired"))
+      .required(t("invoices.form.validation.dueDateRequired")),
+    document: yup.string().nullable(),
+  });
 
 type Props = {
   defaultValues: Partial<InvoiceFormValues>;
@@ -56,8 +69,16 @@ type Props = {
   onSubmit: (values: InvoiceFormValues) => void;
   onCancel: () => void;
   submitLabel?: string;
+  cancelLabel?: string;
   isSubmitting?: boolean;
   lockApartment?: boolean;
+};
+
+const toDateInputValue = (value: Date | null | undefined): string => {
+  if (!value) return "";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
 };
 
 export const InvoiceForm: FC<Props> = ({
@@ -65,10 +86,15 @@ export const InvoiceForm: FC<Props> = ({
   apartments,
   onSubmit,
   onCancel,
-  submitLabel = "Save",
+  submitLabel,
+  cancelLabel,
   isSubmitting = false,
   lockApartment = false,
 }) => {
+  const { t } = useTranslation();
+
+  const schema = useMemo(() => buildSchema(t), [t]);
+
   const mergedDefaults = useMemo<InvoiceFormValues>(
     () => ({
       apartmentID: defaultValues.apartmentID ?? "",
@@ -86,13 +112,14 @@ export const InvoiceForm: FC<Props> = ({
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
   } = useForm<InvoiceFormValues>({
     resolver: yupResolver(schema) as never,
     defaultValues: mergedDefaults,
   });
 
   const currentDocument = watch("document");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const handleUploadFile = async (file: File) => {
     const formData = new FormData();
@@ -107,10 +134,10 @@ export const InvoiceForm: FC<Props> = ({
     mutationFn: handleUploadFile,
     onSuccess: (data) => {
       setValue("document", data.fileName, { shouldValidate: true });
-      toast("Document uploaded", { type: "success" });
+      toast(t("invoices.form.upload.uploadSuccess"), { type: "success" });
     },
     onError: () => {
-      toast("Failed to upload document", { type: "error" });
+      toast(t("invoices.form.upload.uploadError"), { type: "error" });
     },
   });
 
@@ -118,193 +145,324 @@ export const InvoiceForm: FC<Props> = ({
     setValue("document", null, { shouldValidate: true });
   };
 
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (file.type !== "application/pdf") {
+      toast(t("invoices.form.upload.onlyPdf"), { type: "error" });
+      return;
+    }
+    uploadDocument(file);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(false);
+    handleFiles(event.dataTransfer.files);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!isDragActive) setIsDragActive(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(false);
+  };
+
+  const resolvedSubmitLabel =
+    submitLabel ?? t("invoices.newInvoice.submit");
+  const resolvedCancelLabel =
+    cancelLabel ?? t("invoices.newInvoice.cancel");
+
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={handleSubmit(onSubmit)}
-      noValidate
-    >
-      <FormControl fullWidth error={!!errors.apartmentID?.message}>
-        <InputLabel id="invoice-apartment">Apartment</InputLabel>
-        <Controller
-          control={control}
-          name="apartmentID"
-          render={({ field, fieldState }) => (
-            <>
-              <Select
-                labelId="invoice-apartment"
-                label="Apartment"
-                disabled={lockApartment || isSubmitting}
-                value={field.value ?? ""}
-                onChange={(event) => field.onChange(event.target.value)}
-              >
-                {apartments.map((apartment) => (
-                  <MenuItem key={apartment._id} value={apartment._id}>
-                    {getApartmentIdFromAddress(apartment.address)}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>{fieldState.error?.message}</FormHelperText>
-            </>
-          )}
-        />
-      </FormControl>
-
-      <Controller
-        control={control}
-        name="invoiceID"
-        render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            label="Invoice number"
-            variant="outlined"
-            disabled={isSubmitting}
-            error={!!fieldState.error?.message}
-            helperText={fieldState.error?.message}
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <CardContent className="p-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-6">
+          <Controller
+            control={control}
+            name="apartmentID"
+            render={({ field, fieldState }) => (
+              <div className="grid gap-2 md:col-span-3">
+                <Label
+                  htmlFor="apartmentID"
+                  className="font-medium text-slate-900"
+                >
+                  {t("invoices.form.fields.apartment.label")}
+                </Label>
+                <Select
+                  value={field.value || undefined}
+                  onValueChange={field.onChange}
+                  disabled={lockApartment || isSubmitting}
+                >
+                  <SelectTrigger id="apartmentID">
+                    <SelectValue
+                      placeholder={t(
+                        "invoices.form.fields.apartment.placeholder"
+                      )}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {apartments.map((apartment) => (
+                      <SelectItem key={apartment._id} value={apartment._id}>
+                        {getApartmentIdFromAddress(apartment.address)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldState.error?.message ? (
+                  <p className="text-xs text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                ) : null}
+              </div>
+            )}
           />
-        )}
-      />
 
-      <FormControl fullWidth error={!!errors.invoiceType?.message}>
-        <InputLabel id="invoice-type">Type</InputLabel>
-        <Controller
-          control={control}
-          name="invoiceType"
-          render={({ field, fieldState }) => (
-            <>
-              <Select
-                labelId="invoice-type"
-                label="Type"
-                disabled={isSubmitting}
-                value={field.value ?? ""}
-                onChange={(event) => field.onChange(event.target.value)}
-              >
-                {INVOICE_TYPES.map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {capitalizeFirstLetter(type)}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>{fieldState.error?.message}</FormHelperText>
-            </>
-          )}
-        />
-      </FormControl>
-
-      <Controller
-        control={control}
-        name="amount"
-        render={({ field, fieldState }) => (
-          <TextField
-            label="Amount (PLN)"
-            variant="outlined"
-            type="number"
-            disabled={isSubmitting}
-            value={field.value ?? ""}
-            onChange={(event) => {
-              const raw = event.target.value;
-              field.onChange(raw === "" ? null : Number(raw));
-            }}
-            error={!!fieldState.error?.message}
-            helperText={fieldState.error?.message}
+          <Controller
+            control={control}
+            name="invoiceID"
+            render={({ field, fieldState }) => (
+              <div className="grid gap-2 md:col-span-3">
+                <Label
+                  htmlFor="invoiceID"
+                  className="font-medium text-slate-900"
+                >
+                  {t("invoices.form.fields.invoiceNumber.label")}
+                </Label>
+                <Input
+                  id="invoiceID"
+                  type="text"
+                  placeholder={t(
+                    "invoices.form.fields.invoiceNumber.placeholder"
+                  )}
+                  disabled={isSubmitting}
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
+                {fieldState.error?.message ? (
+                  <p className="text-xs text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                ) : null}
+              </div>
+            )}
           />
-        )}
-      />
 
-      <Controller
-        control={control}
-        name="dueDate"
-        render={({ field, fieldState }) => (
-          <DatePicker
-            label="Due date"
-            disabled={isSubmitting}
-            value={field.value ? dayjs(field.value) : null}
-            onChange={(next) => field.onChange(next ? next.toDate() : null)}
-            format="DD.MM.YYYY"
-            slotProps={{
-              textField: {
-                error: !!fieldState.error,
-                helperText: fieldState.error?.message,
-              } as React.ComponentProps<typeof TextField>,
-            }}
+          <Controller
+            control={control}
+            name="invoiceType"
+            render={({ field, fieldState }) => (
+              <div className="grid gap-2 md:col-span-2">
+                <Label
+                  htmlFor="invoiceType"
+                  className="font-medium text-slate-900"
+                >
+                  {t("invoices.form.fields.type.label")}
+                </Label>
+                <Select
+                  value={field.value || undefined}
+                  onValueChange={field.onChange}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger id="invoiceType">
+                    <SelectValue
+                      placeholder={t("invoices.form.fields.type.placeholder")}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INVOICE_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {t(`invoices.types.${type as InvoiceCategory}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldState.error?.message ? (
+                  <p className="text-xs text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                ) : null}
+              </div>
+            )}
           />
-        )}
-      />
 
-      <section className="flex flex-col gap-2 border-gray-300 rounded-md border p-4">
-        <div className="flex flex-row items-center justify-between">
-          <span className="text-gray-700">Invoice document (PDF)</span>
-          <Button
-            component="label"
-            variant="outlined"
-            color="success"
-            size="small"
-            disabled={isUploading || isSubmitting}
-            startIcon={
-              isUploading ? (
-                <CircularProgress size={16} />
-              ) : (
-                <MdUploadFile />
-              )
-            }
-            style={{ textTransform: "none" }}
-          >
-            {currentDocument ? "Replace" : "Upload PDF"}
-            <input
-              hidden
-              type="file"
-              accept="application/pdf"
-              onChange={(event) => {
-                if (event.target.files?.[0]) {
-                  uploadDocument(event.target.files[0]);
+          <Controller
+            control={control}
+            name="amount"
+            render={({ field, fieldState }) => (
+              <div className="grid gap-2 md:col-span-2">
+                <Label
+                  htmlFor="amount"
+                  className="font-medium text-slate-900"
+                >
+                  {t("invoices.form.fields.amount.label")}
+                </Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  disabled={isSubmitting}
+                  value={field.value ?? ""}
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    field.onChange(raw === "" ? null : Number(raw));
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
+                {fieldState.error?.message ? (
+                  <p className="text-xs text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="dueDate"
+            render={({ field, fieldState }) => (
+              <div className="grid gap-2 md:col-span-2">
+                <Label
+                  htmlFor="dueDate"
+                  className="font-medium text-slate-900"
+                >
+                  {t("invoices.form.fields.dueDate.label")}
+                </Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  disabled={isSubmitting}
+                  value={toDateInputValue(field.value)}
+                  onChange={(event) =>
+                    field.onChange(
+                      event.target.value ? new Date(event.target.value) : null
+                    )
+                  }
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
+                {fieldState.error?.message ? (
+                  <p className="text-xs text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                ) : null}
+              </div>
+            )}
+          />
+
+          <div className="grid gap-2 md:col-span-6">
+            <Label className="font-medium text-slate-900">
+              {t("invoices.form.upload.label")}
+            </Label>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  fileInputRef.current?.click();
                 }
               }}
-            />
-          </Button>
-        </div>
-        {currentDocument ? (
-          <div className="flex flex-row items-center justify-between">
-            <span className="text-sm text-gray-600 truncate">
-              {currentDocument}
-            </span>
-            <Button
-              variant="text"
-              color="error"
-              size="small"
-              onClick={handleRemoveDocument}
-              disabled={isSubmitting || isUploading}
-              style={{ textTransform: "none" }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed px-6 py-10 text-center transition-colors ${
+                isDragActive
+                  ? "border-primary bg-primary/5"
+                  : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+              } ${isSubmitting || isUploading ? "pointer-events-none opacity-60" : "cursor-pointer"}`}
             >
-              Remove
-            </Button>
+              {isUploading ? (
+                <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+              ) : (
+                <UploadCloud className="h-8 w-8 text-slate-400" />
+              )}
+              <div className="flex flex-col gap-1">
+                <p className="text-sm font-medium text-slate-900">
+                  {t("invoices.form.upload.dragDropTitle")}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {t("invoices.form.upload.dragDropHint")}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isUploading || isSubmitting}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+              >
+                <UploadCloud className="h-4 w-4" />
+                {t("invoices.form.upload.button")}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={(event) => {
+                  handleFiles(event.target.files);
+                  event.target.value = "";
+                }}
+              />
+            </div>
+            {currentDocument ? (
+              <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0 text-slate-500" />
+                  <span className="truncate text-sm text-slate-700">
+                    {currentDocument}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveDocument}
+                  disabled={isSubmitting || isUploading}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t("invoices.form.upload.remove")}
+                </Button>
+              </div>
+            ) : null}
           </div>
-        ) : (
-          <span className="text-sm text-gray-500">No document attached.</span>
-        )}
-      </section>
+        </div>
+      </CardContent>
 
-      <div className="flex flex-row justify-end gap-2">
+      <CardFooter className="flex justify-end gap-4 border-t border-slate-100 px-6 py-4">
         <Button
-          variant="outlined"
-          size="large"
-          disabled={isSubmitting}
+          type="button"
+          variant="outline"
           onClick={onCancel}
-          style={{ textTransform: "none" }}
+          disabled={isSubmitting}
         >
-          Cancel
+          {resolvedCancelLabel}
         </Button>
         <Button
           type="submit"
-          color="success"
-          size="large"
-          variant="contained"
+          variant="default"
           disabled={isSubmitting || isUploading}
-          startIcon={isSubmitting ? <CircularProgress size={16} /> : null}
-          style={{ textTransform: "none" }}
         >
-          {submitLabel}
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {resolvedSubmitLabel}
         </Button>
-      </div>
+      </CardFooter>
     </form>
   );
 };

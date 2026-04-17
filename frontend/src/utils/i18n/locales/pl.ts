@@ -388,6 +388,75 @@ const pl = {
         },
       },
     },
+    invoices: {
+      types: {
+        rent: "Czynsz",
+        electricity: "Prąd",
+        water: "Woda",
+        gas: "Gaz",
+        internet: "Internet",
+        heating: "Ogrzewanie",
+        garbage: "Śmieci",
+        other: "Inne",
+      },
+      form: {
+        fields: {
+          apartment: {
+            label: "Mieszkanie",
+            placeholder: "Wybierz mieszkanie",
+          },
+          invoiceNumber: {
+            label: "Numer faktury",
+            placeholder: "np. FV/2026/001",
+          },
+          type: {
+            label: "Typ",
+            placeholder: "Wybierz typ",
+          },
+          amount: {
+            label: "Kwota (PLN)",
+          },
+          dueDate: {
+            label: "Termin płatności",
+          },
+        },
+        upload: {
+          label: "Dokument faktury (PDF)",
+          dragDropTitle: "Przeciągnij i upuść plik PDF",
+          dragDropHint: "lub kliknij, aby wybrać plik z dysku (tylko PDF)",
+          button: "Wgraj PDF",
+          onlyPdf: "Dozwolone są tylko pliki PDF",
+          uploadSuccess: "Dokument został wgrany",
+          uploadError: "Nie udało się wgrać dokumentu",
+          remove: "Usuń",
+        },
+        validation: {
+          apartmentRequired: "Mieszkanie jest wymagane",
+          invoiceNumberRequired: "Numer faktury jest wymagany",
+          typeRequired: "Typ jest wymagany",
+          amountType: "Kwota musi być liczbą",
+          amountPositive: "Kwota musi być większa od zera",
+          amountRequired: "Kwota jest wymagana",
+          dueDateRequired: "Termin płatności jest wymagany",
+        },
+      },
+      newInvoice: {
+        back: "Wróć",
+        title: "Dodaj nową fakturę",
+        cancel: "Anuluj",
+        submit: "Utwórz fakturę",
+        successToast: "Faktura została utworzona",
+        errorToast: "Wystąpił błąd podczas tworzenia faktury",
+      },
+      editInvoice: {
+        back: "Wróć",
+        title: "Edytuj fakturę",
+        cancel: "Anuluj",
+        submit: "Zapisz zmiany",
+        successToast: "Faktura została zaktualizowana",
+        errorToast: "Wystąpił błąd podczas aktualizacji faktury",
+      },
+    },
     apartments: {
       title: "Mieszkania",
       subtitle: "Zarządzaj swoją listą apartamentów",
