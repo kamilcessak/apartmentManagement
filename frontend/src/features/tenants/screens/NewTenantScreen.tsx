@@ -1,23 +1,27 @@
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { Button, CircularProgress, TextField } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 import { RouteContent } from "@components/common";
+import { Button } from "@components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@components/ui/card";
+import { Input } from "@components/ui/input";
+import { Label } from "@components/ui/label";
+import { cn } from "@/lib/utils";
 import api from "@services/api";
-import { MdChevronLeft } from "react-icons/md";
-
-const schema = yup.object().shape({
-  firstName: yup.string().required("First name is required"),
-  lastName: yup.string().required("Last name is required"),
-  email: yup.string().email().required("Email is required"),
-  phoneNumber: yup.string().required("Phone number is required"),
-  personalId: yup.string().required("Personal ID is required"),
-  address: yup.string().required("Address is required"),
-});
 
 type FormValues = {
   firstName: string;
@@ -28,9 +32,53 @@ type FormValues = {
   address: string;
 };
 
+type FieldName = keyof FormValues;
+
+type FieldConfig = {
+  name: FieldName;
+  labelKey: string;
+  placeholderKey: string;
+  type?: string;
+  autoComplete?: string;
+  fullWidth?: boolean;
+};
+
 export const NewTenantScreen = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const schema = useMemo(
+    () =>
+      yup.object().shape({
+        firstName: yup
+          .string()
+          .trim()
+          .required(t("tenants.newTenant.validation.firstNameRequired")),
+        lastName: yup
+          .string()
+          .trim()
+          .required(t("tenants.newTenant.validation.lastNameRequired")),
+        email: yup
+          .string()
+          .trim()
+          .email(t("tenants.newTenant.validation.emailInvalid"))
+          .required(t("tenants.newTenant.validation.emailRequired")),
+        phoneNumber: yup
+          .string()
+          .trim()
+          .required(t("tenants.newTenant.validation.phoneRequired")),
+        personalId: yup
+          .string()
+          .trim()
+          .required(t("tenants.newTenant.validation.personalIdRequired")),
+        address: yup
+          .string()
+          .trim()
+          .required(t("tenants.newTenant.validation.addressRequired")),
+      }),
+    [t]
+  );
 
   const {
     register,
@@ -38,124 +86,174 @@ export const NewTenantScreen = () => {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(schema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phoneNumber: "",
+      personalId: "",
+      address: "",
+    },
   });
 
   const createTenant = async (data: FormValues) => {
-    try {
-      const result = await api.post("/tenant", data);
-      return result;
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
+    const response = await api.post("/tenant", data);
+    return response;
   };
 
   const { mutate, isPending } = useMutation({
     mutationFn: createTenant,
     onSuccess: async () => {
-      queryClient
-        .invalidateQueries({ queryKey: ["tenants", "list"] })
-        .then(() => {
-          toast("Tenant added successfully", { type: "success" });
-          navigate(-1);
-        });
+      await queryClient.invalidateQueries({ queryKey: ["tenants", "list"] });
+      toast(t("tenants.newTenant.successToast"), { type: "success" });
+      navigate(-1);
     },
     onError: (error) => {
       console.error(error);
-      toast("An error occured during adding new Tenant. Try again", {
-        type: "error",
-      });
+      toast(t("tenants.newTenant.errorToast"), { type: "error" });
     },
   });
 
-  const formFields = [
+  const onSubmit = (data: FormValues) => mutate(data);
+
+  const fields: FieldConfig[] = [
     {
-      label: "First Name",
-      registerName: "firstName",
-      helperText: errors?.firstName?.message,
-      error: !!errors?.firstName?.message,
+      name: "firstName",
+      labelKey: "tenants.newTenant.fields.firstName.label",
+      placeholderKey: "tenants.newTenant.fields.firstName.placeholder",
+      autoComplete: "given-name",
     },
     {
-      label: "Last Name",
-      registerName: "lastName",
-      helperText: errors?.lastName?.message,
-      error: !!errors?.lastName?.message,
+      name: "lastName",
+      labelKey: "tenants.newTenant.fields.lastName.label",
+      placeholderKey: "tenants.newTenant.fields.lastName.placeholder",
+      autoComplete: "family-name",
     },
     {
-      label: "Email",
-      registerName: "email",
-      helperText: errors?.email?.message,
-      error: !!errors?.email?.message,
+      name: "email",
+      labelKey: "tenants.newTenant.fields.email.label",
+      placeholderKey: "tenants.newTenant.fields.email.placeholder",
+      type: "email",
+      autoComplete: "email",
     },
     {
-      label: "Phone number",
-      registerName: "phoneNumber",
-      helperText: errors?.phoneNumber?.message,
-      error: !!errors?.phoneNumber?.message,
+      name: "phoneNumber",
+      labelKey: "tenants.newTenant.fields.phoneNumber.label",
+      placeholderKey: "tenants.newTenant.fields.phoneNumber.placeholder",
+      type: "tel",
+      autoComplete: "tel",
     },
     {
-      label: "PersonalID",
-      registerName: "personalId",
-      helperText: errors?.personalId?.message,
-      error: !!errors?.personalId?.message,
+      name: "personalId",
+      labelKey: "tenants.newTenant.fields.personalId.label",
+      placeholderKey: "tenants.newTenant.fields.personalId.placeholder",
+      fullWidth: true,
     },
     {
-      label: "Registration address",
-      registerName: "address",
-      helperText: errors?.address?.message,
-      error: !!errors?.address?.message,
+      name: "address",
+      labelKey: "tenants.newTenant.fields.address.label",
+      placeholderKey: "tenants.newTenant.fields.address.placeholder",
+      autoComplete: "street-address",
+      fullWidth: true,
     },
   ];
 
-  const onSubmit = (data: FormValues) => mutate(data);
-
   return (
-    <RouteContent>
-      <header className="flex flex-row items-center p-8 border-b-2 border-gray-200">
-        <a onClick={() => navigate(-1)}>
-          <MdChevronLeft size={48} />
-        </a>
-        <div className="flex flex-1 items-center justify-center">
-          <h1 className="text-3xl font-semibold">Add new Tenant</h1>
-        </div>
-      </header>
-      <div className="flex flex-1 flex-col w-full overflow-y-scroll scrollbar-hide h-full gap-4 p-8">
-        <div className="flex flex-col">
-          {formFields.map(({ registerName, ...e }, i) => (
-            <TextField
-              className="h-20"
-              key={`field-${e.label}-${i}`}
-              {...e}
-              {...register(registerName)}
-              id={e.label}
-              variant="outlined"
-            />
-          ))}
-        </div>
-        <div className="flex justify-end w-full gap-2">
+    <RouteContent sectionStyle={{ flexDirection: "column" }}>
+      <div className="flex h-full w-full justify-center overflow-y-auto bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="w-full max-w-2xl">
           <Button
-            className="flex flex-1"
-            color="success"
-            size="large"
-            style={{ textTransform: "none" }}
-            variant="contained"
-            onClick={handleSubmit(onSubmit)}
-            disabled={isPending}
-            startIcon={
-              isPending ? <CircularProgress size={16} color="primary" /> : null
-            }
-          >
-            Add
-          </Button>
-          <Button
-            size="large"
-            className="flex flex-1"
-            variant="outlined"
-            style={{ textTransform: "none" }}
+            type="button"
+            variant="ghost"
             onClick={() => navigate(-1)}
+            className="mb-4 -ml-2 text-slate-600 hover:text-slate-900"
           >
-            Cancel
+            <ArrowLeft className="h-4 w-4" />
+            {t("tenants.newTenant.back")}
           </Button>
+
+          <Card className="border-slate-200 shadow-sm">
+            <form onSubmit={handleSubmit(onSubmit)} noValidate>
+              <CardHeader>
+                <CardTitle className="text-xl text-slate-900">
+                  {t("tenants.newTenant.title")}
+                </CardTitle>
+                <CardDescription className="text-slate-500">
+                  {t("tenants.newTenant.description")}
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {fields.map((field) => {
+                  const error = errors[field.name]?.message;
+                  return (
+                    <div
+                      key={field.name}
+                      className={cn(
+                        "flex flex-col gap-1.5",
+                        field.fullWidth && "md:col-span-2"
+                      )}
+                    >
+                      <Label
+                        htmlFor={field.name}
+                        className="font-medium text-slate-900"
+                      >
+                        {t(field.labelKey)}
+                      </Label>
+                      <Input
+                        id={field.name}
+                        type={field.type ?? "text"}
+                        autoComplete={field.autoComplete}
+                        placeholder={t(field.placeholderKey)}
+                        aria-invalid={!!error}
+                        aria-describedby={
+                          error ? `${field.name}-error` : undefined
+                        }
+                        disabled={isPending}
+                        className={cn(
+                          "placeholder:text-slate-400",
+                          error &&
+                            "border-destructive focus-visible:ring-destructive"
+                        )}
+                        {...register(field.name)}
+                      />
+                      {error ? (
+                        <p
+                          id={`${field.name}-error`}
+                          className="text-xs text-destructive"
+                        >
+                          {error}
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </CardContent>
+
+              <CardFooter className="flex flex-col-reverse justify-end gap-2 pt-4 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(-1)}
+                  disabled={isPending}
+                  className="sm:min-w-[120px]"
+                >
+                  {t("tenants.newTenant.cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  variant="default"
+                  disabled={isPending}
+                  className="sm:min-w-[160px]"
+                >
+                  {isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : null}
+                  {t("tenants.newTenant.submit")}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
         </div>
       </div>
     </RouteContent>

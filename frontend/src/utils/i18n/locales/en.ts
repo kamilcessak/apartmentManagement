@@ -164,6 +164,50 @@ const en = {
       },
       deleteSuccess: "Tenant deleted successfully",
       deleteError: "Unable to delete tenant",
+      newTenant: {
+        back: "Back",
+        title: "Add new tenant",
+        description: "Enter contact and identification details",
+        cancel: "Cancel",
+        submit: "Add tenant",
+        successToast: "Tenant added successfully",
+        errorToast: "Could not add the tenant. Please try again",
+        fields: {
+          firstName: {
+            label: "First name",
+            placeholder: "e.g. John",
+          },
+          lastName: {
+            label: "Last name",
+            placeholder: "e.g. Smith",
+          },
+          email: {
+            label: "Email",
+            placeholder: "john.smith@example.com",
+          },
+          phoneNumber: {
+            label: "Phone number",
+            placeholder: "+1 555 000 0000",
+          },
+          personalId: {
+            label: "Personal ID / ID card number",
+            placeholder: "e.g. 90010112345",
+          },
+          address: {
+            label: "Registered address",
+            placeholder: "e.g. 1 Main Street, 00-001 Springfield",
+          },
+        },
+        validation: {
+          firstNameRequired: "First name is required",
+          lastNameRequired: "Last name is required",
+          emailRequired: "Email is required",
+          emailInvalid: "Invalid email address",
+          phoneRequired: "Phone number is required",
+          personalIdRequired: "Personal ID or ID card number is required",
+          addressRequired: "Registered address is required",
+        },
+      },
     },
   },
 };

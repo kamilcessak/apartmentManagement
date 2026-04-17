@@ -182,6 +182,50 @@ const pl = {
       },
       deleteSuccess: "Najemca został usunięty",
       deleteError: "Nie udało się usunąć najemcy",
+      newTenant: {
+        back: "Wróć",
+        title: "Dodaj nowego najemcę",
+        description: "Wprowadź dane kontaktowe i identyfikacyjne",
+        cancel: "Anuluj",
+        submit: "Dodaj najemcę",
+        successToast: "Najemca został dodany",
+        errorToast: "Nie udało się dodać najemcy. Spróbuj ponownie",
+        fields: {
+          firstName: {
+            label: "Imię",
+            placeholder: "np. Jan",
+          },
+          lastName: {
+            label: "Nazwisko",
+            placeholder: "np. Kowalski",
+          },
+          email: {
+            label: "Email",
+            placeholder: "jan.kowalski@example.com",
+          },
+          phoneNumber: {
+            label: "Numer telefonu",
+            placeholder: "+48 600 000 000",
+          },
+          personalId: {
+            label: "PESEL / Nr dowodu",
+            placeholder: "np. 90010112345",
+          },
+          address: {
+            label: "Adres zameldowania",
+            placeholder: "np. ul. Marszałkowska 1, 00-001 Warszawa",
+          },
+        },
+        validation: {
+          firstNameRequired: "Imię jest wymagane",
+          lastNameRequired: "Nazwisko jest wymagane",
+          emailRequired: "Adres e-mail jest wymagany",
+          emailInvalid: "Nieprawidłowy adres e-mail",
+          phoneRequired: "Numer telefonu jest wymagany",
+          personalIdRequired: "PESEL lub numer dowodu jest wymagany",
+          addressRequired: "Adres zameldowania jest wymagany",
+        },
+      },
     },
   },
 };
