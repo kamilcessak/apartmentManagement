@@ -35,8 +35,10 @@ export const registerUser = async (
 ): Promise<void> => {
     try {
         const { email, password, phoneNumber } = req.body;
-        if (!email || !password) {
-            res.status(400).json({ error: 'Email and password are required' });
+        if (!email || !password || !phoneNumber) {
+            res.status(400).json({
+                error: 'Email, password and phone number are required',
+            });
             return;
         }
 
@@ -70,27 +72,36 @@ export const registerUser = async (
         });
         const verificationLink = `${FRONTEND_URL}/verify-email?token=${verificationToken}`;
 
-        await sendEmail(
-            email,
-            `Confirm your email`,
-            `
-                <div style="display: flex; flex-direction: column;">
-                    <h1>Please confirm your email address</h1>
-                    <p>Click the link below to verify your email:</p>
-                    <a href="${verificationLink}" style="color: blue; text-decoration: underline;">${verificationLink}</a>
-                </div>
-            `
-        );
+        try {
+            await sendEmail(
+                email,
+                `Confirm your email`,
+                `
+                    <div style="display: flex; flex-direction: column;">
+                        <h1>Please confirm your email address</h1>
+                        <p>Click the link below to verify your email:</p>
+                        <a href="${verificationLink}" style="color: blue; text-decoration: underline;">${verificationLink}</a>
+                    </div>
+                `
+            );
+        } catch (mailErr) {
+            console.error(
+                '[registerUser] Failed to send activation email',
+                mailErr
+            );
+        }
 
         res.status(201).json({
             message: 'User registered successfully',
             userID: newUser._id,
         });
     } catch (err) {
-        console.error({ err });
-        res.status(500).json({
-            error: 'An error occurred during user registration',
-        });
+        console.error('[registerUser]', err);
+        const message =
+            err instanceof Error && err.name === 'ValidationError'
+                ? err.message
+                : 'An error occurred during user registration';
+        res.status(500).json({ error: message });
     }
 };
 
@@ -117,6 +128,7 @@ export const activateAccount = async (
 
         if (user.isEmailVerified) {
             res.status(400).json({ error: 'Account is already verified' });
+            return;
         }
 
         user.isEmailVerified = true;

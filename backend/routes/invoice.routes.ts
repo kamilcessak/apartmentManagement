@@ -6,6 +6,7 @@ import {
     deleteInvoice,
     getInvoice,
     getInvoices,
+    getInvoicesByApartment,
     patchInvoice,
 } from '../controllers/invoice.controller';
 
@@ -16,5 +17,6 @@ router.get('/invoices', authenticate, getInvoices);
 router.get('/invoice/:id', authenticate, getInvoice);
 router.delete('/invoice/:id', authenticate, deleteInvoice);
 router.patch('/invoice/:id', authenticate, patchInvoice);
+router.get('/apartment/:id/invoices', authenticate, getInvoicesByApartment);
 
 export default router;

@@ -13,6 +13,7 @@ import { ErrorView, LoadingView, RouteContent } from "@components/common";
 import api from "@services/api";
 import { getApartmentIdFromAddress } from "@utils/apartment";
 import { capitalizeFirstLetter } from "@utils/common";
+import { ApartmentInvoicesSection } from "@features/invoices/components";
 
 export const ApartmentDetailsScreen = () => {
   const { id } = useParams();
@@ -69,6 +70,7 @@ export const ApartmentDetailsScreen = () => {
           id={data._id}
           type="documents"
         />
+        <ApartmentInvoicesSection apartmentID={data._id} />
       </main>
     </RouteContent>
   );

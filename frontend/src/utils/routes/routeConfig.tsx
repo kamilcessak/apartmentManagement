@@ -1,6 +1,7 @@
 import { getApartmentsRoutes } from "./apartmentsRoutes";
 import { getTenantsRoutes } from "./tenantsRoutes";
 import { getRentalsRoutes } from "./rentalsRoutes";
+import { getInvoicesRoutes } from "./invoicesRoutes";
 import {
   LoginScreen,
   RegisterScreen,
@@ -38,4 +39,5 @@ export const getRoutes = (isLoggedIn: boolean) => [
   ...getTenantsRoutes(isLoggedIn),
   ...getApartmentsRoutes(isLoggedIn),
   ...getRentalsRoutes(isLoggedIn),
+  ...getInvoicesRoutes(isLoggedIn),
 ];

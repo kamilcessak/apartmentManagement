@@ -6,6 +6,7 @@ import {
   MdSettings,
   MdLogout,
   MdRealEstateAgent,
+  MdReceiptLong,
 } from "react-icons/md";
 import { toast } from "react-toastify";
 
@@ -51,6 +52,16 @@ export const Navigation = () => {
       links: ["/rentals", "/rentals/new", "/rental/:id"],
       title: "Rentals",
       icon: (props: IconProps) => <MdRealEstateAgent {...props} />,
+    },
+    {
+      links: [
+        "/invoices",
+        "/invoices/new",
+        "/invoice/:id",
+        "/invoice/:id/edit",
+      ],
+      title: "Invoices",
+      icon: (props: IconProps) => <MdReceiptLong {...props} />,
     },
   ];
 

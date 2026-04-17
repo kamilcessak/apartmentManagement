@@ -13,7 +13,7 @@
 - Infrastruktura: Docker Compose (backend, frontend, mongodb), feature-first struktura, React Query + MUI + Tailwind.
 - **[M1 done]** Fundamenty: `/api/v1`, `VITE_API_URL`, globalny error handler Express, axios 401 interceptor, `ObjectId` + `ref` na kluczach obcych, `{ timestamps: true }` na wszystkich schematach, ujednolicony npm jako package manager, ESLint `no-console` + usunięte debug logi.
 
-**Szacowana gotowość MVP: ~70%** (po zamknięciu M1) — brakuje jednego dużego obszaru funkcjonalnego (Invoices UI + Dashboard), twardnienia bezpieczeństwa, warstwy jakości (walidacja, testy) oraz gotowości do deploy.
+**Szacowana gotowość MVP: ~80%** (po zamknięciu M1 i M2) — domknięty kluczowy gap (Invoices UI); przed MVP zostaje dashboard + logika wynajmów (M3), role/Tenant flow (M4), twardnienie bezpieczeństwa i jakości (M5) oraz gotowość do deploy (M6).
 
 ---
 
@@ -47,26 +47,37 @@ Cel: wyrównać długi techniczne, zanim dokładamy nowe funkcje.
 - **1.8:** Usunięte `backend/.pnp.cjs`, `backend/.pnp.loader.mjs`, `backend/.yarn/`. `backend/.gitignore` zaktualizowany (`.pnp.*`, `.yarn/*`), żeby artefakty nie wracały. Projekt jednoznacznie używa npm.
 
 #### Znane bugi wykryte przy M1 (zakres M2/M3)
-- `invoice.controller.createInvoice` — weryfikacja apartamentu w `InvoiceModel` zamiast `ApartmentModel` → do poprawki w M2 razem z UI faktur.
+- ~~`invoice.controller.createInvoice` — weryfikacja apartamentu w `InvoiceModel` zamiast `ApartmentModel`~~ → **[done w M2]** poprawione razem z UI faktur (używa `ApartmentModel.findOne({ _id, owner })`, dodana walidacja `ObjectId`).
 - `rental.controller.patchRental` — walidacja `tenantID` przez `UserModel` zamiast `TenantModel` → do poprawki w M3/M4.
 
 ---
 
-### M2 — Moduł Invoices (brakujący feature, 2 tyg.)
+### M2 — Moduł Invoices (brakujący feature, 2 tyg.) — **ZAMKNIĘTY**
 
 Cel: zamknięcie kluczowego gapu — na backendzie Invoice istnieje, **na frontendzie nie ma żadnego ekranu**.
 
-| #    | Zadanie                                                                                                       | Priorytet |
-| ---- | ------------------------------------------------------------------------------------------------------------- | --------- |
-| 2.1  | `features/invoices/` (feature-first): `types`, `components`, `screens`                                        | P0        |
-| 2.2  | Ekran listy `InvoicesScreen` z filtrowaniem (apartment, status zapłaty, zakres dat)                           | P0        |
-| 2.3  | `NewInvoiceScreen` + `EditInvoiceScreen` — formularze (react-hook-form + yup) z uploadem dokumentu PDF        | P0        |
-| 2.4  | `InvoiceDetailsScreen` + podgląd dokumentu, akcja „Oznacz jako zapłacone" (`paidDate`, `isPaid`)              | P0        |
-| 2.5  | Integracja w `ApartmentDetailsScreen` — zakładka/sekcja „Faktury dla tego mieszkania"                         | P1        |
-| 2.6  | Endpoint agregujący `GET /apartment/:id/invoices` + wskaźnik zadłużenia                                       | P1        |
-| 2.7  | Trasy: `/invoices`, `/invoices/new`, `/invoice/:id`, `/invoice/:id/edit` + wpięcie do `Navigation`            | P0        |
+| #    | Zadanie                                                                                                       | Priorytet | Status |
+| ---- | ------------------------------------------------------------------------------------------------------------- | --------- | ------ |
+| 2.1  | `features/invoices/` (feature-first): `types`, `components`, `screens`                                        | P0        | done   |
+| 2.2  | Ekran listy `InvoicesScreen` z filtrowaniem (apartment, status zapłaty, zakres dat)                           | P0        | done   |
+| 2.3  | `NewInvoiceScreen` + `EditInvoiceScreen` — formularze (react-hook-form + yup) z uploadem dokumentu PDF        | P0        | done   |
+| 2.4  | `InvoiceDetailsScreen` + podgląd dokumentu, akcja „Oznacz jako zapłacone" (`paidDate`, `isPaid`)              | P0        | done   |
+| 2.5  | Integracja w `ApartmentDetailsScreen` — zakładka/sekcja „Faktury dla tego mieszkania"                         | P1        | done   |
+| 2.6  | Endpoint agregujący `GET /apartment/:id/invoices` + wskaźnik zadłużenia                                       | P1        | done   |
+| 2.7  | Trasy: `/invoices`, `/invoices/new`, `/invoice/:id`, `/invoice/:id/edit` + wpięcie do `Navigation`            | P0        | done   |
 
-**Definition of Done:** Landlord może wystawić, edytować, opłacić i usunąć fakturę dla konkretnego mieszkania; lista pokazuje statusy.
+**Definition of Done:** Landlord może wystawić, edytować, opłacić i usunąć fakturę dla konkretnego mieszkania; lista pokazuje statusy. **Osiągnięte** — pełny CRUD + filtrowanie + sekcja faktur per mieszkanie z wskaźnikiem zadłużenia.
+
+#### Szczegóły implementacji (M2 changelog)
+
+- **2.1:** `frontend/src/features/invoices/` z podkatalogami `types/`, `components/`, `screens/` i barrelami `index.ts`. Typy: `InvoiceType`, `InvoiceCategory` (rent / electricity / water / gas / internet / heating / garbage / other), `InvoiceFilters`, `ApartmentInvoicesResponse`.
+- **2.2:** `InvoicesScreen` + `InvoicesFilters` (select apartment, status paid/unpaid/all, zakres dat `dueDateFrom`/`dueDateTo`). Backend `getInvoices` wzbogacony o obsługę query params `apartmentID`, `isPaid`, `dueDateFrom`, `dueDateTo` + sort po `dueDate` desc.
+- **2.3:** `NewInvoiceScreen` i `EditInvoiceScreen` — współdzielony `InvoiceForm` (react-hook-form + yup) z uploadem PDF przez istniejący endpoint `/upload` (accept="application/pdf"). `NewInvoiceScreen` obsługuje prefill `?apartmentID=` z linku z detali mieszkania (blokuje pole apartamentu).
+- **2.4:** `InvoiceDetailsScreen` — nagłówek z `InvoiceStatusChip` (paid / overdue / unpaid na bazie `dueDate` + `isPaid`), akcje „Mark as paid" / „Mark as unpaid" (PATCH `{ isPaid, paidDate }`), edycja, podgląd dokumentu (otwarcie presigned URL z `/upload/:filename` w nowej karcie).
+- **2.5:** Nowy komponent `ApartmentInvoicesSection` dopięty do `ApartmentDetailsScreen` — pokazuje listę faktur dla mieszkania oraz agregaty (total / paid / unpaid / overdue z licznikiem). „Add invoice" prowadzi do `/invoices/new?apartmentID=...`.
+- **2.6:** Backend — nowy endpoint `GET /apartment/:id/invoices` (zwraca `{ invoices, summary }`, gdzie `summary` = `total`, `paidAmount`, `unpaidAmount`, `overdueAmount`, `overdueCount`). Zaimplementowany w `invoice.controller.getInvoicesByApartment` i zarejestrowany w `invoice.routes`.
+- **2.7:** `frontend/src/utils/routes/invoicesRoutes.tsx` z czterema trasami; `routeConfig.tsx` spina je razem; `Navigation` ma nowy element „Invoices" z ikoną `MdReceiptLong` matchujący wszystkie cztery ścieżki.
+- **Bug fix (znany z M1):** `invoice.controller.createInvoice` wykonywał weryfikację apartamentu przez `InvoiceModel.findOne` zamiast `ApartmentModel.findOne` — poprawione. Przy okazji dodana walidacja formatu `ObjectId` oraz strukturalne logi błędów w każdym handlerze. `patchInvoice` obsługuje teraz świadomie pole `isPaid`/`paidDate` (zmiana statusu auto-stempluje `paidDate = now`, cofnięcie zeruje do `null`) i zwraca zaktualizowany dokument.
 
 ---
 
@@ -159,8 +170,6 @@ Cel: dokończyć model ról — obecnie model wspiera `Tenant`, ale nie ma dedyk
 
 ## Rekomendowana kolejność startu (najbliższe 2 sprinty)
 
-**Sprint 1 (w toku):** ~~M1.1–M1.8~~ **[done]**. Pozostało w sprincie: start M2.1–M2.3 (struktura `features/invoices`, ekran listy, formularze). Odblokowane przez zamknięty M1.
+**Sprint 1 (zamknięty):** ~~M1.1–M1.8~~ **[done]** + ~~M2.1–M2.7~~ **[done]**. Wszystkie zadania M1 i M2 zrealizowane, bug `invoice.controller.createInvoice` z changelogu M1 naprawiony razem z UI faktur.
 
-**Sprint 2:** domknięcie M2 + start M3 (dashboard). Po tym sprincie aplikacja będzie **realnie demonstrowalna klientowi** jako MVP v0.9.
-
-**Uwaga:** przy starcie M2 od razu zamknąć bug w `invoice.controller.createInvoice` (wskazany w changelogu M1) — inaczej nowy UI będzie niefunkcjonalny.
+**Sprint 2 (w toku):** start M3 (dashboard, guard logiki wynajmów, auto-toggle `isAvailable`). Po tym sprincie aplikacja będzie **realnie demonstrowalna klientowi** jako MVP v0.9.
