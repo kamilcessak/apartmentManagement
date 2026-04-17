@@ -20,6 +20,7 @@ import { RentalType } from "@features/rentals/types/rental.types";
 import { TenantsListType } from "@features/tenants/types/tenant.type";
 import {
   DashboardResponse,
+  DashboardSkeleton,
   ExpiringLeasesWidget,
   KpiCard,
   UpcomingPaymentsWidget,
@@ -174,7 +175,7 @@ const LandlordHome = () => {
     }, {});
   }, [rentals, tenantsList, tenantsById]);
 
-  if (isDashboardLoading || isApartmentsLoading) return <LoadingView />;
+  if (isDashboardLoading || isApartmentsLoading) return <DashboardSkeleton />;
   if (isDashboardError || !dashboard || isApartmentsError)
     return (
       <ErrorView
