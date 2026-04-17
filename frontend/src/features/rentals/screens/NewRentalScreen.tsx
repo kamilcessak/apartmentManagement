@@ -1,42 +1,68 @@
+import { FC, useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MdChevronLeft } from "react-icons/md";
 import * as yup from "yup";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AxiosError } from "axios";
-import {
-  Button,
-  CircularProgress,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from "@mui/material";
-import { useCallback, useMemo } from "react";
+import { ChevronLeft, Loader2, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
+import { FileItem } from "@components/files";
 import api from "@services/api";
 
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
 import { TenantsListType } from "@features/tenants/types/tenant.type";
-import { DatePicker } from "@mui/x-date-pickers";
-import { FilesSection } from "@components/files";
 import { getApartmentIdFromAddress } from "@utils/apartment";
 
-const schema = yup.object().shape({
-  apartmentID: yup.string().required("Field is required"),
-  tenantID: yup.string().required("Field is required"),
-  startDate: yup.date().required("Field is required"),
-  endDate: yup.date().required("Field is required"),
-  rentalPaymentDay: yup.number().required("Field is required"),
-  monthlyCost: yup.number().required("Field is required"),
-  securityDeposit: yup.number().required("Field is required"),
-  description: yup.string().required("Field is required"),
-});
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const buildSchema = (t: TFunction) =>
+  yup.object().shape({
+    apartmentID: yup
+      .string()
+      .required(t("rentals.newRental.validation.apartmentRequired")),
+    tenantID: yup
+      .string()
+      .required(t("rentals.newRental.validation.tenantRequired")),
+    startDate: yup
+      .date()
+      .typeError(t("rentals.newRental.validation.startDateRequired"))
+      .required(t("rentals.newRental.validation.startDateRequired")),
+    endDate: yup
+      .date()
+      .typeError(t("rentals.newRental.validation.endDateRequired"))
+      .required(t("rentals.newRental.validation.endDateRequired")),
+    rentalPaymentDay: yup
+      .number()
+      .typeError(t("rentals.newRental.validation.paymentDayRequired"))
+      .required(t("rentals.newRental.validation.paymentDayRequired")),
+    monthlyCost: yup
+      .number()
+      .typeError(t("rentals.newRental.validation.monthlyCostRequired"))
+      .required(t("rentals.newRental.validation.monthlyCostRequired")),
+    securityDeposit: yup
+      .number()
+      .typeError(t("rentals.newRental.validation.securityDepositRequired"))
+      .required(t("rentals.newRental.validation.securityDepositRequired")),
+    description: yup
+      .string()
+      .required(t("rentals.newRental.validation.descriptionRequired")),
+  });
 
 type FormValues = {
   apartmentID: string;
@@ -51,18 +77,142 @@ type FormValues = {
   photos?: string[];
 };
 
+type FileEntry = {
+  name: string;
+  type: string;
+  fileName?: string;
+  url?: string;
+};
+
+const toDateInputValue = (value: Date | string | null | undefined): string => {
+  if (!value) return "";
+  if (typeof value === "string") {
+    if (value.length >= 10) return value.slice(0, 10);
+    return value;
+  }
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+};
+
+const toIsoString = (value: Date | string | null | undefined): string => {
+  if (!value) return "";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString();
+};
+
+const RentalFilesBlock: FC<{
+  title: string;
+  addLabel: string;
+  successMessage: string;
+  errorMessage: string;
+  onAdd: (fileName: string) => void;
+  onRemove: (fileName: string) => void;
+}> = ({ title, addLabel, successMessage, errorMessage, onAdd, onRemove }) => {
+  const [files, setFiles] = useState<FileEntry[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(100);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadFile = async (file: File) => {
+    setUploadProgress(0);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setFiles((prev) => [...prev, { name: file.name, type: file.type }]);
+
+    const response = await api.post("/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (progressEvent) => {
+        const total = progressEvent.total ?? 1;
+        setUploadProgress(Math.round((progressEvent.loaded / total) * 100));
+      },
+    });
+    return response;
+  };
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: handleUploadFile,
+    onSuccess: ({ data: { originalName, fileName, url } }) => {
+      onAdd(fileName);
+      setFiles((prev) =>
+        prev.map((e) =>
+          e.name === originalName ? { ...e, fileName, url } : e
+        )
+      );
+      toast(successMessage, { type: "success" });
+    },
+    onError: () =>
+      toast(errorMessage, {
+        type: "error",
+      }),
+  });
+
+  return (
+    <section className="grid gap-3 rounded-md border border-slate-200 p-4">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium text-slate-900">{title}</Label>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isPending}
+          onClick={() => inputRef.current?.click()}
+        >
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+          {addLabel}
+        </Button>
+        <input
+          ref={inputRef}
+          type="file"
+          className="hidden"
+          onChange={(event) => {
+            if (event.target.files?.length) {
+              mutate(event.target.files[0]);
+            }
+            event.target.value = "";
+          }}
+        />
+      </div>
+      {files.length ? (
+        <div className="flex flex-row flex-wrap gap-4">
+          {files.map((file, index) => (
+            <FileItem
+              key={`${title}-${file.name}-${index}`}
+              {...file}
+              isPhoto={
+                file.type.includes("jpeg") || file.type.includes("png")
+              }
+              isDocument={file.type.includes("pdf")}
+              uploadProgress={uploadProgress}
+              setfiles={setFiles}
+              handleRemoveForm={onRemove}
+            />
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+};
+
 export const NewRentalScreen = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const schema = useMemo(() => buildSchema(t), [t]);
 
   const {
     control,
     handleSubmit,
     watch,
     setValue,
-    formState: { errors },
   } = useForm<FormValues>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as never,
     defaultValues: {
       apartmentID: "",
       tenantID: "",
@@ -112,8 +262,10 @@ export const NewRentalScreen = () => {
 
   const handleRemovePhotoFromForm = (url: string) => {
     const currentPhotos = watch("photos") || [];
-    const result = currentPhotos.filter((e) => e !== url);
-    setValue("photos", [...result]);
+    setValue(
+      "photos",
+      currentPhotos.filter((e) => e !== url)
+    );
   };
 
   const handleAddDocumentToForm = (url: string) => {
@@ -123,8 +275,10 @@ export const NewRentalScreen = () => {
 
   const handleRemoveDocumentFromForm = (url: string) => {
     const currentDocuments = watch("documents") || [];
-    const result = currentDocuments.filter((e) => e !== url);
-    setValue("documents", [...result]);
+    setValue(
+      "documents",
+      currentDocuments.filter((e) => e !== url)
+    );
   };
 
   const {
@@ -156,7 +310,7 @@ export const NewRentalScreen = () => {
         queryClient.invalidateQueries({ queryKey: ["rentals", "list"] });
         queryClient.invalidateQueries({ queryKey: ["apartments"] });
         queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-        toast("Rental created successfully", { type: "success" });
+        toast(t("rentals.newRental.successToast"), { type: "success" });
         navigate(-1);
       }
     },
@@ -165,22 +319,20 @@ export const NewRentalScreen = () => {
       if (axiosError.response?.status === 409) {
         toast(
           axiosError.response.data?.error ??
-            "Selected apartment already has an active rental",
+            t("rentals.newRental.conflictFallbackToast"),
           { type: "error" }
         );
         return;
       }
-      toast("An error occurred during creating new rental", { type: "error" });
+      toast(t("rentals.newRental.errorToast"), { type: "error" });
     },
   });
 
   const onSubmit = ({ startDate, endDate, ...data }: FormValues) => {
     mutate({
       ...data,
-      startDate: `${
-        typeof startDate === "object" ? startDate?.toISOString() : ""
-      }`,
-      endDate: `${typeof endDate === "object" ? endDate?.toISOString() : ""}`,
+      startDate: toIsoString(startDate),
+      endDate: toIsoString(endDate),
     });
   };
 
@@ -209,211 +361,335 @@ export const NewRentalScreen = () => {
 
   return (
     <RouteContent>
-      <header className="flex flex-row items-center p-8 border-b-2 border-gray-200">
-        <a onClick={() => navigate(-1)}>
-          <MdChevronLeft size={48} />
-        </a>
-        <div className="flex flex-1 items-center justify-center">
-          <h1 className="text-3xl">Add new rental</h1>
-        </div>
-      </header>
-      <div className="flex flex-1 flex-col w-full overflow-y-scroll scrollbar-hide h-full gap-4 p-8">
-        {apartmentsList?.length ? (
-          <FormControl fullWidth error={!!errors.apartmentID?.message}>
-            <InputLabel id="apartmentIdSelectLabel">Apartment ID</InputLabel>
-            <Controller
-              control={control}
-              name="apartmentID"
-              render={({ field, fieldState }) => (
-                <>
-                  <Select
-                    labelId="apartmentIdSelectLabel"
-                    id="apartmentIdSelect"
-                    value={
-                      field?.value?.length
-                        ? apartmentsList.find((e) => e._id === field.value)?._id
-                        : ""
-                    }
-                    label="Age"
-                    onChange={(event) => field.onChange(event.target.value)}
-                  >
-                    {apartmentsList.map((e, i) => (
-                      <MenuItem key={`apartment-${e._id}-${i}`} value={e._id}>
-                        {getApartmentIdFromAddress(e.address)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <FormHelperText>{fieldState.error?.message}</FormHelperText>
-                </>
-              )}
-            />
-          </FormControl>
-        ) : null}
-        {tenantsList?.length ? (
-          <FormControl fullWidth error={!!errors.tenantID?.message}>
-            <InputLabel id="tenantIdSelectLabel">Tenant ID</InputLabel>
-            <Controller
-              control={control}
-              name="tenantID"
-              render={({ field, fieldState }) => (
-                <>
-                  <Select
-                    labelId="tenantIdSelectLabel"
-                    id="tenantIdSelect"
-                    value={
-                      field?.value?.length
-                        ? tenantsList.find((e) => e._id === field.value)?._id
-                        : ""
-                    }
-                    label="Age"
-                    onChange={(event) => field.onChange(event.target.value)}
-                  >
-                    {tenantsList.map((e, i) => (
-                      <MenuItem key={`tenant-${e._id}-${i}`} value={e._id}>
-                        {`${e.firstName} ${e.lastName}`}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <FormHelperText>{fieldState.error?.message}</FormHelperText>
-                </>
-              )}
-            />
-          </FormControl>
-        ) : null}
-        <Controller
-          name="startDate"
-          control={control}
-          render={({ field, fieldState }) => (
-            <DatePicker
-              label="Rental start date"
-              value={field.value}
-              onChange={(newValue) => field.onChange(newValue)}
-              format="DD.MM.YYYY"
-              slotProps={{
-                textField: {
-                  error: !!fieldState.error,
-                  helperText: fieldState.error?.message,
-                } as React.ComponentProps<typeof TextField>,
-              }}
-            />
-          )}
-        />
-        <Controller
-          name="endDate"
-          control={control}
-          render={({ field, fieldState }) => (
-            <DatePicker
-              label="Rental end date"
-              value={field.value}
-              onChange={(newValue) => field.onChange(newValue)}
-              format="DD.MM.YYYY"
-              slotProps={{
-                textField: {
-                  error: !!fieldState.error,
-                  helperText: fieldState.error?.message,
-                } as React.ComponentProps<typeof TextField>,
-              }}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="rentalPaymentDay"
-          render={({ field, fieldState }) => (
-            <TextField
-              disabled={isPending}
-              label="Rental payment day"
-              value={field.value ?? ""}
-              type="number"
-              onChange={field.onChange}
-              variant="outlined"
-              error={!!fieldState.error?.message}
-              helperText={fieldState.error?.message}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="monthlyCost"
-          render={({ field, fieldState }) => (
-            <TextField
-              disabled={isPending}
-              label="Monthly cost"
-              value={field.value ?? ""}
-              type="number"
-              onChange={field.onChange}
-              variant="outlined"
-              error={!!fieldState.error?.message}
-              helperText={fieldState.error?.message}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="securityDeposit"
-          render={({ field, fieldState }) => (
-            <TextField
-              disabled={isPending}
-              label="Security deposit"
-              value={field.value ?? ""}
-              type="number"
-              onChange={field.onChange}
-              variant="outlined"
-              error={!!fieldState.error?.message}
-              helperText={fieldState.error?.message}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="description"
-          render={({ field, fieldState }) => (
-            <TextField
-              disabled={isPending}
-              label="Additional description"
-              value={field.value}
-              multiline
-              onChange={field.onChange}
-              variant="outlined"
-              error={!!fieldState.error?.message}
-              helperText={fieldState.error?.message}
-            />
-          )}
-        />
-        <FilesSection
-          title={"Photos"}
-          handleAddForm={handleAddPhotoToForm}
-          handleRemoveForm={handleRemovePhotoFromForm}
-        />
-        <FilesSection
-          title={"Documents"}
-          handleAddForm={handleAddDocumentToForm}
-          handleRemoveForm={handleRemoveDocumentFromForm}
-        />
-        <div className="flex justify-end w-full gap-2">
+      <div className="flex h-full flex-col bg-slate-50">
+        <header className="flex flex-row items-center gap-3 px-8 py-6">
           <Button
-            className="flex flex-1"
-            color="success"
-            size="large"
-            variant="contained"
-            onClick={handleSubmit(onSubmit)}
-            disabled={isPending}
-            style={{ textTransform: "none" }}
-            startIcon={
-              isPending ? <CircularProgress size={16} color="primary" /> : null
-            }
-          >
-            Add
-          </Button>
-          <Button
-            size="large"
-            className="flex flex-1"
-            variant="outlined"
-            style={{ textTransform: "none" }}
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => navigate(-1)}
+            aria-label={t("rentals.newRental.back")}
           >
-            Cancel
+            <ChevronLeft className="h-5 w-5" />
           </Button>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-semibold text-slate-900">
+              {t("rentals.newRental.title")}
+            </h1>
+            <p className="text-sm text-slate-500">
+              {t("rentals.newRental.description")}
+            </p>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-y-auto px-8 pb-8">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="mx-auto w-full max-w-4xl"
+          >
+            <Card className="border-slate-200 shadow-sm">
+              <CardContent className="grid gap-6 p-6">
+                {apartmentsList?.length ? (
+                  <div className="grid gap-2">
+                    <Label htmlFor="apartmentID" className="text-slate-900">
+                      {t("rentals.newRental.fields.apartment.label")}
+                    </Label>
+                    <Controller
+                      control={control}
+                      name="apartmentID"
+                      render={({ field, fieldState }) => (
+                        <>
+                          <Select
+                            value={field.value || undefined}
+                            onValueChange={field.onChange}
+                            disabled={isPending}
+                          >
+                            <SelectTrigger id="apartmentID">
+                              <SelectValue
+                                placeholder={t(
+                                  "rentals.newRental.fields.apartment.placeholder"
+                                )}
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {apartmentsList.map((e) => (
+                                <SelectItem key={e._id} value={e._id}>
+                                  {getApartmentIdFromAddress(e.address)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {fieldState.error?.message ? (
+                            <p className="text-xs text-destructive">
+                              {fieldState.error.message}
+                            </p>
+                          ) : null}
+                        </>
+                      )}
+                    />
+                  </div>
+                ) : null}
+
+                {tenantsList?.length ? (
+                  <div className="grid gap-2">
+                    <Label htmlFor="tenantID" className="text-slate-900">
+                      {t("rentals.newRental.fields.tenant.label")}
+                    </Label>
+                    <Controller
+                      control={control}
+                      name="tenantID"
+                      render={({ field, fieldState }) => (
+                        <>
+                          <Select
+                            value={field.value || undefined}
+                            onValueChange={field.onChange}
+                            disabled={isPending}
+                          >
+                            <SelectTrigger id="tenantID">
+                              <SelectValue
+                                placeholder={t(
+                                  "rentals.newRental.fields.tenant.placeholder"
+                                )}
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {tenantsList.map((e) => (
+                                <SelectItem key={e._id} value={e._id}>
+                                  {`${e.firstName} ${e.lastName}`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {fieldState.error?.message ? (
+                            <p className="text-xs text-destructive">
+                              {fieldState.error.message}
+                            </p>
+                          ) : null}
+                        </>
+                      )}
+                    />
+                  </div>
+                ) : null}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Controller
+                    control={control}
+                    name="startDate"
+                    render={({ field, fieldState }) => (
+                      <div className="grid gap-2">
+                        <Label htmlFor="startDate" className="text-slate-900">
+                          {t("rentals.newRental.fields.startDate.label")}
+                        </Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          disabled={isPending}
+                          value={toDateInputValue(field.value)}
+                          onChange={(e) => field.onChange(e.target.value || null)}
+                          onBlur={field.onBlur}
+                        />
+                        {fieldState.error?.message ? (
+                          <p className="text-xs text-destructive">
+                            {fieldState.error.message}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="endDate"
+                    render={({ field, fieldState }) => (
+                      <div className="grid gap-2">
+                        <Label htmlFor="endDate" className="text-slate-900">
+                          {t("rentals.newRental.fields.endDate.label")}
+                        </Label>
+                        <Input
+                          id="endDate"
+                          type="date"
+                          disabled={isPending}
+                          value={toDateInputValue(field.value)}
+                          onChange={(e) => field.onChange(e.target.value || null)}
+                          onBlur={field.onBlur}
+                        />
+                        {fieldState.error?.message ? (
+                          <p className="text-xs text-destructive">
+                            {fieldState.error.message}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <Controller
+                    control={control}
+                    name="rentalPaymentDay"
+                    render={({ field, fieldState }) => (
+                      <div className="grid gap-2">
+                        <Label
+                          htmlFor="rentalPaymentDay"
+                          className="text-slate-900"
+                        >
+                          {t("rentals.newRental.fields.paymentDay.label")}
+                        </Label>
+                        <Input
+                          id="rentalPaymentDay"
+                          type="number"
+                          min={1}
+                          max={31}
+                          disabled={isPending}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
+                          onBlur={field.onBlur}
+                        />
+                        {fieldState.error?.message ? (
+                          <p className="text-xs text-destructive">
+                            {fieldState.error.message}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="monthlyCost"
+                    render={({ field, fieldState }) => (
+                      <div className="grid gap-2">
+                        <Label htmlFor="monthlyCost" className="text-slate-900">
+                          {t("rentals.newRental.fields.monthlyCost.label")}
+                        </Label>
+                        <Input
+                          id="monthlyCost"
+                          type="number"
+                          min={0}
+                          disabled={isPending}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
+                          onBlur={field.onBlur}
+                        />
+                        {fieldState.error?.message ? (
+                          <p className="text-xs text-destructive">
+                            {fieldState.error.message}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                  />
+                  <Controller
+                    control={control}
+                    name="securityDeposit"
+                    render={({ field, fieldState }) => (
+                      <div className="grid gap-2">
+                        <Label
+                          htmlFor="securityDeposit"
+                          className="text-slate-900"
+                        >
+                          {t("rentals.newRental.fields.securityDeposit.label")}
+                        </Label>
+                        <Input
+                          id="securityDeposit"
+                          type="number"
+                          min={0}
+                          disabled={isPending}
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? null
+                                : Number(e.target.value)
+                            )
+                          }
+                          onBlur={field.onBlur}
+                        />
+                        {fieldState.error?.message ? (
+                          <p className="text-xs text-destructive">
+                            {fieldState.error.message}
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                  />
+                </div>
+
+                <Controller
+                  control={control}
+                  name="description"
+                  render={({ field, fieldState }) => (
+                    <div className="grid gap-2">
+                      <Label htmlFor="description" className="text-slate-900">
+                        {t("rentals.newRental.fields.description.label")}
+                      </Label>
+                      <Textarea
+                        id="description"
+                        rows={4}
+                        className="min-h-[120px]"
+                        disabled={isPending}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                      {fieldState.error?.message ? (
+                        <p className="text-xs text-destructive">
+                          {fieldState.error.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                />
+
+                <RentalFilesBlock
+                  title={t("rentals.newRental.uploads.photosTitle")}
+                  addLabel={t("rentals.newRental.uploads.addButton")}
+                  successMessage={t("rentals.newRental.uploads.uploadSuccess")}
+                  errorMessage={t("rentals.newRental.uploads.uploadError")}
+                  onAdd={handleAddPhotoToForm}
+                  onRemove={handleRemovePhotoFromForm}
+                />
+
+                <RentalFilesBlock
+                  title={t("rentals.newRental.uploads.documentsTitle")}
+                  addLabel={t("rentals.newRental.uploads.addButton")}
+                  successMessage={t("rentals.newRental.uploads.uploadSuccess")}
+                  errorMessage={t("rentals.newRental.uploads.uploadError")}
+                  onAdd={handleAddDocumentToForm}
+                  onRemove={handleRemoveDocumentFromForm}
+                />
+              </CardContent>
+
+              <CardFooter className="flex justify-end gap-2 border-t border-slate-100 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(-1)}
+                  disabled={isPending}
+                >
+                  {t("rentals.newRental.cancel")}
+                </Button>
+                <Button type="submit" variant="default" disabled={isPending}>
+                  {isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : null}
+                  {t("rentals.newRental.submit")}
+                </Button>
+              </CardFooter>
+            </Card>
+          </form>
         </div>
       </div>
     </RouteContent>

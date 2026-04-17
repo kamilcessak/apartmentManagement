@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { RentalType } from "../types/rental.types";
 import { RentalItem } from "../components";
 
 export const RentalsScreen = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
@@ -55,16 +57,19 @@ export const RentalsScreen = () => {
     <RouteContent sectionStyle={{ flexDirection: "column" }}>
       <div className="flex h-full flex-col overflow-hidden bg-slate-50 p-6 lg:p-8">
         <header className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            List of your rentals
-          </h1>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+              {t("rentals.title")}
+            </h1>
+            <p className="text-sm text-slate-500">{t("rentals.subtitle")}</p>
+          </div>
           <Button
             variant="default"
             onClick={handleAddNewRental}
             className="self-start sm:self-auto"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add new rental
+            {t("rentals.addRental")}
           </Button>
         </header>
 
@@ -75,7 +80,7 @@ export const RentalsScreen = () => {
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Szukaj wynajmu..."
+                placeholder={t("rentals.searchPlaceholder")}
                 className="pl-9"
               />
             </div>
@@ -86,16 +91,16 @@ export const RentalsScreen = () => {
               <TableHeader>
                 <TableRow className="border-b border-slate-200 hover:bg-transparent">
                   <TableHead className="pl-6 text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Adres
+                    {t("rentals.columns.address")}
                   </TableHead>
                   <TableHead className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Najemca
+                    {t("rentals.columns.tenant")}
                   </TableHead>
                   <TableHead className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Status
+                    {t("rentals.columns.status")}
                   </TableHead>
                   <TableHead className="pr-6 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Akcje
+                    {t("rentals.columns.actions")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -114,7 +119,7 @@ export const RentalsScreen = () => {
                       colSpan={4}
                       className="py-12 text-center text-sm text-slate-500"
                     >
-                      No rentals added yet
+                      {t("rentals.empty")}
                     </TableCell>
                   </TableRow>
                 )}

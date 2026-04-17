@@ -3,6 +3,7 @@ import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -55,10 +57,10 @@ export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
     mutationFn: async (id: string) => api.delete(`/rental/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rentals", "list"] });
-      toast("Rental deleted successfully", { type: "success" });
+      toast(t("rentals.deleteSuccess"), { type: "success" });
     },
     onError: () => {
-      toast("An error occurred during deleting rental", { type: "error" });
+      toast(t("rentals.deleteError"), { type: "error" });
     },
   });
 
@@ -74,12 +76,14 @@ export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
     );
   }
 
+  const unassignedLabel = t("rentals.unassigned");
   const addressLabel = apartmentData?.address
     ? getApartmentIdFromAddress(apartmentData.address)
-    : "—";
+    : unassignedLabel;
   const tenantLabel = tenantData
-    ? `${tenantData.firstName ?? ""} ${tenantData.lastName ?? ""}`.trim() || "—"
-    : "—";
+    ? `${tenantData.firstName ?? ""} ${tenantData.lastName ?? ""}`.trim() ||
+      unassignedLabel
+    : unassignedLabel;
 
   if (searchQuery) {
     const haystack = `${addressLabel} ${tenantLabel}`.toLowerCase();
@@ -97,7 +101,7 @@ export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
       </TableCell>
 
       <TableCell className="py-3">
-        <Badge variant="outline">Active</Badge>
+        <Badge variant="outline">{t("rentals.status.active")}</Badge>
       </TableCell>
 
       <TableCell className="py-3 pr-6 text-right">
@@ -105,8 +109,8 @@ export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Edit rental"
-            title="Edit rental"
+            aria-label={t("rentals.actions.edit")}
+            title={t("rentals.actions.edit")}
             onClick={() => navigate(`/rental/${rental._id}`)}
           >
             <Pencil className="h-4 w-4" />
@@ -114,8 +118,8 @@ export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Delete rental"
-            title="Delete rental"
+            aria-label={t("rentals.actions.delete")}
+            title={t("rentals.actions.delete")}
             disabled={isDeleting}
             onClick={() => deleteRental(rental._id)}
             className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"

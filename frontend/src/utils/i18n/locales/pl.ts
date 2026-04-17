@@ -252,6 +252,85 @@ const pl = {
         },
       },
     },
+    rentals: {
+      title: "Wynajmy",
+      subtitle: "Zarządzaj umowami najmu swoich mieszkań",
+      addRental: "Dodaj wynajem",
+      searchPlaceholder: "Szukaj wynajmu...",
+      empty: "Brak wynajmów do wyświetlenia",
+      emptySearch: "Żaden wynajem nie pasuje do wyszukiwania",
+      unassigned: "—",
+      status: {
+        active: "Aktywny",
+      },
+      columns: {
+        address: "Adres",
+        tenant: "Najemca",
+        status: "Status",
+        actions: "Akcje",
+      },
+      actions: {
+        edit: "Edytuj wynajem",
+        delete: "Usuń wynajem",
+      },
+      deleteSuccess: "Wynajem został usunięty",
+      deleteError: "Nie udało się usunąć wynajmu",
+      newRental: {
+        back: "Wróć",
+        title: "Dodaj nowy wynajem",
+        description: "Utwórz umowę najmu dla wybranego mieszkania",
+        cancel: "Anuluj",
+        submit: "Dodaj",
+        successToast: "Wynajem został utworzony",
+        errorToast: "Wystąpił błąd podczas tworzenia wynajmu",
+        conflictFallbackToast: "Wybrane mieszkanie ma już aktywny wynajem",
+        fields: {
+          apartment: {
+            label: "Identyfikator mieszkania",
+            placeholder: "Wybierz mieszkanie",
+          },
+          tenant: {
+            label: "Identyfikator najemcy",
+            placeholder: "Wybierz najemcę",
+          },
+          startDate: {
+            label: "Data rozpoczęcia wynajmu",
+          },
+          endDate: {
+            label: "Data zakończenia wynajmu",
+          },
+          paymentDay: {
+            label: "Dzień płatności czynszu",
+          },
+          monthlyCost: {
+            label: "Czynsz miesięczny",
+          },
+          securityDeposit: {
+            label: "Kaucja",
+          },
+          description: {
+            label: "Dodatkowy opis",
+          },
+        },
+        uploads: {
+          photosTitle: "Zdjęcia",
+          documentsTitle: "Dokumenty",
+          addButton: "Dodaj",
+          uploadSuccess: "Plik został wysłany",
+          uploadError: "Nie udało się wysłać pliku. Spróbuj ponownie",
+        },
+        validation: {
+          apartmentRequired: "Mieszkanie jest wymagane",
+          tenantRequired: "Najemca jest wymagany",
+          startDateRequired: "Data rozpoczęcia jest wymagana",
+          endDateRequired: "Data zakończenia jest wymagana",
+          paymentDayRequired: "Dzień płatności jest wymagany",
+          monthlyCostRequired: "Czynsz miesięczny jest wymagany",
+          securityDepositRequired: "Kaucja jest wymagana",
+          descriptionRequired: "Opis jest wymagany",
+        },
+      },
+    },
     apartments: {
       title: "Mieszkania",
       subtitle: "Zarządzaj swoją listą apartamentów",

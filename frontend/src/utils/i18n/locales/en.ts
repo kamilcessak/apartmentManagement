@@ -234,6 +234,85 @@ const en = {
         },
       },
     },
+    rentals: {
+      title: "Rentals",
+      subtitle: "Manage rental agreements for your apartments",
+      addRental: "Add rental",
+      searchPlaceholder: "Search rentals...",
+      empty: "No rentals to display",
+      emptySearch: "No rental matches your search",
+      unassigned: "—",
+      status: {
+        active: "Active",
+      },
+      columns: {
+        address: "Address",
+        tenant: "Tenant",
+        status: "Status",
+        actions: "Actions",
+      },
+      actions: {
+        edit: "Edit rental",
+        delete: "Delete rental",
+      },
+      deleteSuccess: "Rental deleted successfully",
+      deleteError: "Unable to delete rental",
+      newRental: {
+        back: "Back",
+        title: "Add new rental",
+        description: "Create a rental agreement for the selected apartment",
+        cancel: "Cancel",
+        submit: "Add",
+        successToast: "Rental created successfully",
+        errorToast: "An error occurred while creating the rental",
+        conflictFallbackToast: "Selected apartment already has an active rental",
+        fields: {
+          apartment: {
+            label: "Apartment ID",
+            placeholder: "Select apartment",
+          },
+          tenant: {
+            label: "Tenant ID",
+            placeholder: "Select tenant",
+          },
+          startDate: {
+            label: "Rental start date",
+          },
+          endDate: {
+            label: "Rental end date",
+          },
+          paymentDay: {
+            label: "Rental payment day",
+          },
+          monthlyCost: {
+            label: "Monthly cost",
+          },
+          securityDeposit: {
+            label: "Security deposit",
+          },
+          description: {
+            label: "Additional description",
+          },
+        },
+        uploads: {
+          photosTitle: "Photos",
+          documentsTitle: "Documents",
+          addButton: "Add",
+          uploadSuccess: "File uploaded successfully",
+          uploadError: "Could not upload the file. Please try again",
+        },
+        validation: {
+          apartmentRequired: "Apartment is required",
+          tenantRequired: "Tenant is required",
+          startDateRequired: "Start date is required",
+          endDateRequired: "End date is required",
+          paymentDayRequired: "Payment day is required",
+          monthlyCostRequired: "Monthly cost is required",
+          securityDepositRequired: "Security deposit is required",
+          descriptionRequired: "Description is required",
+        },
+      },
+    },
     apartments: {
       title: "Apartments",
       subtitle: "Manage your apartments list",
