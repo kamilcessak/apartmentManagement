@@ -1,3 +1,5 @@
+export type UserRole = 'Tenant' | 'Landlord';
+
 export type UserType = {
     id: string;
     isEmailVerified: boolean;
@@ -5,5 +7,5 @@ export type UserType = {
     password: string;
     phoneNumber: string;
     invitationCode?: string;
-    role: 'Tenant' | 'Landlord';
+    role: UserRole;
 };

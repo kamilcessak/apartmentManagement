@@ -13,7 +13,7 @@
 - Infrastruktura: Docker Compose (backend, frontend, mongodb), feature-first struktura, React Query + MUI + Tailwind.
 - **[M1 done]** Fundamenty: `/api/v1`, `VITE_API_URL`, globalny error handler Express, axios 401 interceptor, `ObjectId` + `ref` na kluczach obcych, `{ timestamps: true }` na wszystkich schematach, ujednolicony npm jako package manager, ESLint `no-console` + usunięte debug logi.
 
-**Szacowana gotowość MVP: ~80%** (po zamknięciu M1 i M2) — domknięty kluczowy gap (Invoices UI); przed MVP zostaje dashboard + logika wynajmów (M3), role/Tenant flow (M4), twardnienie bezpieczeństwa i jakości (M5) oraz gotowość do deploy (M6).
+**Szacowana gotowość MVP: ~90%** (po zamknięciu M1, M2, M3 P0 i M4) — domknięty kluczowy gap (Invoices UI), dashboard z realną logiką wynajmów oraz pełny model ról (Landlord/Tenant) z zaproszeniami i portalem Tenanta. Przed MVP zostaje twardnienie bezpieczeństwa i jakości (M5), gotowość do deploy (M6) oraz opcjonalny generator faktur miesięcznych (M3.7).
 
 ---
 
@@ -113,19 +113,38 @@ Cel: zamienić aplikację z CRUDa w realne narzędzie zarządcze.
 
 ---
 
-### M4 — Role, uprawnienia, zaproszenia Tenantów (1–2 tyg.)
+### M4 — Role, uprawnienia, zaproszenia Tenantów (1–2 tyg.) — **ZAMKNIĘTY**
 
 Cel: dokończyć model ról — obecnie model wspiera `Tenant`, ale nie ma dedykowanego flow.
 
-| #    | Zadanie                                                                                                                                                      | Priorytet |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- |
-| 4.1  | Middleware `requireRole('Landlord' \| 'Tenant')` + enforcement na wszystkich routerach                                                                       | P0        |
-| 4.2  | Flow zaproszenia Tenanta: Landlord generuje `invitationCode` → mail do Tenanta → rejestracja z kodem wiąże konto Tenanta z `owner` + `assignedApartmentID`   | P0        |
-| 4.3  | Ekran Tenanta (widok ograniczony): „Moje mieszkanie", „Moje faktury", „Moje dokumenty" (read-only)                                                           | P1        |
-| 4.4  | Rozdzielenie nawigacji w `Navigation` wg `user.role`                                                                                                         | P0        |
-| 4.5  | Endpoint `GET /me` zamiast samego `GET /user` (spójna nazwa) + FE hook `useCurrentUser`                                                                      | P1        |
+| #    | Zadanie                                                                                                                                                      | Priorytet | Status |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- | ------ |
+| 4.1  | Middleware `requireRole('Landlord' \| 'Tenant')` + enforcement na wszystkich routerach                                                                       | P0        | done   |
+| 4.2  | Flow zaproszenia Tenanta: Landlord generuje `invitationCode` → mail do Tenanta → rejestracja z kodem wiąże konto Tenanta z `owner` + `assignedApartmentID`   | P0        | done   |
+| 4.3  | Ekran Tenanta (widok ograniczony): „Moje mieszkanie", „Moje faktury", „Moje dokumenty" (read-only)                                                           | P1        | done   |
+| 4.4  | Rozdzielenie nawigacji w `Navigation` wg `user.role`                                                                                                         | P0        | done   |
+| 4.5  | Endpoint `GET /me` zamiast samego `GET /user` (spójna nazwa) + FE hook `useCurrentUser`                                                                      | P1        | done   |
 
-**Definition of Done:** dwie persony (Landlord, Tenant) mają osobne, bezpieczne widoki; Tenant nie może modyfikować cudzych danych.
+**Definition of Done:** dwie persony (Landlord, Tenant) mają osobne, bezpieczne widoki; Tenant nie może modyfikować cudzych danych. **Osiągnięte** — JWT zawiera rolę, `requireRole` pilnuje wszystkich endpointów zarządczych, Tenant po zalogowaniu trafia do portalu z trzema read-only ekranami (`/my-apartment`, `/my-invoices`, `/my-documents`), a cały CRUD (Apartments / Tenants / Rentals / Invoices / Dashboard) jest dostępny wyłącznie dla `Landlord`.
+
+#### Szczegóły implementacji (M4 changelog)
+
+- **4.5:** Backend — `GET /me` i `PATCH /me` zarejestrowane w `user.routes.ts` (alias dla dotychczasowego `/user`, którego nie zrywamy ze względu na kompatybilność). Payload `getUser` zależy teraz od roli: Landlord dostaje `apartments[]` (tak jak wcześniej), Tenant — `tenant` (rekord `TenantModel` sparowany po `userID`). Frontend — nowy hook `useCurrentUser` (`frontend/src/hooks/useCurrentUser.ts`) oparty o React Query z kluczem `["currentUser"]`, staleTime 60s, `enabled: isAuthenticated()`. Zwraca `{ user, role, isLandlord, isTenant, isLoading, isError, refetch }`. Pod spodem nowy typ `CurrentUser` w `frontend/src/types/user.type.ts`. `LoginScreen` robi `queryClient.invalidateQueries(["currentUser"])` po sukcesie, a `Navigation.logOut` → `removeQueries(["currentUser"])`, żeby nie leakować stanu między sesjami.
+- **4.1:** Nowy middleware `backend/middlewares/role.middleware.ts` — `requireRole(...allowedRoles)` czyta `req.user?.role` (ustawianego już przez `authenticate` z dekodowanego JWT) i zwraca 403 `This resource requires role: Landlord or Tenant` gdy brak dopasowania. JWT z `loginUser` dostaje teraz `{ id, email, role }` — token aktywacyjny konta pozostaje minimalny (`{ id }`, 1h). `requireRole('Landlord')` nałożony na wszystkie endpointy zarządcze: `apartment.routes`, `tenant.routes`, `rental.routes`, `invoice.routes`, `dashboard.routes`. Tenant-specific endpointy (`/me/apartment`, `/me/invoices`, `/me/documents`) pilnuje `requireRole('Tenant')`. Statyki `/uploads` i `/me`, `/user`, `/login`, `/register`, `/activate-account` pozostają role-agnostyczne (pierwsze dwa za `authenticate`, ostatnie trzy publiczne).
+- **4.2:** Model `Tenant` dostał opcjonalne pole `userID: ObjectId | null` (ref `User`) + index na `invitationCode`. Flow: Landlord tworzy Tenanta (`POST /tenant`) — `invitationCode` generowany w `createTenant` + automatyczny mail z kodem i linkiem `${FRONTEND_URL}/register?invitationCode=<CODE>&email=<encoded>`. Tenant dostaje `isActive: false` aż do aktywacji konta. Nowy endpoint `POST /tenant/:id/invite` (`resendTenantInvitation`) pozwala ponowić wysyłkę (blokowany 400 gdy Tenant już ma sparowane `userID`). `registerUser` (backend) nie ufa już surowemu `invitationCode` — normalizuje go do upper-case, sprawdza w `TenantModel.findOne({ invitationCode })`: 400 gdy brak, 400 gdy już użyty, 400 gdy email nie pasuje do rekordu. Po utworzeniu `User` z `role: 'Tenant'` od razu linkuje `tenant.userID = user._id`; po aktywacji maila (`activateAccount`) flipuje `tenant.isActive = true`. `patchTenant` blacklistuje `owner` / `invitationCode` / `userID` z payloadu, żeby Landlord nie potrafił przypadkiem nadpisać identyfikatorów. Frontend — `RegisterScreen` czyta `?email=` i `?invitationCode=` z URL-a, pre-fill + lock pól, dodaje banner „Accept your tenant invitation"; `TenantDetailsScreen` dostaje `Chip` „Pending invitation" / „Account linked" i przycisk „Resend invitation" (tylko dla Pending).
+- **4.4:** `Navigation` stał się role-aware — dwa osobne zestawy top-nav (`landlordNavItems`: Home / Tenants / Apartments / Rentals / Invoices, `tenantNavItems`: Home / My apartment / My invoices / My documents) wybierane po `useCurrentUser().isTenant|isLandlord`. Dopóki rola nie dojdzie z `/me` — `topNavItems` jest puste, żeby nie flashować Landlord-UI Tenantowi. `UserItem` w stopce pokazuje realne `firstName/lastName` (albo fallback z `tenant` / `email`) + `role` jako caption.
+- **4.3:** Nowy feature-folder `frontend/src/features/tenant-portal/` (`screens/`, `types/`, `index.ts`). Trzy ekrany: `MyApartmentScreen` (`GET /me/apartment` — dane mieszkania + dane kontaktowe Tenanta, obsługuje 404 „No apartment assigned"), `MyInvoicesScreen` (`GET /me/invoices` — lista z `InvoiceStatusChip` (reuse z feature invoices) + 4 agregaty: total / paid / unpaid / overdue), `MyDocumentsScreen` (`GET /me/documents` — 3 sekcje: apartment documents, rental documents, invoice documents; każda ze swoim licznikiem i kafelkami z akcją „Preview" otwierającą presigned URL z `/upload/:filename`). Trasy w `tenantPortalRoutes.tsx`; `routeConfig.tsx` zwraca osobny zestaw routów w zależności od `role` (`getRoutes(isLoggedIn, role)`) — Tenant widzi `/`, `/login`, `/register`, `/home`, `/settings`, `/my-apartment`, `/my-invoices`, `/my-documents`; Landlord — poprzedni zestaw Landlord-only. `HomeScreen` po stronie UI też się rozgałęzia: Tenant dostaje `TenantHome` (karty-linki do 3 ekranów portalu), Landlord — dotychczasowy dashboard z KPI i widgetami. Backendowe widoki czytają dane wyłącznie dla przypiętego Tenanta (po `TenantModel.findOne({ userID })` → `assignedApartmentID`), więc Tenant nie ma żadnej ścieżki do cudzych danych — nawet jak wywoła `/apartments` ręcznie, dostanie 403 z `requireRole('Landlord')`.
+
+#### Nowe i zmienione endpointy (M4 cheat-sheet)
+
+| Metoda | Ścieżka                         | Rola     | Uwagi                                                                 |
+| ------ | ------------------------------- | -------- | --------------------------------------------------------------------- |
+| GET    | `/api/v1/me`                    | any      | Alias do `/user`, zwraca `user` + `apartments` (Landlord) / `tenant` (Tenant). |
+| PATCH  | `/api/v1/me`                    | any      | Alias do `/user` (pola `firstName`/`lastName`/`phoneNumber`).         |
+| GET    | `/api/v1/me/apartment`          | Tenant   | Mieszkanie przypięte przez `Tenant.assignedApartmentID`.              |
+| GET    | `/api/v1/me/invoices`           | Tenant   | Faktury per assigned apartment + summary (paid/unpaid/overdue).       |
+| GET    | `/api/v1/me/documents`          | Tenant   | Dokumenty mieszkania, aktywnego wynajmu i faktur (tylko URL-e plików).|
+| POST   | `/api/v1/tenant/:id/invite`     | Landlord | Ponowna wysyłka maila z zaproszeniem (blokowany gdy `userID` ustawiony).|
 
 ---
 
@@ -186,4 +205,6 @@ Cel: dokończyć model ról — obecnie model wspiera `Tenant`, ale nie ma dedyk
 
 **Sprint 1 (zamknięty):** ~~M1.1–M1.8~~ **[done]** + ~~M2.1–M2.7~~ **[done]**. Wszystkie zadania M1 i M2 zrealizowane, bug `invoice.controller.createInvoice` z changelogu M1 naprawiony razem z UI faktur.
 
-**Sprint 2 (P0 zamknięte):** M3.1–M3.6 done (dashboard z KPI + 2 widgety, guard na tworzenie wynajmu, auto-toggle `Apartment.isAvailable`, „End rental" + sprzątanie na delete), bug `patchRental` (walidacja tenanta przez `TenantModel`) naprawiony. Pozostaje M3.7 (generator faktur miesięcznych, P1) — do przeniesienia do końcówki M3 lub M4. Aplikacja jest **realnie demonstrowalna klientowi** jako MVP v0.9.
+**Sprint 2 (zamknięty):** ~~M3.1–M3.6~~ **[done]** (dashboard z KPI + 2 widgety, guard na tworzenie wynajmu, auto-toggle `Apartment.isAvailable`, „End rental" + sprzątanie na delete), bug `patchRental` (walidacja tenanta przez `TenantModel`) naprawiony. Pozostaje M3.7 (generator faktur miesięcznych, P1) — domknięcie razem z M5 / M6.
+
+**Sprint 3 (zamknięty):** ~~M4.1–M4.5~~ **[done]** — rola w JWT + `requireRole` na wszystkich routerach, flow zaproszenia Tenanta (auto-mail z `invitationCode` + `?invitationCode=...&email=...` w `RegisterScreen`), portal Tenanta (`/my-apartment`, `/my-invoices`, `/my-documents`), role-aware `Navigation`/`HomeScreen`, hook `useCurrentUser`, endpointy `GET/PATCH /me` + `GET /me/*`. Aplikacja obsługuje obie persony end-to-end; Tenant nie ma ścieżki do danych innych najemców. **MVP v0.95** — pozostaje M5 (security/QA) i M6 (prod readiness).

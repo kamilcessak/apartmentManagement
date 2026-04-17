@@ -3,14 +3,13 @@ export type TenantType = {
   firstName: string;
   lastName: string;
   address: string;
-  // apartmentId: string;
   invitationCode: string;
   isActive: boolean;
   owner: string;
-  // rentAmount: string;
-  // rentDueDate: string;
   email: string;
   phoneNumber: string;
+  userID?: string | null;
+  assignedApartmentID?: string | null;
 };
 
 export type TenantDetailsFormType = {

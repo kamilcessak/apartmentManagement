@@ -1,3 +1,5 @@
+import { ReactElement } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   MdHome,
@@ -7,6 +9,7 @@ import {
   MdLogout,
   MdRealEstateAgent,
   MdReceiptLong,
+  MdDescription,
 } from "react-icons/md";
 import { toast } from "react-toastify";
 
@@ -14,13 +17,74 @@ import { IconProps } from "../types.ts";
 import { NavItem } from "./NavItem.tsx";
 import { Divider } from "../common/Divider.tsx";
 import { UserItem } from "../common/UserItem.tsx";
+import { useCurrentUser } from "../../hooks";
+
+type NavItemConfig = {
+  links: string[];
+  title: string;
+  icon: (props: IconProps) => ReactElement;
+};
+
+const landlordNavItems: NavItemConfig[] = [
+  {
+    links: ["/home"],
+    title: "Home",
+    icon: (props: IconProps) => <MdHome {...props} />,
+  },
+  {
+    links: ["/tenants", "/tenant/:id", "/tenants/add"],
+    title: "Tenants",
+    icon: (props: IconProps) => <MdGroups {...props} />,
+  },
+  {
+    links: ["/apartments", "/apartments/new", "/apartment/:id"],
+    title: "Apartments",
+    icon: (props: IconProps) => <MdApartment {...props} />,
+  },
+  {
+    links: ["/rentals", "/rentals/new", "/rental/:id"],
+    title: "Rentals",
+    icon: (props: IconProps) => <MdRealEstateAgent {...props} />,
+  },
+  {
+    links: ["/invoices", "/invoices/new", "/invoice/:id", "/invoice/:id/edit"],
+    title: "Invoices",
+    icon: (props: IconProps) => <MdReceiptLong {...props} />,
+  },
+];
+
+const tenantNavItems: NavItemConfig[] = [
+  {
+    links: ["/home"],
+    title: "Home",
+    icon: (props: IconProps) => <MdHome {...props} />,
+  },
+  {
+    links: ["/my-apartment"],
+    title: "My apartment",
+    icon: (props: IconProps) => <MdApartment {...props} />,
+  },
+  {
+    links: ["/my-invoices"],
+    title: "My invoices",
+    icon: (props: IconProps) => <MdReceiptLong {...props} />,
+  },
+  {
+    links: ["/my-documents"],
+    title: "My documents",
+    icon: (props: IconProps) => <MdDescription {...props} />,
+  },
+];
 
 export const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { isTenant, isLandlord } = useCurrentUser();
 
   const logOut = () => {
     sessionStorage.removeItem("token");
+    queryClient.removeQueries({ queryKey: ["currentUser"] });
     toast("Pomyślnie wylogowano uzytkownika", { type: "success" });
     navigate("/", { replace: true });
   };
@@ -32,38 +96,14 @@ export const Navigation = () => {
     });
   };
 
-  const topNavItems = [
-    {
-      links: ["/home"],
-      title: "Home",
-      icon: (props: IconProps) => <MdHome {...props} />,
-    },
-    {
-      links: ["/tenants", "/tenant/:id", "/tenants/add"],
-      title: "Tenants",
-      icon: (props: IconProps) => <MdGroups {...props} />,
-    },
-    {
-      links: ["/apartments", "/apartments/new", "/apartment/:id"],
-      title: "Apartments",
-      icon: (props: IconProps) => <MdApartment {...props} />,
-    },
-    {
-      links: ["/rentals", "/rentals/new", "/rental/:id"],
-      title: "Rentals",
-      icon: (props: IconProps) => <MdRealEstateAgent {...props} />,
-    },
-    {
-      links: [
-        "/invoices",
-        "/invoices/new",
-        "/invoice/:id",
-        "/invoice/:id/edit",
-      ],
-      title: "Invoices",
-      icon: (props: IconProps) => <MdReceiptLong {...props} />,
-    },
-  ];
+  // Until we know the role, prefer showing nothing role-specific (avoids a
+  // flash of Landlord nav on Tenant sessions). Bottom nav and user card
+  // render regardless so sign-out is always reachable.
+  const topNavItems: NavItemConfig[] = isTenant
+    ? tenantNavItems
+    : isLandlord
+    ? landlordNavItems
+    : [];
 
   const bottomNavItems = [
     {

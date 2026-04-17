@@ -112,36 +112,49 @@ backend/
 
 Wszystkie endpointy (poza `auth`) wymagają nagłówka `Authorization: Bearer <JWT>`. Wszystkie ścieżki poniżej są poprzedzone prefiksem **`/api/v1`** (np. faktyczny login: `POST /api/v1/login`). Statyczne pliki upload pozostają pod `/uploads/:filename` (bez prefiksu).
 
+> **Role / autoryzacja (M4):** JWT z `loginUser` zawiera `{ id, email, role }`. Endpointy zarządcze (`/apartment`, `/tenant`, `/rental`, `/invoice`, `/dashboard`) są osłonięte `requireRole('Landlord')`; endpointy portalu Tenanta (`/me/apartment`, `/me/invoices`, `/me/documents`) — `requireRole('Tenant')`. `/me` i `/user` wymagają tylko `authenticate` (dostępne dla obu ról).
+
 #### Auth
 | Metoda | Ścieżka | Opis |
 | --- | --- | --- |
-| POST | `/api/v1/login` | Logowanie → `{ token, user }` |
-| POST | `/api/v1/register` | Rejestracja + wysyłka maila z linkiem aktywacyjnym |
-| GET | `/api/v1/activate-account?token=...` | Aktywacja konta (weryfikacja email) |
+| POST | `/api/v1/login` | Logowanie → `{ token, user }` (token zawiera rolę) |
+| POST | `/api/v1/register` | Rejestracja + wysyłka maila z linkiem aktywacyjnym. Gdy `invitationCode` jest podany — konto rejestrowane jako `Tenant`, `invitationCode` walidowany względem `TenantModel` (niezgodność, podwójne użycie lub brak dopasowania email → 400), a po udanym zapisie `Tenant.userID` pointuje na świeżego użytkownika. |
+| GET | `/api/v1/activate-account?token=...` | Aktywacja konta (weryfikacja email). Dla Tenantów dodatkowo flipuje `Tenant.isActive = true`. |
 
-#### Apartments
+#### Apartments (Landlord-only)
 `POST /api/v1/apartment`, `GET /api/v1/apartments`, `GET /api/v1/apartmentsList`, `GET /api/v1/apartment/:id`, `PATCH /api/v1/apartment/:id`, `DELETE /api/v1/apartment/:id`
 
-#### Tenants
-`POST /api/v1/tenant`, `GET /api/v1/tenants`, `GET /api/v1/tenantsList`, `GET /api/v1/tenant/:id`, `PATCH /api/v1/tenant/:id`, `DELETE /api/v1/tenant/:id`
+#### Tenants (Landlord-only)
+`POST /api/v1/tenant`, `GET /api/v1/tenants`, `GET /api/v1/tenantsList`, `GET /api/v1/tenant/:id`, `PATCH /api/v1/tenant/:id`, `DELETE /api/v1/tenant/:id`, `POST /api/v1/tenant/:id/invite`
+- `POST /tenant` — generuje `invitationCode` i wysyła mail z linkiem `${FRONTEND_URL}/register?invitationCode=<CODE>&email=<encoded>`; tenant ma `isActive: false` do czasu aktywacji konta (M4.2).
+- `POST /tenant/:id/invite` — ponowna wysyłka maila (400 gdy Tenant już ma przypisany `userID`).
 
-#### Rentals
+#### Rentals (Landlord-only)
 `POST /api/v1/rental`, `GET /api/v1/rentals`, `GET /api/v1/rental/:id`, `PATCH /api/v1/rental/:id`, `DELETE /api/v1/rental/:id`, `POST /api/v1/rental/:id/end`
 - `POST /rental` — atomowo blokuje mieszkanie (`Apartment.isAvailable: true → false`); zwraca **409** jeśli mieszkanie jest już zajęte (M3.4 / M3.5).
 - `POST /rental/:id/end` — ustawia `isActive=false`, `endDate=now` i zwalnia mieszkanie (`isAvailable=true`) (M3.6). `PATCH /rental/:id` nie pozwala ręcznie modyfikować `isActive` — trzeba użyć tego endpointu.
 - `DELETE /rental/:id` — jeśli wynajem był aktywny, zwalnia powiązane mieszkanie.
 
-#### Invoices
+#### Invoices (Landlord-only)
 `POST /api/v1/invoice`, `GET /api/v1/invoices`, `GET /api/v1/invoice/:id`, `PATCH /api/v1/invoice/:id`, `DELETE /api/v1/invoice/:id`
 
 #### Files (multer, limit 10MB, image/* + application/pdf)
 `POST /api/v1/upload` (single), `POST /api/v1/upload-multiple` (max 10), `GET /api/v1/upload/:filename`, `DELETE /api/v1/upload/:filename`
-Statyczne pliki: `GET /uploads/:filename` (poza prefiksem `/api/v1`).
+Statyczne pliki: `GET /uploads/:filename` (poza prefiksem `/api/v1`, bez sprawdzenia roli).
 
-#### User
-`GET /api/v1/user`, `PATCH /api/v1/user`
+#### User / Me
+`GET /api/v1/user`, `PATCH /api/v1/user`, `GET /api/v1/me`, `PATCH /api/v1/me`
+- `GET /me` (alias `/user`) — payload zależy od roli:
+  - Landlord: `{ ...user, apartments: [{ _id, address, isAvailable, roomCount, monthlyCost }] }`.
+  - Tenant: `{ ...user, tenant: { _id, firstName, lastName, email, phoneNumber, address, isActive, assignedApartmentID, owner } | null }`.
+- `PATCH /me` = `PATCH /user` — dopuszczalne `firstName`, `lastName`, `phoneNumber` (pozostałe pola zablokowane).
 
-#### Dashboard
+#### Tenant portal (`Tenant`-only, M4.3)
+- `GET /api/v1/me/apartment` — dane przypisanego mieszkania (`assignedApartmentID`) + dane kontaktowe Tenanta. 404 „No apartment is currently assigned to your account" gdy brak przypięcia.
+- `GET /api/v1/me/invoices` — `{ invoices[], summary: { total, paidAmount, unpaidAmount, overdueAmount, overdueCount } | null }` — tylko faktury dla `assignedApartmentID`.
+- `GET /api/v1/me/documents` — `{ apartmentDocuments: string[], rentalDocuments: string[], invoiceDocuments: { _id, invoiceID, invoiceType, document, dueDate, amount }[] }` (tylko URL-e plików, bez metadanych faktur).
+
+#### Dashboard (Landlord-only)
 `GET /api/v1/dashboard` — agregat dla `HomeScreen`:
 - `kpi`: `apartmentsCount`, `occupiedCount`, `occupancyRate`, `activeRentalsCount`, `mrr` (suma `monthlyCost` aktywnych wynajmów), `overdueAmount`, `overdueCount`.
 - `upcomingPayments[]` (30 dni): połączone faktury (`kind: "invoice"`) i płatności czynszu (`kind: "rental"`, z wyliczonym `nextPaymentDate` z `rentalPaymentDay`).
@@ -155,17 +168,19 @@ Statyczne pliki: `GET /uploads/:filename` (poza prefiksem `/api/v1`).
 
 **Apartment** — `address` (regex `ul.Ulica 1, 00-000 Miasto`), `metric`, `isAvailable`, `roomCount`, `monthlyCost`, `description`, `equipment?`, `photos[]`, `documents[]`, `owner` (ObjectId, ref `User`).
 
-**Tenant** — `firstName`, `lastName`, `email` (unique), `phoneNumber`, `address`, `invitationCode`, `isActive`, `owner` (ObjectId, ref `User`), `assignedApartmentID` (ObjectId, ref `Apartment`, default `null`).
+**Tenant** — `firstName`, `lastName`, `email` (unique), `phoneNumber`, `address`, `invitationCode` (indexed), `isActive`, `owner` (ObjectId, ref `User`), `assignedApartmentID` (ObjectId, ref `Apartment`, default `null`), `userID` (ObjectId, ref `User`, default `null` — ustawiane po zarejestrowaniu konta z `invitationCode`, wiąże rekord Tenant z kontem `User`, M4.2).
 
 **Rental** — `apartmentID` (ObjectId, ref `Apartment`), `tenantID` (ObjectId, ref `Tenant`), `startDate`, `endDate`, `rentalPaymentDay`, `monthlyCost`, `securityDeposit`, `description`, `documents[]`, `photos[]`, `isActive`, `owner` (ObjectId, ref `User`).
 
 **Invoice** — `apartmentID` (ObjectId, ref `Apartment`), `invoiceType`, `amount`, `dueDate`, `uploadDate` (default `Date.now`), `paidDate` (default `null`), `invoiceID`, `document` (`string | null` — URL pliku z uploadu), `isPaid` (default `false`), `owner` (ObjectId, ref `User`).
 
-### 3.6 Autoryzacja
+### 3.6 Autoryzacja i role (M4)
 
-- `auth.middleware.ts` wyciąga token z `Authorization: Bearer`, weryfikuje go `jwt.verify` z sekretem `jwtSecret` i wpisuje `decoded` do `req.user`.
-- Token logowania ważny 24h; token aktywacyjny 1h.
+- `auth.middleware.ts` wyciąga token z `Authorization: Bearer`, weryfikuje go `jwt.verify` z sekretem `jwtSecret` i wpisuje `decoded` do `req.user` (`{ id, email, role }`).
+- `role.middleware.ts` (M4.1) — `requireRole(...allowedRoles)` czyta `req.user.role` i zwraca 403 gdy rola nie jest dozwolona; używany na wszystkich routerach zarządczych (`Landlord`) oraz na portalu Tenanta (`Tenant`).
+- Token logowania ważny 24h, zawiera `{ id, email, role }`; token aktywacyjny 1h (tylko `{ id }`).
 - Hasła hashowane `bcryptjs` (salt 10) w hooku `pre('save')` modelu User.
+- Flow zaproszenia Tenanta (M4.2): Landlord → `POST /tenant` → automatyczny mail z `invitationCode` + link `${FRONTEND_URL}/register?invitationCode=<CODE>&email=<encoded>`. Tenant klika link → `RegisterScreen` (pre-fill + lock pól) → `POST /register` waliduje `invitationCode` względem `TenantModel` (niezgodność email, podwójne użycie, brak kodu → 400), linkuje `Tenant.userID = user._id`. Aktywacja konta (`GET /activate-account`) dodatkowo flipuje `Tenant.isActive = true`.
 
 ---
 
@@ -212,7 +227,8 @@ frontend/
     │   └── api.ts          # axios instance z interceptorem JWT
     ├── hooks/
     │   ├── index.ts
-    │   └── useAppLanguage.ts
+    │   ├── useAppLanguage.ts
+    │   └── useCurrentUser.ts    # React Query hook — `GET /me`, zwraca { user, role, isLandlord, isTenant } (M4.5)
     ├── screens/            # Ekrany "rdzeniowe" (poza feature'ami)
     │   ├── HomeScreen.tsx
     │   ├── SettingsScreen.tsx
@@ -232,10 +248,13 @@ frontend/
     │   │   ├── components/ (RentalItem, RentalInfoSection, RentalDetailsSection, DetailsFilesSection)
     │   │   ├── screens/    (RentalsScreen, NewRentalScreen, RentalDetailsScreen)
     │   │   └── types/rental.types.ts
-    │   └── tenants/
-    │       ├── components/ (TenantItem, TenantDetails)
-    │       ├── screens/    (TenantsScreen, NewTenantScreen, TenantDetailsScreen)
-    │       └── types/tenant.type.ts
+    │   ├── tenants/
+    │   │   ├── components/ (TenantItem, TenantDetails)
+    │   │   ├── screens/    (TenantsScreen, NewTenantScreen, TenantDetailsScreen — z akcją „Resend invitation", M4.2)
+    │   │   └── types/tenant.type.ts
+    │   └── tenant-portal/           # Portal Tenanta (read-only, M4.3)
+    │       ├── screens/    (MyApartmentScreen, MyInvoicesScreen, MyDocumentsScreen)
+    │       └── types/tenant-portal.type.ts
     ├── components/         # Reużywalne komponenty globalne
     │   ├── common/         (ActivityIndicator, Divider, EmptyView, ErrorView, LoadingView, RouteContent, UserAvatar, UserItem)
     │   ├── files/          (FileItem, FilesSection, UploadFileButton)
@@ -244,6 +263,8 @@ frontend/
     │   ├── routes/         (ProtectedRoute)
     │   └── sections/       (DetailsInformationItem)
     ├── types/
+    │   ├── index.ts
+    │   └── user.type.ts             # UserRole + CurrentUser (M4.5)
     └── utils/
         ├── apartment.ts
         ├── auth.ts         # isAuthenticated() — guard dla UI
@@ -251,24 +272,26 @@ frontend/
         ├── generateRandomHexColor.ts
         ├── i18n.ts         # konfiguracja i18next
         └── routes/
-            ├── routeConfig.tsx      # getRoutes(isLoggedIn)
+            ├── routeConfig.tsx          # getRoutes(isLoggedIn, role) — role-aware (M4.4)
             ├── apartmentsRoutes.tsx
             ├── rentalsRoutes.tsx
-            └── tenantsRoutes.tsx
+            ├── tenantsRoutes.tsx
+            ├── invoicesRoutes.tsx
+            └── tenantPortalRoutes.tsx   # /my-apartment, /my-invoices, /my-documents (M4.3)
 ```
 
-### 4.3 Routing
+### 4.3 Routing (role-aware, M4.4)
 
-`getRoutes(isLoggedIn)` składa listę tras publicznych i prywatnych (opakowanych `<ProtectedRoute>`):
+`getRoutes(isLoggedIn, role)` składa listę tras publicznych i prywatnych (opakowanych `<ProtectedRoute>`) zależnie od roli z `useCurrentUser()`:
 
-| Publiczne | Chronione |
-| --- | --- |
-| `/`, `/login`, `/register`, `/verify-email`, `/registerSuccess`, `/404` | `/home`, `/settings` |
-| | `/apartments`, `/apartments/new`, `/apartment/:id` |
-| | `/tenants`, `/tenants/add`, `/tenant/:id` |
-| | `/rentals`, `/rentals/new`, `/rental/:id` |
+| Publiczne | Wspólne chronione | Landlord-only | Tenant-only |
+| --- | --- | --- | --- |
+| `/`, `/login`, `/register`, `/verify-email`, `/registerSuccess`, `/404` | `/home`, `/settings` | `/apartments`, `/apartments/new`, `/apartment/:id` | `/my-apartment` |
+| | | `/tenants`, `/tenants/add`, `/tenant/:id` | `/my-invoices` |
+| | | `/rentals`, `/rentals/new`, `/rental/:id` | `/my-documents` |
+| | | `/invoices`, `/invoices/new`, `/invoice/:id`, `/invoice/:id/edit` | |
 
-`App.tsx` synchronizuje stan `isLoggedIn` na podstawie `isAuthenticated()` (token w `sessionStorage`) i przekierowuje na `/home` po zalogowaniu.
+`App.tsx` synchronizuje stan `isLoggedIn` na podstawie `isAuthenticated()` (token w `sessionStorage`) i przekierowuje na `/home` po zalogowaniu. `HomeScreen` renderuje dwa różne widoki: Landlord → dashboard z KPI i widgetami (M3.1–M3.3), Tenant → `TenantHome` z kartami-linkami do trzech ekranów portalu (M4.3). `Navigation` również wybiera zestaw itemów (Landlord vs Tenant) z `useCurrentUser()`; dopóki rola się nie załaduje, `topNavItems` jest puste (unikamy flash-of-Landlord-UI).
 
 ### 4.4 Warstwa HTTP
 
@@ -333,7 +356,7 @@ npm start             # docker compose up --build
 11. **Testy** — **[open]** brak konfiguracji (`"test": "exit 1"`). Jest/Vitest + Supertest — M5.8–M5.10.
 12. **CORS** — **[open]** `cors()` bez whitelisty; przed produkcją ograniczyć do `FRONTEND_URL`. Zaplanowane w M5.2.
 13. **Statyczne `/uploads` bez autoryzacji** — **[open]** każdy z linkiem pobierze plik; podpisane URL-e lub middleware — M5.5.
-14. **DRY routingu frontend** — **[open]** `getApartmentsRoutes/TenantsRoutes/RentalsRoutes` powtarzają wzorzec; do refaktoru przy M4 (podział nawigacji po rolach).
+14. **DRY routingu frontend** — **[done M4]** `getRoutes(isLoggedIn, role)` w `routeConfig.tsx` rozdziela trasy Landlord / Tenant; nawigacja w `Navigation.tsx` czyta rolę z `useCurrentUser()`. Wzorzec `getXxxRoutes` nadal powtarzalny — to akceptowalny duplikat trzymany per-feature (M4.4).
 15. **README** — **[open]** brak na poziomie root i `backend/`. Zaplanowane w M6.8.
 
 ### 7.1 Znane bugi odkryte przy M1 (out-of-scope, do M2/M3)

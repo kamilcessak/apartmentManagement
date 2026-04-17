@@ -10,6 +10,7 @@ export interface TenantSchemaType extends Document {
     isActive: boolean;
     owner: mongoose.Types.ObjectId;
     assignedApartmentID: mongoose.Types.ObjectId | null;
+    userID: mongoose.Types.ObjectId | null;
 }
 
 const tenantSchema = new Schema<TenantSchemaType>(
@@ -19,7 +20,7 @@ const tenantSchema = new Schema<TenantSchemaType>(
         lastName: { type: String, required: true },
         phoneNumber: { type: String, required: true },
         address: { type: String, required: true },
-        invitationCode: { type: String, required: true },
+        invitationCode: { type: String, required: true, index: true },
         isActive: { type: Boolean, required: true },
         owner: {
             type: Schema.Types.ObjectId,
@@ -29,6 +30,11 @@ const tenantSchema = new Schema<TenantSchemaType>(
         assignedApartmentID: {
             type: Schema.Types.ObjectId,
             ref: 'Apartment',
+            default: null,
+        },
+        userID: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
             default: null,
         },
     },

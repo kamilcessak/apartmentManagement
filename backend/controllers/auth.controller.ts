@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/user.model';
+import { TenantModel } from '../models/tenant.model';
 import { FRONTEND_URL, jwtSecret } from '../config';
 import { sendEmail } from '../services/email.service';
 import { UserType } from '../types/user.types';
@@ -18,13 +19,18 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
             res.status(401).json({ error: 'Invalid password or email' });
             return;
         }
-        const token = jwt.sign({ id: user._id, email: user.email }, jwtSecret, {
-            expiresIn: '24h',
-        });
+        const token = jwt.sign(
+            { id: user._id, email: user.email, role: user.role },
+            jwtSecret,
+            {
+                expiresIn: '24h',
+            }
+        );
         const { password: _, ...userWithoutPassword } = user.toObject();
 
         res.status(200).json({ token, user: userWithoutPassword });
     } catch (error) {
+        console.error('[loginUser]', error);
         res.status(500).json({ error: 'An error occurred during user login' });
     }
 };
@@ -49,16 +55,37 @@ export const registerUser = async (
             return;
         }
 
-        const userData = {
+        const userData: Record<string, unknown> = {
             email,
             password,
             phoneNumber,
             isEmailVerified: false,
         };
 
-        if (req.body?.invitationCode) {
+        const rawCode = req.body?.invitationCode;
+        const invitationCode =
+            typeof rawCode === 'string' ? rawCode.trim().toUpperCase() : null;
+
+        if (invitationCode) {
+            const tenant = await TenantModel.findOne({ invitationCode });
+            if (!tenant) {
+                res.status(400).json({ error: 'Invalid invitation code' });
+                return;
+            }
+            if (tenant.userID) {
+                res.status(400).json({
+                    error: 'This invitation code has already been used',
+                });
+                return;
+            }
+            if (tenant.email && tenant.email !== email) {
+                res.status(400).json({
+                    error: 'Invitation code does not match this email address',
+                });
+                return;
+            }
             Object.assign(userData, {
-                invitationCode: req.body?.invitationCode,
+                invitationCode,
                 role: 'Tenant',
             });
         } else {
@@ -66,6 +93,16 @@ export const registerUser = async (
         }
 
         const newUser = await UserModel.create(userData);
+
+        // Link tenant to the newly created user so Landlord sees the tenant
+        // record as bound to a real user account; isActive flips to true after
+        // email verification to confirm ownership of the mailbox.
+        if (invitationCode) {
+            await TenantModel.updateOne(
+                { invitationCode, userID: null },
+                { $set: { userID: newUser._id } }
+            );
+        }
 
         const verificationToken = jwt.sign({ id: newUser._id }, jwtSecret, {
             expiresIn: '1h',
@@ -135,6 +172,14 @@ export const activateAccount = async (
 
         await user.save();
 
+        // Activate linked tenant if this user registered via invitation code
+        if (user.role === 'Tenant' && user.invitationCode) {
+            await TenantModel.updateOne(
+                { invitationCode: user.invitationCode, userID: user._id },
+                { $set: { isActive: true } }
+            );
+        }
+
         res.status(200).json({ message: 'Account activated successfully' });
     } catch (error) {
         if (error instanceof jwt.JsonWebTokenError) {
@@ -142,6 +187,7 @@ export const activateAccount = async (
                 error: 'Invalid or expired activation token',
             });
         } else {
+            console.error('[activateAccount]', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

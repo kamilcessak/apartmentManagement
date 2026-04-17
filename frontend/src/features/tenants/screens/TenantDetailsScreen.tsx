@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { MdChevronLeft } from "react-icons/md";
-import { Button, CircularProgress, Divider, Typography } from "@mui/material";
+import { MdChevronLeft, MdMailOutline } from "react-icons/md";
+import {
+  Button,
+  Chip,
+  CircularProgress,
+  Divider,
+  Typography,
+} from "@mui/material";
 import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -78,6 +84,22 @@ export const TenantDetailsScreen = () => {
     },
   });
 
+  const { mutate: resendInvitation, isPending: isResendPending } = useMutation({
+    mutationFn: async () => {
+      const result = await api.post(`/tenant/${id}/invite`);
+      return result;
+    },
+    onSuccess: () => {
+      toast("Invitation email resent", { type: "success" });
+    },
+    onError: (err: unknown) => {
+      const message =
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? "Unable to resend invitation";
+      toast(message, { type: "error" });
+    },
+  });
+
   const onSubmit = (formData: TenantDetailsFormType) => mutate(formData);
 
   useEffect(() => {
@@ -101,11 +123,34 @@ export const TenantDetailsScreen = () => {
         <a className="cursor-pointer" onClick={() => navigate(-1)}>
           <MdChevronLeft size={48} />
         </a>
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 items-center justify-center gap-3">
           <h1 className="text-3xl font-semibold">
             {`Details of: ${data.firstName} ${data.lastName}`}
           </h1>
+          <Chip
+            size="small"
+            label={data.userID ? "Account linked" : "Pending invitation"}
+            color={data.userID ? "success" : "warning"}
+          />
         </div>
+        {!data.userID ? (
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => resendInvitation()}
+            disabled={isResendPending}
+            startIcon={
+              isResendPending ? (
+                <CircularProgress size={16} />
+              ) : (
+                <MdMailOutline size={20} />
+              )
+            }
+            style={{ textTransform: "none" }}
+          >
+            Resend invitation
+          </Button>
+        ) : null}
       </header>
       <main className="flex flex-1 flex-col w-full overflow-y-scroll scrollbar-hide h-full gap-4 p-8">
         <div

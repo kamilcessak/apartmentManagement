@@ -5,7 +5,7 @@ import { Button, CircularProgress, TextField } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { MdArrowBackIos } from "react-icons/md";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
 import api from "@services/api";
@@ -22,6 +22,7 @@ type FormValues = {
 
 export const LoginScreen = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -46,6 +47,7 @@ export const LoginScreen = () => {
     onSuccess: async (data) => {
       if (data?.data.token) {
         sessionStorage.setItem("token", data.data.token);
+        await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
         toast("Pomyślnie zalogowano do konta!", { type: "success" });
         navigate("/home", { replace: true, state: { loggedIn: true } });
       } else {

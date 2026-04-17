@@ -5,6 +5,7 @@ import { Navigation } from "./components";
 import { isAuthenticated } from "./utils";
 import { useState, useEffect } from "react";
 import { getRoutes } from "@utils/routes";
+import { useCurrentUser } from "./hooks";
 
 const App = () => {
   const location = useLocation();
@@ -23,7 +24,8 @@ const App = () => {
     });
   }, [location]);
 
-  const routes = getRoutes(isLoggedIn);
+  const { role } = useCurrentUser();
+  const routes = getRoutes(isLoggedIn, role);
 
   return (
     <div className="flex flex-1 flex-row">

@@ -1,4 +1,15 @@
+import { useCurrentUser } from "../../hooks";
+
 export const UserItem = () => {
+  const { user, role } = useCurrentUser();
+
+  const displayName =
+    user?.firstName || user?.lastName
+      ? `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim()
+      : user?.tenant
+      ? `${user.tenant.firstName} ${user.tenant.lastName}`
+      : user?.email ?? "Signed in";
+
   return (
     <div className="flex items-center gap-4">
       <img
@@ -7,8 +18,13 @@ export const UserItem = () => {
         alt="profile photo"
       />
       <div className="flex flex-col text-wrap">
-        <p>Kamil Cessak</p>
-        <p>kamil.cessak@gmail.com</p>
+        <p className="font-semibold">{displayName}</p>
+        <p className="text-sm text-gray-700">{user?.email}</p>
+        {role ? (
+          <p className="text-xs uppercase tracking-wide text-gray-500">
+            {role}
+          </p>
+        ) : null}
       </div>
     </div>
   );

@@ -6,7 +6,10 @@ import {
   MdPeople,
   MdTrendingUp,
   MdWarningAmber,
+  MdDescription,
+  MdReceiptLong,
 } from "react-icons/md";
+import { Link } from "react-router-dom";
 
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
 import api from "@services/api";
@@ -17,6 +20,7 @@ import {
   KpiCard,
   UpcomingPaymentsWidget,
 } from "@features/dashboard";
+import { useCurrentUser } from "../hooks";
 
 const formatCurrency = (value: number) =>
   `${value.toLocaleString("pl-PL", {
@@ -24,7 +28,68 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 2,
   })} PLN`;
 
-export const HomeScreen = () => {
+const TenantHome = () => {
+  const { user } = useCurrentUser();
+  const displayName =
+    user?.firstName ||
+    user?.tenant?.firstName ||
+    user?.email?.split("@")[0] ||
+    "there";
+
+  return (
+    <RouteContent>
+      <header className="flex flex-row items-center justify-between p-8 border-b-2 border-gray-200">
+        <div className="flex flex-col">
+          <Typography variant="h4" className="font-semibold">
+            Welcome, {displayName}
+          </Typography>
+          <Typography variant="body2" className="text-gray-600">
+            Quick access to what's assigned to your account
+          </Typography>
+        </div>
+      </header>
+      <main className="flex flex-1 flex-col w-full overflow-y-scroll scrollbar-hide h-full gap-4 p-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link to="/my-apartment" className="no-underline">
+            <div className="border-2 border-gray-300 rounded-md p-6 flex flex-col gap-2 hover:border-blue-500 transition-colors">
+              <MdApartment size={32} />
+              <Typography variant="h6" className="font-semibold">
+                My apartment
+              </Typography>
+              <Typography variant="body2" className="text-gray-600">
+                View the apartment assigned to your account
+              </Typography>
+            </div>
+          </Link>
+          <Link to="/my-invoices" className="no-underline">
+            <div className="border-2 border-gray-300 rounded-md p-6 flex flex-col gap-2 hover:border-blue-500 transition-colors">
+              <MdReceiptLong size={32} />
+              <Typography variant="h6" className="font-semibold">
+                My invoices
+              </Typography>
+              <Typography variant="body2" className="text-gray-600">
+                Check payment status and due dates
+              </Typography>
+            </div>
+          </Link>
+          <Link to="/my-documents" className="no-underline">
+            <div className="border-2 border-gray-300 rounded-md p-6 flex flex-col gap-2 hover:border-blue-500 transition-colors">
+              <MdDescription size={32} />
+              <Typography variant="h6" className="font-semibold">
+                My documents
+              </Typography>
+              <Typography variant="body2" className="text-gray-600">
+                Download contracts and invoice PDFs
+              </Typography>
+            </div>
+          </Link>
+        </div>
+      </main>
+    </RouteContent>
+  );
+};
+
+const LandlordHome = () => {
   const {
     data: dashboard,
     isLoading: isDashboardLoading,
@@ -138,4 +203,13 @@ export const HomeScreen = () => {
       </main>
     </RouteContent>
   );
+};
+
+export const HomeScreen = () => {
+  const { isTenant, isLoading } = useCurrentUser();
+
+  if (isLoading) return <LoadingView />;
+  if (isTenant) return <TenantHome />;
+
+  return <LandlordHome />;
 };

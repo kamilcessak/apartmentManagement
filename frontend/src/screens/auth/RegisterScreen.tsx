@@ -1,8 +1,9 @@
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { Button, CircularProgress, TextField } from "@mui/material";
-import { Link, useNavigate } from "react-router-dom";
+import { Alert, Button, CircularProgress, TextField } from "@mui/material";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { useMutation } from "@tanstack/react-query";
 import { MdArrowBackIos } from "react-icons/md";
@@ -35,14 +36,38 @@ type FormValues = {
 
 export const RegisterScreen = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const prefilledEmail = searchParams.get("email") ?? "";
+  const prefilledCode = searchParams.get("invitationCode") ?? "";
+  const isTenantInvitation = useMemo(
+    () => Boolean(prefilledCode),
+    [prefilledCode]
+  );
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(schema),
+    defaultValues: {
+      email: prefilledEmail,
+      password: "",
+      phoneNumber: "",
+      invitationCode: prefilledCode,
+    },
   });
+
+  useEffect(() => {
+    reset({
+      email: prefilledEmail,
+      password: "",
+      phoneNumber: "",
+      invitationCode: prefilledCode,
+    });
+  }, [prefilledEmail, prefilledCode, reset]);
 
   const handleRegister = async (data: FormValues) => {
     const payload: FormValues = {
@@ -52,7 +77,7 @@ export const RegisterScreen = () => {
     };
     const invitationCode = data.invitationCode?.trim();
     if (invitationCode) {
-      payload.invitationCode = invitationCode;
+      payload.invitationCode = invitationCode.toUpperCase();
     }
     const response = await api.post("/register", payload);
     return response;
@@ -79,8 +104,17 @@ export const RegisterScreen = () => {
     <>
       <div className="flex flex-1 items-center justify-center h-screen flex-col gap-4">
         <h1 className="text-2xl font-semibold">
-          Register into the application
+          {isTenantInvitation
+            ? "Accept your tenant invitation"
+            : "Register into the application"}
         </h1>
+        {isTenantInvitation ? (
+          <Alert severity="info" className="w-1/3">
+            You have been invited as a Tenant. Complete the form below to
+            activate your account and access the apartment your Landlord
+            assigned you.
+          </Alert>
+        ) : null}
         <form
           className="flex flex-col gap-4 w-full items-center"
           onSubmit={handleSubmit(onSubmit)}
@@ -88,10 +122,11 @@ export const RegisterScreen = () => {
           <TextField
             className="w-1/4"
             label="Email"
-            disabled={isPending}
+            disabled={isPending || isTenantInvitation}
             {...register("email")}
             error={!!errors.email}
             helperText={errors.email?.message}
+            InputLabelProps={prefilledEmail ? { shrink: true } : undefined}
           />
           <TextField
             className="w-1/4"
@@ -113,10 +148,11 @@ export const RegisterScreen = () => {
           <TextField
             className="w-1/4"
             label="Invitation code (optional)"
-            disabled={isPending}
+            disabled={isPending || isTenantInvitation}
             {...register("invitationCode")}
             error={!!errors.invitationCode}
             helperText={errors.invitationCode?.message}
+            InputLabelProps={prefilledCode ? { shrink: true } : undefined}
           />
           <Button
             type="submit"
