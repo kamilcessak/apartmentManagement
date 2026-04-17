@@ -15,11 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from "@components/ui/table";
-import { ErrorView, LoadingView, RouteContent } from "@components/common";
+import { ErrorView, RouteContent } from "@components/common";
 import api from "@services/api";
 
 import { TenantType } from "../types/tenant.type";
 import { TenantItem } from "../components/TenantItem";
+import { TenantsListSkeleton } from "../components/TenantsListSkeleton";
 
 export const TenantsScreen = () => {
   const { t } = useTranslation();
@@ -38,15 +39,10 @@ export const TenantsScreen = () => {
     }
   };
 
-  const { data, isLoading, isError, isRefetching, error, refetch } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["tenants", "list"],
     queryFn: getTenants,
   });
-
-  const isAnythingLoading = useMemo(
-    () => isLoading || isRefetching,
-    [isLoading, isRefetching]
-  );
 
   const filteredTenants = useMemo(() => {
     if (!data) return [];
@@ -66,7 +62,7 @@ export const TenantsScreen = () => {
     });
   }, [data, search]);
 
-  if (isAnythingLoading) return <LoadingView />;
+  if (isLoading) return <TenantsListSkeleton />;
   if (isError) return <ErrorView message={error.message} onClick={refetch} />;
 
   const hasAnyTenants = (data?.length ?? 0) > 0;
