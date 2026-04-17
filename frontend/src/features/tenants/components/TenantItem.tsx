@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
+import { Eye, Mail, MoreHorizontal, Phone, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@components/ui/avatar";
@@ -105,8 +105,8 @@ export const TenantItem: FC<Props> = ({ tenant }) => {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
             <DropdownMenuItem onClick={() => navigate(`/tenant/${tenant._id}`)}>
-              <Pencil className="h-4 w-4" />
-              <span>{t("tenants.actions.edit")}</span>
+              <Eye className="h-4 w-4" />
+              <span>{t("tenants.actions.details")}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
