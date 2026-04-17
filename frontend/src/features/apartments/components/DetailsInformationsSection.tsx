@@ -1,27 +1,31 @@
-import {
-  Button as MuiButton,
-  CircularProgress,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-  Typography,
-  useTheme,
-} from "@mui/material";
 import * as yup from "yup";
 import { FC, ReactNode, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { Loader2, Pencil, X } from "lucide-react";
 
-import { DetailsSectionHeader } from "@components/header";
 import { ApartmentType } from "../types/apartment.type";
 
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getApartmentIdFromAddress } from "@utils/apartment";
 import api from "@services/api";
 
@@ -51,23 +55,51 @@ const InfoCell: FC<{ label: string; value?: ReactNode }> = ({
   </div>
 );
 
+type FieldWrapperProps = {
+  id: string;
+  label: string;
+  error?: string;
+  className?: string;
+  children: ReactNode;
+};
+
+const FieldWrapper: FC<FieldWrapperProps> = ({
+  id,
+  label,
+  error,
+  className,
+  children,
+}) => (
+  <div className={`flex flex-col ${className ?? ""}`}>
+    <Label htmlFor={id} className="text-sm font-medium text-slate-900 mb-1.5">
+      {label}
+    </Label>
+    {children}
+    {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
+  </div>
+);
+
 export const DetailsInformationsSection = ({
   data,
 }: {
   data: ApartmentType;
 }) => {
-  const theme = useTheme();
   const queryClient = useQueryClient();
-  const [editMode, seteditMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
-  const { handleSubmit, control, reset } = useForm<FormType>({
+  const {
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors },
+  } = useForm<FormType>({
     resolver: yupResolver(schema),
     defaultValues: {
       address: data?.address || "",
       metric: data?.metric || 0,
       roomCount: data?.roomCount || 0,
       monthlyCost: data?.monthlyCost || 0,
-      isAvailable: data?.isAvailable || true,
+      isAvailable: data?.isAvailable ?? true,
     },
   });
 
@@ -85,7 +117,7 @@ export const DetailsInformationsSection = ({
     mutationFn: handlePatchApartment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apartment", `${data._id}`] });
-      seteditMode(false);
+      setEditMode(false);
       toast("Successfully modified apartment details", { type: "success" });
     },
     onError: () => {
@@ -95,154 +127,221 @@ export const DetailsInformationsSection = ({
     },
   });
 
+  const handleToggleEdit = () => {
+    setEditMode((prev) => {
+      if (!prev) {
+        reset({
+          address: data?.address || "",
+          metric: data?.metric || 0,
+          roomCount: data?.roomCount || 0,
+          monthlyCost: data?.monthlyCost || 0,
+          isAvailable: data?.isAvailable ?? true,
+        });
+      }
+      return !prev;
+    });
+  };
+
   const onSubmit = (formData: FormType) => mutate(formData);
 
   return (
-    <Card className="p-6 mb-6">
-      <DetailsSectionHeader
-        editMode={editMode}
-        editModeButton={
-          <MuiButton
-            color="success"
-            variant="contained"
-            disabled={isPending}
-            startIcon={isPending ? <CircularProgress size={16} /> : null}
-            onClick={handleSubmit(onSubmit)}
-            style={{ textTransform: "none" }}
-          >
-            <Typography variant="body2">Save</Typography>
-          </MuiButton>
-        }
-        title={"Main information"}
-        onClickButton={() =>
-          seteditMode((prev) => {
-            if (!prev) {
-              reset({
-                address: data?.address || "",
-                metric: data?.metric || 0,
-                roomCount: data?.roomCount || 0,
-                monthlyCost: data?.monthlyCost || 0,
-                isAvailable: data?.isAvailable || true,
-              });
-            }
-            return !prev;
-          })
-        }
-      />
-      <div className="mt-6">
-        {!editMode ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            <InfoCell
-              label="Apartment ID"
-              value={getApartmentIdFromAddress(data.address)}
-            />
-            <InfoCell label="Address" value={data.address} />
-            <InfoCell label="Metric" value={`${data.metric} m²`} />
-            <InfoCell label="Rooms count" value={`${data.roomCount}`} />
-            <InfoCell label="Monthly cost" value={`${data.monthlyCost} zł`} />
-            <div className="flex flex-col gap-1 min-w-0">
-              <span className="text-sm text-slate-500">Status</span>
-              <div>
-                {data.isAvailable ? (
-                  <Badge className="bg-emerald-600 text-white hover:bg-emerald-600/90">
-                    Available
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">Unavailable</Badge>
-                )}
+    <Card className="mb-6 border-slate-200 shadow-sm">
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 py-4">
+          <CardTitle className="text-lg text-slate-900">
+            Main information
+          </CardTitle>
+          {!editMode ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleToggleEdit}
+              className="text-slate-600 hover:text-slate-900"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Button>
+          ) : null}
+        </CardHeader>
+
+        <CardContent className="pt-2">
+          {!editMode ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <InfoCell
+                label="Apartment ID"
+                value={getApartmentIdFromAddress(data.address)}
+              />
+              <InfoCell label="Address" value={data.address} />
+              <InfoCell label="Metric" value={`${data.metric} m²`} />
+              <InfoCell label="Rooms count" value={`${data.roomCount}`} />
+              <InfoCell label="Monthly cost" value={`${data.monthlyCost} zł`} />
+              <div className="flex flex-col gap-1 min-w-0">
+                <span className="text-sm text-slate-500">Status</span>
+                <div>
+                  {data.isAvailable ? (
+                    <Badge className="bg-emerald-600 text-white hover:bg-emerald-600/90">
+                      Available
+                    </Badge>
+                  ) : (
+                    <Badge variant="destructive">Unavailable</Badge>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            <Controller
-              control={control}
-              name="address"
-              render={({ field, fieldState }) => (
-                <TextField
-                  disabled={isPending}
-                  label="Address"
-                  value={field.value}
-                  onChange={field.onChange}
-                  variant="outlined"
-                  error={!!fieldState.error?.message}
-                  helperText={fieldState.error?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="metric"
-              render={({ field, fieldState }) => (
-                <TextField
-                  disabled={isPending}
-                  label="Metric"
-                  value={field.value}
-                  onChange={field.onChange}
-                  variant="outlined"
-                  error={!!fieldState.error?.message}
-                  helperText={fieldState.error?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="roomCount"
-              render={({ field, fieldState }) => (
-                <TextField
-                  disabled={isPending}
-                  label="Room count"
-                  value={field.value}
-                  onChange={field.onChange}
-                  variant="outlined"
-                  error={!!fieldState.error?.message}
-                  helperText={fieldState.error?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="monthlyCost"
-              render={({ field, fieldState }) => (
-                <TextField
-                  disabled={isPending}
-                  label="Monthly cost"
-                  value={field.value}
-                  onChange={field.onChange}
-                  variant="outlined"
-                  error={!!fieldState.error?.message}
-                  helperText={fieldState.error?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="isAvailable"
-              render={({ field, fieldState }) => (
-                <FormControl>
-                  <InputLabel id="isAvailableSelect">Is available</InputLabel>
-                  <Select
-                    id="isAvailableSelect"
-                    label="Is available"
-                    value={field.value}
-                    onChange={(e) => {
-                      field.onChange(e.target.value === "true");
-                    }}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Controller
+                control={control}
+                name="address"
+                render={({ field }) => (
+                  <FieldWrapper
+                    id="address"
+                    label="Address"
+                    error={errors.address?.message}
+                    className="col-span-full"
                   >
-                    <MenuItem value={"true"}>Available</MenuItem>
-                    <MenuItem value={"false"}>Not available</MenuItem>
-                  </Select>
-                  {fieldState.error?.message && (
-                    <FormHelperText
-                      style={{ color: theme.palette.error.main }}
-                    >{`fieldState.error?.message`}</FormHelperText>
-                  )}
-                </FormControl>
-              )}
-            />
-          </div>
-        )}
-      </div>
+                    <Input
+                      id="address"
+                      disabled={isPending}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  </FieldWrapper>
+                )}
+              />
+              <Controller
+                control={control}
+                name="metric"
+                render={({ field }) => (
+                  <FieldWrapper
+                    id="metric"
+                    label="Metric (m²)"
+                    error={errors.metric?.message}
+                  >
+                    <Input
+                      id="metric"
+                      type="number"
+                      disabled={isPending}
+                      value={field.value ?? ""}
+                      onChange={(event) =>
+                        field.onChange(
+                          event.target.value === ""
+                            ? ""
+                            : Number(event.target.value)
+                        )
+                      }
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  </FieldWrapper>
+                )}
+              />
+              <Controller
+                control={control}
+                name="roomCount"
+                render={({ field }) => (
+                  <FieldWrapper
+                    id="roomCount"
+                    label="Room count"
+                    error={errors.roomCount?.message}
+                  >
+                    <Input
+                      id="roomCount"
+                      type="number"
+                      disabled={isPending}
+                      value={field.value ?? ""}
+                      onChange={(event) =>
+                        field.onChange(
+                          event.target.value === ""
+                            ? ""
+                            : Number(event.target.value)
+                        )
+                      }
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  </FieldWrapper>
+                )}
+              />
+              <Controller
+                control={control}
+                name="monthlyCost"
+                render={({ field }) => (
+                  <FieldWrapper
+                    id="monthlyCost"
+                    label="Monthly cost (zł)"
+                    error={errors.monthlyCost?.message}
+                  >
+                    <Input
+                      id="monthlyCost"
+                      type="number"
+                      disabled={isPending}
+                      value={field.value ?? ""}
+                      onChange={(event) =>
+                        field.onChange(
+                          event.target.value === ""
+                            ? ""
+                            : Number(event.target.value)
+                        )
+                      }
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  </FieldWrapper>
+                )}
+              />
+              <Controller
+                control={control}
+                name="isAvailable"
+                render={({ field }) => (
+                  <FieldWrapper
+                    id="isAvailable"
+                    label="Is available"
+                    error={errors.isAvailable?.message}
+                  >
+                    <Select
+                      disabled={isPending}
+                      value={field.value ? "true" : "false"}
+                      onValueChange={(value) =>
+                        field.onChange(value === "true")
+                      }
+                    >
+                      <SelectTrigger id="isAvailable">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">Available</SelectItem>
+                        <SelectItem value="false">Not available</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FieldWrapper>
+                )}
+              />
+            </div>
+          )}
+        </CardContent>
+
+        {editMode ? (
+          <CardFooter className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleToggleEdit}
+              disabled={isPending}
+            >
+              <X className="h-4 w-4" />
+              Close edit
+            </Button>
+            <Button type="submit" variant="default" disabled={isPending}>
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Save
+            </Button>
+          </CardFooter>
+        ) : null}
+      </form>
     </Card>
   );
 };

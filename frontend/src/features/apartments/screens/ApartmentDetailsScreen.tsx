@@ -42,20 +42,24 @@ export const ApartmentDetailsScreen = () => {
   return (
     <RouteContent>
       <div className="flex flex-col flex-1 min-h-0 bg-slate-50">
-        <header className="flex flex-row items-center gap-3 px-8 py-5 border-b border-slate-200 bg-white">
+        <header className="flex flex-row items-center px-8 py-5 border-b border-slate-200 bg-white">
           <Button
             variant="ghost"
             size="icon"
+            className="mr-4"
             onClick={() => navigate(-1)}
             aria-label="Go back"
           >
             <ChevronLeft className="!size-5" />
           </Button>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            {`Details of: ${capitalizeFirstLetter(
-              getApartmentIdFromAddress(data.address)
-            )}`}
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+              {capitalizeFirstLetter(getApartmentIdFromAddress(data.address))}
+            </h1>
+            <p className="text-sm text-slate-500">
+              Edytuj szczegóły i parametry mieszkania
+            </p>
+          </div>
         </header>
         <main className="flex flex-1 flex-col w-full overflow-y-auto scrollbar-hide p-8">
           <DetailsInformationsSection data={data} />
