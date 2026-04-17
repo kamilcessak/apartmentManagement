@@ -13,6 +13,7 @@ const en = {
     auth: {
       login: {
         title: "Login into the app",
+        description: "Enter your credentials to continue.",
         emailLabel: "Email",
         passwordLabel: "Password",
         submit: "LOGIN",
@@ -27,6 +28,7 @@ const en = {
       },
       register: {
         title: "Register into the application",
+        description: "Create an account to manage your rental portfolio.",
         tenantInvitationTitle: "Accept your tenant invitation",
         tenantInvitationInfo:
           "You have been invited as a Tenant. Complete the form below to activate your account and access the apartment your Landlord assigned you.",

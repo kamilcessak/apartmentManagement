@@ -14,6 +14,7 @@ const pl = {
     auth: {
       login: {
         title: "Zaloguj się do aplikacji",
+        description: "Wpisz swoje dane, aby kontynuować.",
         emailLabel: "Adres e-mail",
         passwordLabel: "Hasło",
         submit: "ZALOGUJ SIĘ",
@@ -28,6 +29,7 @@ const pl = {
       },
       register: {
         title: "Zarejestruj się w aplikacji",
+        description: "Załóż konto, aby zarządzać swoim portfelem wynajmu.",
         tenantInvitationTitle: "Zaakceptuj zaproszenie najemcy",
         tenantInvitationInfo:
           "Zostałeś zaproszony jako Najemca. Wypełnij formularz poniżej, aby aktywować konto i uzyskać dostęp do mieszkania przypisanego przez Wynajmującego.",

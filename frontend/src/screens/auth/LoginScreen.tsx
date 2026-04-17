@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardFooter,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -80,31 +80,43 @@ export const LoginScreen = () => {
   const onSubmit = (data: FormValues) => mutate(data);
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-md">
-        <Button asChild variant="ghost" size="sm" className="mb-4">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="mb-4 text-slate-600 hover:text-slate-900"
+        >
           <Link to="/">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             {t("common.back")}
           </Link>
         </Button>
-        <Card className="w-full shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold">
+
+        <Card className="w-full border-slate-200 shadow-sm">
+          <CardHeader className="space-y-2 p-8 pb-4">
+            <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">
               {t("auth.login.title")}
             </CardTitle>
+            <CardDescription className="text-sm text-slate-500">
+              {t("auth.login.description")}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="flex flex-col gap-4"
-            >
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">{t("auth.login.emailLabel")}</Label>
+          <CardContent className="p-8 pt-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-medium text-slate-900"
+                >
+                  {t("auth.login.emailLabel")}
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   autoComplete="email"
+                  placeholder="you@example.com"
                   disabled={isPending}
                   aria-invalid={!!errors.email}
                   className={cn(
@@ -120,14 +132,18 @@ export const LoginScreen = () => {
                 ) : null}
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-medium text-slate-900"
+                >
                   {t("auth.login.passwordLabel")}
                 </Label>
                 <Input
                   id="password"
                   type="password"
                   autoComplete="current-password"
+                  placeholder="••••••••"
                   disabled={isPending}
                   aria-invalid={!!errors.password}
                   className={cn(
@@ -145,28 +161,28 @@ export const LoginScreen = () => {
 
               <Button
                 type="submit"
+                variant="default"
                 disabled={isPending}
-                className="w-full mt-4"
+                className="w-full"
                 size="lg"
               >
                 {isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
                 {t("auth.login.submit")}
               </Button>
             </form>
-          </CardContent>
-          <CardFooter className="justify-center">
-            <p className="text-sm text-muted-foreground">
+
+            <p className="mt-6 text-center text-sm text-slate-500">
               {t("auth.login.footerPrompt")}{" "}
               <Link
                 to="/register"
-                className="font-medium text-foreground underline-offset-4 hover:underline"
+                className="text-sm font-medium text-indigo-600 hover:underline"
               >
                 {t("auth.login.footerAction")}
               </Link>
             </p>
-          </CardFooter>
+          </CardContent>
         </Card>
       </div>
     </div>

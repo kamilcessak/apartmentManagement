@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardFooter,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -121,40 +121,52 @@ export const RegisterScreen = () => {
   const onSubmit = (data: FormValues) => mutate(data);
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
-        <Button asChild variant="ghost" size="sm" className="mb-4">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-slate-50 p-4">
+      <div className="w-full max-w-md py-6">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="mb-4 text-slate-600 hover:text-slate-900"
+        >
           <Link to="/">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             {t("common.back")}
           </Link>
         </Button>
-        <Card className="w-full shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold">
+
+        <Card className="w-full border-slate-200 shadow-sm">
+          <CardHeader className="space-y-2 p-8 pb-4">
+            <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">
               {isTenantInvitation
                 ? t("auth.register.tenantInvitationTitle")
                 : t("auth.register.title")}
             </CardTitle>
+            <CardDescription className="text-sm text-slate-500">
+              {t("auth.register.description")}
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-8 pt-4">
             {isTenantInvitation ? (
-              <div className="mb-4 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
-                <Info className="w-4 h-4 mt-0.5 shrink-0" />
+              <div className="mb-4 flex items-start gap-2 rounded-md border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-900">
+                <Info className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{t("auth.register.tenantInvitationInfo")}</p>
               </div>
             ) : null}
 
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="flex flex-col gap-4"
-            >
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email">{t("auth.register.emailLabel")}</Label>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-medium text-slate-900"
+                >
+                  {t("auth.register.emailLabel")}
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   autoComplete="email"
+                  placeholder="you@example.com"
                   disabled={isPending || isTenantInvitation}
                   aria-invalid={!!errors.email}
                   className={cn(
@@ -170,14 +182,18 @@ export const RegisterScreen = () => {
                 ) : null}
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="phoneNumber">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="phoneNumber"
+                  className="text-sm font-medium text-slate-900"
+                >
                   {t("auth.register.phoneLabel")}
                 </Label>
                 <Input
                   id="phoneNumber"
                   type="tel"
                   autoComplete="tel"
+                  placeholder="+48 600 000 000"
                   disabled={isPending}
                   aria-invalid={!!errors.phoneNumber}
                   className={cn(
@@ -193,14 +209,18 @@ export const RegisterScreen = () => {
                 ) : null}
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="password"
+                  className="text-sm font-medium text-slate-900"
+                >
                   {t("auth.register.passwordLabel")}
                 </Label>
                 <Input
                   id="password"
                   type="password"
                   autoComplete="new-password"
+                  placeholder="••••••••"
                   disabled={isPending}
                   aria-invalid={!!errors.password}
                   className={cn(
@@ -216,13 +236,17 @@ export const RegisterScreen = () => {
                 ) : null}
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="invitationCode">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="invitationCode"
+                  className="text-sm font-medium text-slate-900"
+                >
                   {t("auth.register.invitationCodeLabel")}
                 </Label>
                 <Input
                   id="invitationCode"
                   type="text"
+                  placeholder="ABC123"
                   disabled={isPending || isTenantInvitation}
                   aria-invalid={!!errors.invitationCode}
                   className={cn(
@@ -240,28 +264,28 @@ export const RegisterScreen = () => {
 
               <Button
                 type="submit"
+                variant="default"
                 disabled={isPending}
-                className="w-full mt-4"
+                className="w-full"
                 size="lg"
               >
                 {isPending ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
                 {t("auth.register.submit")}
               </Button>
             </form>
-          </CardContent>
-          <CardFooter className="justify-center">
-            <p className="text-sm text-muted-foreground">
+
+            <p className="mt-6 text-center text-sm text-slate-500">
               {t("auth.register.footerPrompt")}{" "}
               <Link
                 to="/login"
-                className="font-medium text-foreground underline-offset-4 hover:underline"
+                className="text-sm font-medium text-indigo-600 hover:underline"
               >
                 {t("auth.register.footerAction")}
               </Link>
             </p>
-          </CardFooter>
+          </CardContent>
         </Card>
       </div>
     </div>
