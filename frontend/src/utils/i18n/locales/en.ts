@@ -141,6 +141,30 @@ const en = {
         defaultName: "there",
       },
     },
+    tenants: {
+      title: "Tenants",
+      subtitle: "Manage your list of tenants",
+      addTenant: "Add tenant",
+      searchPlaceholder: "Search tenants...",
+      empty: "No tenants to display",
+      emptySearch: "No tenant matches your search",
+      status: {
+        active: "Active",
+        pending: "Pending",
+      },
+      columns: {
+        tenant: "Tenant",
+        contact: "Contact",
+        status: "Status",
+        actions: "Actions",
+      },
+      actions: {
+        edit: "Edit",
+        delete: "Delete",
+      },
+      deleteSuccess: "Tenant deleted successfully",
+      deleteError: "Unable to delete tenant",
+    },
   },
 };
 

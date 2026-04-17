@@ -159,6 +159,30 @@ const pl = {
         defaultName: "gościu",
       },
     },
+    tenants: {
+      title: "Najemcy",
+      subtitle: "Zarządzaj listą swoich najemców",
+      addTenant: "Dodaj najemcę",
+      searchPlaceholder: "Szukaj najemcy...",
+      empty: "Brak najemców do wyświetlenia",
+      emptySearch: "Żaden najemca nie pasuje do wyszukiwania",
+      status: {
+        active: "Aktywny",
+        pending: "Oczekujący",
+      },
+      columns: {
+        tenant: "Najemca",
+        contact: "Kontakt",
+        status: "Status",
+        actions: "Akcje",
+      },
+      actions: {
+        edit: "Edytuj",
+        delete: "Usuń",
+      },
+      deleteSuccess: "Najemca został usunięty",
+      deleteError: "Nie udało się usunąć najemcy",
+    },
   },
 };
 
