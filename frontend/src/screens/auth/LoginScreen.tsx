@@ -1,19 +1,27 @@
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { Button, CircularProgress, TextField } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import { MdArrowBackIos } from "react-icons/md";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-import api from "@services/api";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
-const schema = yup.object().shape({
-  email: yup.string().required("Email is required"),
-  password: yup.string().required("Password is required"),
-});
+import api from "@services/api";
 
 type FormValues = {
   email: string;
@@ -23,6 +31,18 @@ type FormValues = {
 export const LoginScreen = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
+  const schema = useMemo(
+    () =>
+      yup.object().shape({
+        email: yup.string().required(t("auth.login.validation.emailRequired")),
+        password: yup
+          .string()
+          .required(t("auth.login.validation.passwordRequired")),
+      }),
+    [t]
+  );
 
   const {
     register,
@@ -33,13 +53,8 @@ export const LoginScreen = () => {
   });
 
   const handleLogin = async (data: FormValues) => {
-    try {
-      const response = await api.post("/login", data);
-      return response;
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
+    const response = await api.post("/login", data);
+    return response;
   };
 
   const { mutate, isPending } = useMutation({
@@ -48,17 +63,16 @@ export const LoginScreen = () => {
       if (data?.data.token) {
         sessionStorage.setItem("token", data.data.token);
         await queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-        toast("Pomyślnie zalogowano do konta!", { type: "success" });
+        toast(t("auth.login.successToast"), { type: "success" });
         navigate("/home", { replace: true, state: { loggedIn: true } });
       } else {
-        alert("Login failed");
+        toast(t("auth.login.errorFallback"), { type: "error" });
       }
     },
     onError: (error: unknown) => {
-      console.error(error);
       const message =
         (error as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error ?? "Login failed";
+          ?.error ?? t("auth.login.errorFallback");
       toast(message, { type: "error" });
     },
   });
@@ -66,45 +80,95 @@ export const LoginScreen = () => {
   const onSubmit = (data: FormValues) => mutate(data);
 
   return (
-    <>
-      <div className="flex flex-1 items-center justify-center h-screen flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Login into the app</h1>
-        <form
-          className="flex flex-col gap-4 w-full items-center"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          <TextField
-            className="w-1/4"
-            label="Email"
-            disabled={isPending}
-            {...register("email")}
-            error={!!errors.email}
-            helperText={errors.email?.message}
-          />
-          <TextField
-            className="w-1/4"
-            disabled={isPending}
-            label="Password"
-            type="password"
-            {...register("password")}
-            error={!!errors.password}
-            helperText={errors.password?.message}
-          />
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="w-1/4"
-            size="large"
-            variant="outlined"
-            startIcon={isPending ? <CircularProgress size={20} /> : null}
-          >
-            Login
-          </Button>
-        </form>
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md">
+        <Button asChild variant="ghost" size="sm" className="mb-4">
+          <Link to="/">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t("common.back")}
+          </Link>
+        </Button>
+        <Card className="w-full shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">
+              {t("auth.login.title")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="flex flex-col gap-4"
+            >
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="email">{t("auth.login.emailLabel")}</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  disabled={isPending}
+                  aria-invalid={!!errors.email}
+                  className={cn(
+                    errors.email &&
+                      "border-destructive focus-visible:ring-destructive"
+                  )}
+                  {...register("email")}
+                />
+                {errors.email?.message ? (
+                  <p className="text-sm text-destructive">
+                    {errors.email.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="password">
+                  {t("auth.login.passwordLabel")}
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  disabled={isPending}
+                  aria-invalid={!!errors.password}
+                  className={cn(
+                    errors.password &&
+                      "border-destructive focus-visible:ring-destructive"
+                  )}
+                  {...register("password")}
+                />
+                {errors.password?.message ? (
+                  <p className="text-sm text-destructive">
+                    {errors.password.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="w-full mt-4"
+                size="lg"
+              >
+                {isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                {t("auth.login.submit")}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="justify-center">
+            <p className="text-sm text-muted-foreground">
+              {t("auth.login.footerPrompt")}{" "}
+              <Link
+                to="/register"
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                {t("auth.login.footerAction")}
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
       </div>
-      <Link to="/" className="absolute top-8 left-8">
-        <MdArrowBackIos size={24} />
-      </Link>
-    </>
+    </div>
   );
 };

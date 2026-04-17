@@ -2,30 +2,26 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { Alert, Button, CircularProgress, TextField } from "@mui/material";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Info, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { useMutation } from "@tanstack/react-query";
-import { MdArrowBackIos } from "react-icons/md";
 import { toast } from "react-toastify";
 
-import api from "@services/api";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
-const schema = yup.object().shape({
-  email: yup
-    .string()
-    .email("Invalid email address")
-    .required("Email is required"),
-  password: yup
-    .string()
-    .min(6, "Password must be at least 6 characters")
-    .required("Password is required"),
-  phoneNumber: yup
-    .string()
-    .matches(/^[0-9+\-\s()]{6,20}$/, "Invalid phone number")
-    .required("Phone number is required"),
-  invitationCode: yup.string().optional(),
-});
+import api from "@services/api";
 
 type FormValues = {
   email: string;
@@ -37,12 +33,36 @@ type FormValues = {
 export const RegisterScreen = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
 
   const prefilledEmail = searchParams.get("email") ?? "";
   const prefilledCode = searchParams.get("invitationCode") ?? "";
   const isTenantInvitation = useMemo(
     () => Boolean(prefilledCode),
     [prefilledCode]
+  );
+
+  const schema = useMemo(
+    () =>
+      yup.object().shape({
+        email: yup
+          .string()
+          .email(t("auth.register.validation.emailInvalid"))
+          .required(t("auth.register.validation.emailRequired")),
+        password: yup
+          .string()
+          .min(6, t("auth.register.validation.passwordMin"))
+          .required(t("auth.register.validation.passwordRequired")),
+        phoneNumber: yup
+          .string()
+          .matches(
+            /^[0-9+\-\s()]{6,20}$/,
+            t("auth.register.validation.phoneInvalid")
+          )
+          .required(t("auth.register.validation.phoneRequired")),
+        invitationCode: yup.string().optional(),
+      }),
+    [t]
   );
 
   const {
@@ -93,7 +113,7 @@ export const RegisterScreen = () => {
     onError: (error: unknown) => {
       const message =
         (error as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error ?? "Registration failed";
+          ?.error ?? t("auth.register.errorFallback");
       toast(message, { type: "error" });
     },
   });
@@ -101,74 +121,149 @@ export const RegisterScreen = () => {
   const onSubmit = (data: FormValues) => mutate(data);
 
   return (
-    <>
-      <div className="flex flex-1 items-center justify-center h-screen flex-col gap-4">
-        <h1 className="text-2xl font-semibold">
-          {isTenantInvitation
-            ? "Accept your tenant invitation"
-            : "Register into the application"}
-        </h1>
-        {isTenantInvitation ? (
-          <Alert severity="info" className="w-1/3">
-            You have been invited as a Tenant. Complete the form below to
-            activate your account and access the apartment your Landlord
-            assigned you.
-          </Alert>
-        ) : null}
-        <form
-          className="flex flex-col gap-4 w-full items-center"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          <TextField
-            className="w-1/4"
-            label="Email"
-            disabled={isPending || isTenantInvitation}
-            {...register("email")}
-            error={!!errors.email}
-            helperText={errors.email?.message}
-            InputLabelProps={prefilledEmail ? { shrink: true } : undefined}
-          />
-          <TextField
-            className="w-1/4"
-            label="Phone number"
-            disabled={isPending}
-            {...register("phoneNumber")}
-            error={!!errors.phoneNumber}
-            helperText={errors.phoneNumber?.message}
-          />
-          <TextField
-            className="w-1/4"
-            disabled={isPending}
-            label="Password"
-            type="password"
-            {...register("password")}
-            error={!!errors.password}
-            helperText={errors.password?.message}
-          />
-          <TextField
-            className="w-1/4"
-            label="Invitation code (optional)"
-            disabled={isPending || isTenantInvitation}
-            {...register("invitationCode")}
-            error={!!errors.invitationCode}
-            helperText={errors.invitationCode?.message}
-            InputLabelProps={prefilledCode ? { shrink: true } : undefined}
-          />
-          <Button
-            type="submit"
-            disabled={isPending}
-            className="w-1/4"
-            size="large"
-            variant="outlined"
-            startIcon={isPending ? <CircularProgress size={20} /> : null}
-          >
-            Register
-          </Button>
-        </form>
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md">
+        <Button asChild variant="ghost" size="sm" className="mb-4">
+          <Link to="/">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            {t("common.back")}
+          </Link>
+        </Button>
+        <Card className="w-full shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">
+              {isTenantInvitation
+                ? t("auth.register.tenantInvitationTitle")
+                : t("auth.register.title")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isTenantInvitation ? (
+              <div className="mb-4 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+                <Info className="w-4 h-4 mt-0.5 shrink-0" />
+                <p>{t("auth.register.tenantInvitationInfo")}</p>
+              </div>
+            ) : null}
+
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="flex flex-col gap-4"
+            >
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="email">{t("auth.register.emailLabel")}</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  disabled={isPending || isTenantInvitation}
+                  aria-invalid={!!errors.email}
+                  className={cn(
+                    errors.email &&
+                      "border-destructive focus-visible:ring-destructive"
+                  )}
+                  {...register("email")}
+                />
+                {errors.email?.message ? (
+                  <p className="text-sm text-destructive">
+                    {errors.email.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="phoneNumber">
+                  {t("auth.register.phoneLabel")}
+                </Label>
+                <Input
+                  id="phoneNumber"
+                  type="tel"
+                  autoComplete="tel"
+                  disabled={isPending}
+                  aria-invalid={!!errors.phoneNumber}
+                  className={cn(
+                    errors.phoneNumber &&
+                      "border-destructive focus-visible:ring-destructive"
+                  )}
+                  {...register("phoneNumber")}
+                />
+                {errors.phoneNumber?.message ? (
+                  <p className="text-sm text-destructive">
+                    {errors.phoneNumber.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="password">
+                  {t("auth.register.passwordLabel")}
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  disabled={isPending}
+                  aria-invalid={!!errors.password}
+                  className={cn(
+                    errors.password &&
+                      "border-destructive focus-visible:ring-destructive"
+                  )}
+                  {...register("password")}
+                />
+                {errors.password?.message ? (
+                  <p className="text-sm text-destructive">
+                    {errors.password.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="invitationCode">
+                  {t("auth.register.invitationCodeLabel")}
+                </Label>
+                <Input
+                  id="invitationCode"
+                  type="text"
+                  disabled={isPending || isTenantInvitation}
+                  aria-invalid={!!errors.invitationCode}
+                  className={cn(
+                    errors.invitationCode &&
+                      "border-destructive focus-visible:ring-destructive"
+                  )}
+                  {...register("invitationCode")}
+                />
+                {errors.invitationCode?.message ? (
+                  <p className="text-sm text-destructive">
+                    {errors.invitationCode.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="w-full mt-4"
+                size="lg"
+              >
+                {isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                {t("auth.register.submit")}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="justify-center">
+            <p className="text-sm text-muted-foreground">
+              {t("auth.register.footerPrompt")}{" "}
+              <Link
+                to="/login"
+                className="font-medium text-foreground underline-offset-4 hover:underline"
+              >
+                {t("auth.register.footerAction")}
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
       </div>
-      <Link to="/" className="absolute top-8 left-8">
-        <MdArrowBackIos size={24} />
-      </Link>
-    </>
+    </div>
   );
 };
