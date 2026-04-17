@@ -275,6 +275,63 @@ const pl = {
       },
       deleteSuccess: "Wynajem został usunięty",
       deleteError: "Nie udało się usunąć wynajmu",
+      rentalDetails: {
+        back: "Wstecz",
+        title: "Szczegóły wynajmu",
+        status: {
+          active: "Aktywny",
+          ended: "Zakończony",
+        },
+        endRental: "Zakończ wynajem",
+        endSuccessToast: "Wynajem został zakończony",
+        endErrorToast: "Wystąpił błąd podczas kończenia wynajmu",
+        confirmEnd: {
+          title: "Zakończyć ten wynajem?",
+          description:
+            "Zakończenie wynajmu oznaczy go jako nieaktywny i zwolni powiązane mieszkanie. Tej operacji nie można cofnąć.",
+          cancel: "Anuluj",
+          confirm: "Zakończ wynajem",
+        },
+        mainInfo: {
+          title: "Informacje główne",
+          edit: "Edytuj",
+          save: "Zapisz",
+          closeEdit: "Zamknij edycję",
+          saveSuccess: "Dane wynajmu zostały zaktualizowane",
+          saveError: "Nie udało się zaktualizować danych wynajmu",
+          fields: {
+            startDate: "Data rozpoczęcia",
+            endDate: "Data zakończenia",
+            paymentDay: "Dzień płatności czynszu",
+            monthlyCost: "Czynsz miesięczny",
+            securityDeposit: "Kaucja",
+          },
+          validation: {
+            startDateRequired: "Data rozpoczęcia jest wymagana",
+            endDateRequired: "Data zakończenia jest wymagana",
+            paymentDayRequired: "Dzień płatności jest wymagany",
+            monthlyCostRequired: "Czynsz miesięczny jest wymagany",
+            securityDepositRequired: "Kaucja jest wymagana",
+          },
+        },
+        descriptionSection: {
+          title: "Opis",
+          label: "Opis",
+          edit: "Edytuj",
+          save: "Zapisz",
+          closeEdit: "Zamknij edycję",
+          empty: "Brak opisu.",
+          saveSuccess: "Opis wynajmu został zaktualizowany",
+          saveError: "Nie udało się zaktualizować opisu wynajmu",
+          validation: {
+            descriptionRequired: "Opis jest wymagany",
+          },
+        },
+        files: {
+          photos: "Zdjęcia",
+          documents: "Dokumenty",
+        },
+      },
       newRental: {
         back: "Wróć",
         title: "Dodaj nowy wynajem",

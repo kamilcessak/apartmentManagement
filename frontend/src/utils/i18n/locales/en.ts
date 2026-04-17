@@ -257,6 +257,63 @@ const en = {
       },
       deleteSuccess: "Rental deleted successfully",
       deleteError: "Unable to delete rental",
+      rentalDetails: {
+        back: "Back",
+        title: "Details of rental",
+        status: {
+          active: "Active",
+          ended: "Ended",
+        },
+        endRental: "End rental",
+        endSuccessToast: "Rental ended successfully",
+        endErrorToast: "An error occurred while ending the rental",
+        confirmEnd: {
+          title: "End this rental?",
+          description:
+            "Ending the rental will mark it as inactive and release the linked apartment as available. This action cannot be undone.",
+          cancel: "Cancel",
+          confirm: "End rental",
+        },
+        mainInfo: {
+          title: "Main information",
+          edit: "Edit",
+          save: "Save",
+          closeEdit: "Close edit",
+          saveSuccess: "Rental details updated successfully",
+          saveError: "An error occurred while updating rental details",
+          fields: {
+            startDate: "Start date",
+            endDate: "End date",
+            paymentDay: "Rental payment day",
+            monthlyCost: "Monthly cost",
+            securityDeposit: "Security deposit",
+          },
+          validation: {
+            startDateRequired: "Start date is required",
+            endDateRequired: "End date is required",
+            paymentDayRequired: "Payment day is required",
+            monthlyCostRequired: "Monthly cost is required",
+            securityDepositRequired: "Security deposit is required",
+          },
+        },
+        descriptionSection: {
+          title: "Description",
+          label: "Description",
+          edit: "Edit",
+          save: "Save",
+          closeEdit: "Close edit",
+          empty: "No description provided.",
+          saveSuccess: "Description updated successfully",
+          saveError: "An error occurred while updating the description",
+          validation: {
+            descriptionRequired: "Description is required",
+          },
+        },
+        files: {
+          photos: "Photos",
+          documents: "Documents",
+        },
+      },
       newRental: {
         back: "Back",
         title: "Add new rental",

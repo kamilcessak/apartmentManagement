@@ -1,229 +1,378 @@
-import { DetailsSectionHeader } from "@components/header";
-import {
-  Button,
-  CircularProgress,
-  Divider,
-  TextField,
-  Typography,
-} from "@mui/material";
-import * as yup from "yup";
 import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import api from "@services/api";
-import { RentalType } from "../types/rental.types";
-import { DetailsInformationItem } from "@components/sections";
 import dayjs from "dayjs";
-import { DatePicker } from "@mui/x-date-pickers";
+import { Loader2, Pencil } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
-const schema = yup.object().shape({
-  startDate: yup.date().required("Field is required"),
-  endDate: yup.date().required("Field is required"),
-  rentalPaymentDay: yup.number().required("Field is required"),
-  monthlyCost: yup.number().required("Field is required"),
-  securityDeposit: yup.number().required("Field is required"),
-});
+import api from "@services/api";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+import { RentalType } from "../types/rental.types";
+
+const buildSchema = (t: TFunction) =>
+  yup.object().shape({
+    startDate: yup
+      .date()
+      .typeError(
+        t("rentals.rentalDetails.mainInfo.validation.startDateRequired")
+      )
+      .required(
+        t("rentals.rentalDetails.mainInfo.validation.startDateRequired")
+      ),
+    endDate: yup
+      .date()
+      .typeError(t("rentals.rentalDetails.mainInfo.validation.endDateRequired"))
+      .required(
+        t("rentals.rentalDetails.mainInfo.validation.endDateRequired")
+      ),
+    rentalPaymentDay: yup
+      .number()
+      .typeError(
+        t("rentals.rentalDetails.mainInfo.validation.paymentDayRequired")
+      )
+      .required(
+        t("rentals.rentalDetails.mainInfo.validation.paymentDayRequired")
+      ),
+    monthlyCost: yup
+      .number()
+      .typeError(
+        t("rentals.rentalDetails.mainInfo.validation.monthlyCostRequired")
+      )
+      .required(
+        t("rentals.rentalDetails.mainInfo.validation.monthlyCostRequired")
+      ),
+    securityDeposit: yup
+      .number()
+      .typeError(
+        t("rentals.rentalDetails.mainInfo.validation.securityDepositRequired")
+      )
+      .required(
+        t("rentals.rentalDetails.mainInfo.validation.securityDepositRequired")
+      ),
+  });
 
 type FormType = {
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: string;
+  endDate: string;
   rentalPaymentDay: number;
   monthlyCost: number;
   securityDeposit: number;
 };
 
-export const RentalDetailsSection = ({ rental }: { rental: RentalType }) => {
-  const queryClient = useQueryClient();
-  const [editMode, seteditMode] = useState(false);
+const toDateInputValue = (value: string | Date | null | undefined): string => {
+  if (!value) return "";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+};
 
-  const defaultValues = useMemo(
+type ReadItemProps = {
+  label: string;
+  value: string;
+};
+
+const ReadItem = ({ label, value }: ReadItemProps) => (
+  <div className="flex flex-col gap-1">
+    <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      {label}
+    </span>
+    <span className="text-sm font-medium text-slate-900">{value}</span>
+  </div>
+);
+
+export const RentalDetailsSection = ({ rental }: { rental: RentalType }) => {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [editMode, setEditMode] = useState(false);
+
+  const schema = useMemo(() => buildSchema(t), [t]);
+
+  const defaultValues = useMemo<FormType>(
     () => ({
-      startDate: dayjs(rental.startDate),
-      endDate: dayjs(rental.endDate),
-      rentalPaymentDay: rental.rentalPaymentDay || 0,
-      monthlyCost: rental.monthlyCost || 0,
-      securityDeposit: rental.securityDeposit || 0,
+      startDate: toDateInputValue(rental.startDate),
+      endDate: toDateInputValue(rental.endDate),
+      rentalPaymentDay: rental.rentalPaymentDay ?? 0,
+      monthlyCost: rental.monthlyCost ?? 0,
+      securityDeposit: rental.securityDeposit ?? 0,
     }),
     [rental]
   );
 
   const { handleSubmit, control, reset } = useForm<FormType>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as never,
     defaultValues,
   });
 
   const handlePatchRental = async (formData: FormType) => {
-    try {
-      const result = await api.patch(`/rental/${rental._id}`, formData);
-      return result;
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
+    const result = await api.patch(`/rental/${rental._id}`, {
+      ...formData,
+      startDate: new Date(formData.startDate).toISOString(),
+      endDate: new Date(formData.endDate).toISOString(),
+    });
+    return result;
   };
 
   const { mutate, isPending } = useMutation({
     mutationFn: handlePatchRental,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rental", `${rental._id}`] });
-      seteditMode(false);
-      toast("Successfully modified rental details", { type: "success" });
+      setEditMode(false);
+      toast(t("rentals.rentalDetails.mainInfo.saveSuccess"), {
+        type: "success",
+      });
     },
     onError: () => {
-      toast("An error occurred during modifying rental details", {
-        type: "error",
-      });
+      toast(t("rentals.rentalDetails.mainInfo.saveError"), { type: "error" });
     },
   });
 
   const onSubmit = (data: FormType) => mutate(data);
 
+  const handleToggleEdit = () => {
+    setEditMode((prev) => {
+      if (!prev) reset(defaultValues);
+      return !prev;
+    });
+  };
+
   return (
-    <section
-      className={`flex flex-col gap-4 border-2 ${
-        editMode ? "border-green-600" : "border-gray-700"
-      } rounded-md p-4`}
-    >
-      <DetailsSectionHeader
-        editMode={editMode}
-        editModeButton={
-          <Button
-            color="success"
-            variant="contained"
-            disabled={isPending}
-            startIcon={isPending ? <CircularProgress /> : null}
-            onClick={handleSubmit(onSubmit)}
-            style={{ textTransform: "none" }}
-          >
-            <Typography variant="body2">Save</Typography>
-          </Button>
-        }
-        title={"Main informations"}
-        onClickButton={() =>
-          seteditMode((prev) => {
-            if (!prev) {
-              reset(defaultValues);
-            }
-            return !prev;
-          })
-        }
-      />
-      <Divider />
-      <div className="flex flex-1 flex-row items-center gap-4 justify-between w-full">
+    <Card className="border-slate-200 shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-4">
+        <CardTitle className="text-lg font-semibold text-slate-900">
+          {t("rentals.rentalDetails.mainInfo.title")}
+        </CardTitle>
         {!editMode ? (
-          <>
-            <DetailsInformationItem
-              title={"Start date"}
-              subtitle={dayjs(rental.startDate).format("DD.MM.YYYY")}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleToggleEdit}
+          >
+            <Pencil className="h-4 w-4" />
+            {t("rentals.rentalDetails.mainInfo.edit")}
+          </Button>
+        ) : null}
+      </CardHeader>
+
+      <CardContent className="p-6 pt-0">
+        {!editMode ? (
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-5">
+            <ReadItem
+              label={t("rentals.rentalDetails.mainInfo.fields.startDate")}
+              value={dayjs(rental.startDate).format("DD.MM.YYYY")}
             />
-            <DetailsInformationItem
-              title={"End date"}
-              subtitle={dayjs(rental.endDate).format("DD.MM.YYYY")}
+            <ReadItem
+              label={t("rentals.rentalDetails.mainInfo.fields.endDate")}
+              value={dayjs(rental.endDate).format("DD.MM.YYYY")}
             />
-            <DetailsInformationItem
-              title={"Rental payment day"}
-              subtitle={`${rental.rentalPaymentDay}`}
+            <ReadItem
+              label={t("rentals.rentalDetails.mainInfo.fields.paymentDay")}
+              value={`${rental.rentalPaymentDay}`}
             />
-            <DetailsInformationItem
-              title={"Security deposit"}
-              subtitle={`${rental.securityDeposit}`}
+            <ReadItem
+              label={t("rentals.rentalDetails.mainInfo.fields.monthlyCost")}
+              value={`${rental.monthlyCost}`}
             />
-            <DetailsInformationItem
-              title={"Monthly cost"}
-              subtitle={`${rental.monthlyCost}`}
-            />
-          </>
-        ) : (
-          <div className="flex flex-col flex-1 gap-4">
-            <Controller
-              name="startDate"
-              control={control}
-              render={({ field, fieldState }) => (
-                <DatePicker
-                  label="Rental start date"
-                  value={field.value}
-                  onChange={(newValue) => field.onChange(newValue)}
-                  format="DD.MM.YYYY"
-                  slotProps={{
-                    textField: {
-                      error: !!fieldState.error,
-                      helperText: fieldState.error?.message,
-                    } as React.ComponentProps<typeof TextField>,
-                  }}
-                />
-              )}
-            />
-            <Controller
-              name="endDate"
-              control={control}
-              render={({ field, fieldState }) => (
-                <DatePicker
-                  label="Rental end date"
-                  value={field.value}
-                  onChange={(newValue) => field.onChange(newValue)}
-                  format="DD.MM.YYYY"
-                  slotProps={{
-                    textField: {
-                      error: !!fieldState.error,
-                      helperText: fieldState.error?.message,
-                    } as React.ComponentProps<typeof TextField>,
-                  }}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="rentalPaymentDay"
-              render={({ field, fieldState }) => (
-                <TextField
-                  disabled={isPending}
-                  label="Rental payment day"
-                  value={field.value}
-                  onChange={field.onChange}
-                  variant="outlined"
-                  type="number"
-                  error={!!fieldState.error?.message}
-                  helperText={fieldState.error?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="monthlyCost"
-              render={({ field, fieldState }) => (
-                <TextField
-                  disabled={isPending}
-                  label="Monthly cost"
-                  value={field.value}
-                  onChange={field.onChange}
-                  variant="outlined"
-                  type="number"
-                  error={!!fieldState.error?.message}
-                  helperText={fieldState.error?.message}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="securityDeposit"
-              render={({ field, fieldState }) => (
-                <TextField
-                  disabled={isPending}
-                  label="Security deposit"
-                  value={field.value}
-                  onChange={field.onChange}
-                  variant="outlined"
-                  type="number"
-                  error={!!fieldState.error?.message}
-                  helperText={fieldState.error?.message}
-                />
-              )}
+            <ReadItem
+              label={t("rentals.rentalDetails.mainInfo.fields.securityDeposit")}
+              value={`${rental.securityDeposit}`}
             />
           </div>
+        ) : (
+          <form
+            id="rental-details-form"
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+            className="grid gap-4"
+          >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Controller
+                control={control}
+                name="startDate"
+                render={({ field, fieldState }) => (
+                  <div className="grid gap-2">
+                    <Label htmlFor="startDate" className="text-slate-900">
+                      {t("rentals.rentalDetails.mainInfo.fields.startDate")}
+                    </Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      disabled={isPending}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                    />
+                    {fieldState.error?.message ? (
+                      <p className="text-xs text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+              <Controller
+                control={control}
+                name="endDate"
+                render={({ field, fieldState }) => (
+                  <div className="grid gap-2">
+                    <Label htmlFor="endDate" className="text-slate-900">
+                      {t("rentals.rentalDetails.mainInfo.fields.endDate")}
+                    </Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      disabled={isPending}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                    />
+                    {fieldState.error?.message ? (
+                      <p className="text-xs text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <Controller
+                control={control}
+                name="rentalPaymentDay"
+                render={({ field, fieldState }) => (
+                  <div className="grid gap-2">
+                    <Label
+                      htmlFor="rentalPaymentDay"
+                      className="text-slate-900"
+                    >
+                      {t("rentals.rentalDetails.mainInfo.fields.paymentDay")}
+                    </Label>
+                    <Input
+                      id="rentalPaymentDay"
+                      type="number"
+                      min={1}
+                      max={31}
+                      disabled={isPending}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === "" ? "" : Number(e.target.value)
+                        )
+                      }
+                      onBlur={field.onBlur}
+                    />
+                    {fieldState.error?.message ? (
+                      <p className="text-xs text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+              <Controller
+                control={control}
+                name="monthlyCost"
+                render={({ field, fieldState }) => (
+                  <div className="grid gap-2">
+                    <Label htmlFor="monthlyCost" className="text-slate-900">
+                      {t("rentals.rentalDetails.mainInfo.fields.monthlyCost")}
+                    </Label>
+                    <Input
+                      id="monthlyCost"
+                      type="number"
+                      min={0}
+                      disabled={isPending}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === "" ? "" : Number(e.target.value)
+                        )
+                      }
+                      onBlur={field.onBlur}
+                    />
+                    {fieldState.error?.message ? (
+                      <p className="text-xs text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+              <Controller
+                control={control}
+                name="securityDeposit"
+                render={({ field, fieldState }) => (
+                  <div className="grid gap-2">
+                    <Label
+                      htmlFor="securityDeposit"
+                      className="text-slate-900"
+                    >
+                      {t(
+                        "rentals.rentalDetails.mainInfo.fields.securityDeposit"
+                      )}
+                    </Label>
+                    <Input
+                      id="securityDeposit"
+                      type="number"
+                      min={0}
+                      disabled={isPending}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === "" ? "" : Number(e.target.value)
+                        )
+                      }
+                      onBlur={field.onBlur}
+                    />
+                    {fieldState.error?.message ? (
+                      <p className="text-xs text-destructive">
+                        {fieldState.error.message}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              />
+            </div>
+          </form>
         )}
-      </div>
-    </section>
+      </CardContent>
+
+      {editMode ? (
+        <CardFooter className="flex justify-end gap-2 border-t border-slate-100 p-6 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleToggleEdit}
+            disabled={isPending}
+          >
+            {t("rentals.rentalDetails.mainInfo.closeEdit")}
+          </Button>
+          <Button
+            type="submit"
+            form="rental-details-form"
+            variant="default"
+            disabled={isPending}
+          >
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {t("rentals.rentalDetails.mainInfo.save")}
+          </Button>
+        </CardFooter>
+      ) : null}
+    </Card>
   );
 };
