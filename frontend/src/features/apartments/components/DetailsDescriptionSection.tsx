@@ -1,7 +1,6 @@
 import {
-  Button,
+  Button as MuiButton,
   CircularProgress,
-  Divider,
   TextField,
   Typography,
 } from "@mui/material";
@@ -14,6 +13,7 @@ import { toast } from "react-toastify";
 
 import { DetailsSectionHeader } from "@components/header";
 
+import { Card } from "@/components/ui/card";
 import api from "@services/api";
 
 const schema = yup.object().shape({
@@ -68,25 +68,21 @@ export const DetailsDescriptionSection = ({
   const onSubmit = (formData: FormType) => mutate(formData);
 
   return (
-    <section
-      className={`flex flex-col gap-4 border-2 ${
-        editMode ? "border-green-600" : "border-gray-700"
-      } rounded-md p-4`}
-    >
+    <Card className="p-6 mb-6">
       <DetailsSectionHeader
         title={"Description"}
         editMode={editMode}
         editModeButton={
-          <Button
+          <MuiButton
             color="success"
             variant="contained"
             disabled={isPending}
-            startIcon={isPending ? <CircularProgress /> : null}
+            startIcon={isPending ? <CircularProgress size={16} /> : null}
             onClick={handleSubmit(onSubmit)}
             style={{ textTransform: "none" }}
           >
             <Typography variant="body2">Save</Typography>
-          </Button>
+          </MuiButton>
         }
         onClickButton={() =>
           seteditMode((prev) => {
@@ -97,12 +93,11 @@ export const DetailsDescriptionSection = ({
           })
         }
       />
-      <Divider />
-      <div className="flex flex-1 w-full">
+      <div className="mt-6">
         {!editMode ? (
-          <Typography className="whitespace-pre-line" variant="body1">
+          <p className="whitespace-pre-line text-sm text-slate-700 leading-relaxed">
             {description}
-          </Typography>
+          </p>
         ) : (
           <div className="flex flex-1 flex-col">
             <Controller
@@ -124,6 +119,6 @@ export const DetailsDescriptionSection = ({
           </div>
         )}
       </div>
-    </section>
+    </Card>
   );
 };

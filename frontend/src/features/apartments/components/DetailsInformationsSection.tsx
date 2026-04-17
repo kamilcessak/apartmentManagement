@@ -1,7 +1,6 @@
 import {
-  Button,
+  Button as MuiButton,
   CircularProgress,
-  Divider,
   FormControl,
   FormHelperText,
   InputLabel,
@@ -12,16 +11,17 @@ import {
   useTheme,
 } from "@mui/material";
 import * as yup from "yup";
-import { useState } from "react";
+import { FC, ReactNode, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 
-import { DetailsInformationItem } from "@components/sections";
 import { DetailsSectionHeader } from "@components/header";
 import { ApartmentType } from "../types/apartment.type";
 
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { getApartmentIdFromAddress } from "@utils/apartment";
 import api from "@services/api";
 
@@ -40,6 +40,16 @@ type FormType = {
   monthlyCost: number;
   isAvailable: boolean;
 };
+
+const InfoCell: FC<{ label: string; value?: ReactNode }> = ({
+  label,
+  value,
+}) => (
+  <div className="flex flex-col gap-1 min-w-0">
+    <span className="text-sm text-slate-500">{label}</span>
+    <span className="font-medium text-slate-900 truncate">{value}</span>
+  </div>
+);
 
 export const DetailsInformationsSection = ({
   data,
@@ -88,26 +98,22 @@ export const DetailsInformationsSection = ({
   const onSubmit = (formData: FormType) => mutate(formData);
 
   return (
-    <section
-      className={`flex flex-col gap-4 border-2 ${
-        editMode ? "border-green-600" : "border-gray-700"
-      } rounded-md p-4`}
-    >
+    <Card className="p-6 mb-6">
       <DetailsSectionHeader
         editMode={editMode}
         editModeButton={
-          <Button
+          <MuiButton
             color="success"
             variant="contained"
             disabled={isPending}
-            startIcon={isPending ? <CircularProgress /> : null}
+            startIcon={isPending ? <CircularProgress size={16} /> : null}
             onClick={handleSubmit(onSubmit)}
             style={{ textTransform: "none" }}
           >
             <Typography variant="body2">Save</Typography>
-          </Button>
+          </MuiButton>
         }
-        title={"Main informations"}
+        title={"Main information"}
         onClickButton={() =>
           seteditMode((prev) => {
             if (!prev) {
@@ -123,49 +129,32 @@ export const DetailsInformationsSection = ({
           })
         }
       />
-      <Divider />
-      <div className="flex flex-1 flex-row items-center gap-4 justify-between w-full">
+      <div className="mt-6">
         {!editMode ? (
-          <>
-            <DetailsInformationItem
-              title={"Apartment ID"}
-              subtitle={getApartmentIdFromAddress(data.address)}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <InfoCell
+              label="Apartment ID"
+              value={getApartmentIdFromAddress(data.address)}
             />
-            <DetailsInformationItem
-              title={"Address"}
-              subtitle={`${data.address}`}
-            />
-            <DetailsInformationItem
-              title={"Metric"}
-              subtitle={`${data.metric} m²`}
-            />
-            <DetailsInformationItem
-              title={"Rooms count"}
-              subtitle={`${data.roomCount}`}
-            />
-            <DetailsInformationItem
-              title={"Monthly cost"}
-              subtitle={`${data.monthlyCost} zł`}
-            />
-            <DetailsInformationItem
-              title={"Status"}
-              subtitle={`${!!data.isAvailable}`}
-              content={
-                <div
-                  className="text-white p-1 rounded-md"
-                  style={{
-                    backgroundColor: data.isAvailable
-                      ? theme.palette.success.main
-                      : theme.palette.warning.main,
-                  }}
-                >
-                  {data.isAvailable ? "Available" : "Unavailable"}
-                </div>
-              }
-            />
-          </>
+            <InfoCell label="Address" value={data.address} />
+            <InfoCell label="Metric" value={`${data.metric} m²`} />
+            <InfoCell label="Rooms count" value={`${data.roomCount}`} />
+            <InfoCell label="Monthly cost" value={`${data.monthlyCost} zł`} />
+            <div className="flex flex-col gap-1 min-w-0">
+              <span className="text-sm text-slate-500">Status</span>
+              <div>
+                {data.isAvailable ? (
+                  <Badge className="bg-emerald-600 text-white hover:bg-emerald-600/90">
+                    Available
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive">Unavailable</Badge>
+                )}
+              </div>
+            </div>
+          </div>
         ) : (
-          <div className="flex flex-col flex-1 gap-4">
+          <div className="flex flex-col gap-4">
             <Controller
               control={control}
               name="address"
@@ -254,6 +243,6 @@ export const DetailsInformationsSection = ({
           </div>
         )}
       </div>
-    </section>
+    </Card>
   );
 };

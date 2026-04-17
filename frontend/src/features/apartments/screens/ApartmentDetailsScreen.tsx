@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { MdChevronLeft } from "react-icons/md";
+import { ChevronLeft } from "lucide-react";
 
 import {
   DetailsPhotosSection,
@@ -10,6 +10,7 @@ import {
 import { ApartmentType } from "../types/apartment.type";
 
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
+import { Button } from "@/components/ui/button";
 import api from "@services/api";
 import { getApartmentIdFromAddress } from "@utils/apartment";
 import { capitalizeFirstLetter } from "@utils/common";
@@ -40,38 +41,43 @@ export const ApartmentDetailsScreen = () => {
 
   return (
     <RouteContent>
-      <header className="flex flex-row items-center p-8 border-b-2 border-gray-200">
-        <a className="cursor-pointer" onClick={() => navigate(-1)}>
-          <MdChevronLeft size={48} />
-        </a>
-        <div className="flex flex-1 items-center justify-center">
-          <h1 className="text-3xl font-semibold">
+      <div className="flex flex-col flex-1 min-h-0 bg-slate-50">
+        <header className="flex flex-row items-center gap-3 px-8 py-5 border-b border-slate-200 bg-white">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            aria-label="Go back"
+          >
+            <ChevronLeft className="!size-5" />
+          </Button>
+          <h1 className="text-2xl font-semibold text-slate-900">
             {`Details of: ${capitalizeFirstLetter(
               getApartmentIdFromAddress(data.address)
             )}`}
           </h1>
-        </div>
-      </header>
-      <main className="flex flex-1 flex-col w-full overflow-y-scroll scrollbar-hide h-full gap-4 p-8">
-        <DetailsInformationsSection data={data} />
-        <DetailsDescriptionSection
-          description={data.description}
-          id={data._id}
-        />
-        <DetailsPhotosSection
-          files={data.photos}
-          id={data._id}
-          type="photos"
-          title="Photos"
-        />
-        <DetailsPhotosSection
-          title="Documents"
-          files={data.documents}
-          id={data._id}
-          type="documents"
-        />
-        <ApartmentInvoicesSection apartmentID={data._id} />
-      </main>
+        </header>
+        <main className="flex flex-1 flex-col w-full overflow-y-auto scrollbar-hide p-8">
+          <DetailsInformationsSection data={data} />
+          <DetailsDescriptionSection
+            description={data.description}
+            id={data._id}
+          />
+          <DetailsPhotosSection
+            files={data.photos}
+            id={data._id}
+            type="photos"
+            title="Photos"
+          />
+          <DetailsPhotosSection
+            title="Documents"
+            files={data.documents}
+            id={data._id}
+            type="documents"
+          />
+          <ApartmentInvoicesSection apartmentID={data._id} />
+        </main>
+      </div>
     </RouteContent>
   );
 };
