@@ -371,6 +371,8 @@ const en = {
       },
     },
     invoices: {
+      title: "List of your invoices",
+      addInvoice: "Add new invoice",
       types: {
         rent: "Rent",
         electricity: "Electricity",
@@ -380,6 +382,43 @@ const en = {
         heating: "Heating",
         garbage: "Garbage",
         other: "Other",
+      },
+      status: {
+        paid: "Paid",
+        overdue: "Overdue",
+        unpaid: "Unpaid",
+      },
+      details: {
+        back: "Back",
+        title: "Invoice {{id}}",
+        amountWithCurrency: "{{value}} PLN",
+        fields: {
+          apartment: "Apartment",
+          type: "Type",
+          amount: "Amount",
+          dueDate: "Due date",
+          uploadDate: "Upload date",
+          paidDate: "Paid date",
+          empty: "—",
+        },
+        actions: {
+          edit: "Edit",
+          changeStatus: "Change status",
+          openStatusMenu: "Open status menu",
+          markAsPaid: "Mark as paid",
+          markAsUnpaid: "Mark as unpaid",
+        },
+        document: {
+          title: "Invoice document",
+          empty: "No document attached",
+          upload: "Upload PDF",
+          open: "Open document",
+        },
+        toasts: {
+          updateSuccess: "Invoice status updated",
+          updateError: "Failed to update invoice status",
+          previewError: "Failed to load document",
+        },
       },
       form: {
         fields: {

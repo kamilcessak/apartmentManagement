@@ -1,28 +1,59 @@
-import { useMemo } from "react";
+import { FC, ReactNode, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MdChevronLeft, MdEdit, MdPaid, MdUndo } from "react-icons/md";
+import {
+  ChevronLeft,
+  FileText,
+  FileX,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Upload,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
-import {
-  Button,
-  CircularProgress,
-  Divider,
-  Paper,
-  Typography,
-} from "@mui/material";
+import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 
 import api from "@services/api";
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
-import { DetailsInformationItem } from "@components/sections";
-import { capitalizeFirstLetter } from "@utils/common";
 import { getApartmentIdFromAddress } from "@utils/apartment";
 import { ApartmentType } from "@features/apartments/types/apartment.type";
 
-import { InvoiceType } from "../types";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { InvoiceCategory, InvoiceType } from "../types";
 import { InvoiceStatusChip } from "../components";
 
+type DataItemProps = {
+  label: string;
+  children: ReactNode;
+  emphasized?: boolean;
+};
+
+const DataItem: FC<DataItemProps> = ({ label, children, emphasized }) => (
+  <div className="flex flex-col gap-1">
+    <span className="text-sm text-slate-500">{label}</span>
+    <span
+      className={
+        emphasized
+          ? "text-2xl font-bold text-slate-900"
+          : "text-base font-medium text-slate-900"
+      }
+    >
+      {children}
+    </span>
+  </div>
+);
+
 export const InvoiceDetailsScreen = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -79,10 +110,10 @@ export const InvoiceDetailsScreen = () => {
     mutationFn: handleTogglePaid,
     onSuccess: () => {
       invalidate();
-      toast("Invoice status updated", { type: "success" });
+      toast(t("invoices.details.toasts.updateSuccess"), { type: "success" });
     },
     onError: () => {
-      toast("Failed to update invoice status", { type: "error" });
+      toast(t("invoices.details.toasts.updateError"), { type: "error" });
     },
   });
 
@@ -92,143 +123,151 @@ export const InvoiceDetailsScreen = () => {
       const response = await api.get(`/upload/${invoice.document}`);
       window.open(response.data.url, "_blank");
     } catch {
-      toast("Failed to load document", { type: "error" });
+      toast(t("invoices.details.toasts.previewError"), { type: "error" });
     }
   };
 
   const apartmentLabel = useMemo(() => {
-    if (!apartment?.address) return "—";
+    if (!apartment?.address) return t("invoices.details.fields.empty");
     return getApartmentIdFromAddress(apartment.address);
-  }, [apartment]);
+  }, [apartment, t]);
 
   if (isLoading) return <LoadingView />;
   if (isError || !invoice)
     return <ErrorView message={`${error?.message}`} onClick={refetch} />;
 
+  const typeLabel = t(`invoices.types.${invoice.invoiceType as InvoiceCategory}`, {
+    defaultValue: invoice.invoiceType,
+  });
+
   return (
     <RouteContent>
-      <header className="flex flex-row items-center p-8 border-b-2 border-gray-200">
-        <a className="cursor-pointer" onClick={() => navigate(-1)}>
-          <MdChevronLeft size={48} />
-        </a>
-        <div className="flex flex-1 items-center justify-center">
-          <h1 className="text-3xl font-semibold">
-            Invoice {invoice.invoiceID}
-          </h1>
-        </div>
-      </header>
-      <main className="flex flex-1 flex-col w-full overflow-y-scroll scrollbar-hide h-full gap-4 p-8">
-        <section className="flex flex-col gap-4 border-2 border-gray-700 rounded-md p-4">
-          <div className="flex flex-row items-center justify-between">
-            <div className="flex flex-row items-center gap-3">
-              <Typography variant="h6">{invoice.invoiceID}</Typography>
-              <InvoiceStatusChip invoice={invoice} />
-            </div>
-            <div className="flex flex-row gap-2">
-              {!invoice.isPaid ? (
-                <Button
-                  color="success"
-                  variant="contained"
-                  startIcon={
-                    isToggling ? (
-                      <CircularProgress size={16} color="inherit" />
-                    ) : (
-                      <MdPaid />
-                    )
-                  }
-                  disabled={isToggling}
-                  onClick={() => togglePaid(true)}
-                  style={{ textTransform: "none" }}
-                >
-                  Mark as paid
-                </Button>
-              ) : (
-                <Button
-                  color="warning"
-                  variant="outlined"
-                  startIcon={
-                    isToggling ? (
-                      <CircularProgress size={16} color="inherit" />
-                    ) : (
-                      <MdUndo />
-                    )
-                  }
-                  disabled={isToggling}
-                  onClick={() => togglePaid(false)}
-                  style={{ textTransform: "none" }}
-                >
-                  Mark as unpaid
-                </Button>
-              )}
+      <div className="flex h-full flex-col bg-slate-50">
+        <div className="flex-1 overflow-y-auto px-8 py-8">
+          <div className="mx-auto w-full max-w-5xl">
+            <header className="mb-6 flex flex-row items-center gap-3">
               <Button
-                color="primary"
-                variant="outlined"
-                startIcon={<MdEdit />}
-                onClick={() => navigate(`/invoice/${invoice._id}/edit`)}
-                style={{ textTransform: "none" }}
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                aria-label={t("invoices.details.back")}
               >
-                Edit
+                <ChevronLeft className="h-5 w-5" />
               </Button>
-            </div>
-          </div>
-          <Divider />
-          <div className="flex flex-row flex-wrap gap-8">
-            <DetailsInformationItem
-              title="Apartment"
-              subtitle={apartmentLabel}
-            />
-            <DetailsInformationItem
-              title="Type"
-              subtitle={capitalizeFirstLetter(invoice.invoiceType)}
-            />
-            <DetailsInformationItem
-              title="Amount"
-              subtitle={`${invoice.amount.toFixed(2)} PLN`}
-            />
-            <DetailsInformationItem
-              title="Due date"
-              subtitle={dayjs(invoice.dueDate).format("DD.MM.YYYY")}
-            />
-            <DetailsInformationItem
-              title="Upload date"
-              subtitle={dayjs(invoice.uploadDate).format("DD.MM.YYYY")}
-            />
-            <DetailsInformationItem
-              title="Paid date"
-              subtitle={
-                invoice.paidDate
-                  ? dayjs(invoice.paidDate).format("DD.MM.YYYY")
-                  : "—"
-              }
-            />
-          </div>
-        </section>
+              <h1 className="text-2xl font-semibold text-slate-900">
+                {t("invoices.details.title", { id: invoice.invoiceID })}
+              </h1>
+              <InvoiceStatusChip invoice={invoice} />
 
-        <section className="flex flex-col gap-4 border-2 border-gray-700 rounded-md p-4">
-          <Typography variant="h6">Invoice document</Typography>
-          <Divider />
-          {invoice.document ? (
-            <Paper variant="outlined" className="p-4">
-              <div className="flex flex-row items-center justify-between gap-4">
-                <Typography variant="body2" className="truncate">
-                  {invoice.document}
-                </Typography>
+              <div className="ml-auto flex flex-row items-center gap-2">
                 <Button
-                  variant="contained"
-                  onClick={handlePreviewDocument}
-                  style={{ textTransform: "none" }}
+                  variant="outline"
+                  onClick={() => navigate(`/invoice/${invoice._id}/edit`)}
                 >
-                  Open document
+                  <Pencil className="h-4 w-4" />
+                  {t("invoices.details.actions.edit")}
                 </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={isToggling}
+                      aria-label={t("invoices.details.actions.openStatusMenu")}
+                    >
+                      {isToggling ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MoreHorizontal className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {invoice.isPaid ? (
+                      <DropdownMenuItem
+                        onClick={() => togglePaid(false)}
+                        disabled={isToggling}
+                      >
+                        {t("invoices.details.actions.markAsUnpaid")}
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        onClick={() => togglePaid(true)}
+                        disabled={isToggling}
+                      >
+                        {t("invoices.details.actions.markAsPaid")}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            </Paper>
-          ) : (
-            <Typography variant="body2" color="textSecondary">
-              No document attached.
-            </Typography>
-          )}
-        </section>
-      </main>
+            </header>
+
+            <Card className="border-slate-200 p-6 shadow-sm">
+              <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
+                <DataItem label={t("invoices.details.fields.apartment")}>
+                  {apartmentLabel}
+                </DataItem>
+                <DataItem label={t("invoices.details.fields.type")}>
+                  {typeLabel}
+                </DataItem>
+                <DataItem
+                  label={t("invoices.details.fields.amount")}
+                  emphasized
+                >
+                  {t("invoices.details.amountWithCurrency", {
+                    value: invoice.amount.toFixed(2),
+                  })}
+                </DataItem>
+                <DataItem label={t("invoices.details.fields.dueDate")}>
+                  {dayjs(invoice.dueDate).format("DD.MM.YYYY")}
+                </DataItem>
+                <DataItem label={t("invoices.details.fields.uploadDate")}>
+                  {dayjs(invoice.uploadDate).format("DD.MM.YYYY")}
+                </DataItem>
+                <DataItem label={t("invoices.details.fields.paidDate")}>
+                  {invoice.paidDate
+                    ? dayjs(invoice.paidDate).format("DD.MM.YYYY")
+                    : t("invoices.details.fields.empty")}
+                </DataItem>
+              </div>
+            </Card>
+
+            <Card className="mt-6 border-slate-200 p-6 shadow-sm">
+              <h2 className="text-base font-semibold text-slate-900">
+                {t("invoices.details.document.title")}
+              </h2>
+
+              {invoice.document ? (
+                <div className="mt-4 flex flex-row items-center justify-between gap-4 rounded-md border border-slate-200 p-4">
+                  <div className="flex min-w-0 flex-row items-center gap-3">
+                    <FileText className="h-5 w-5 shrink-0 text-slate-500" />
+                    <span className="truncate text-sm text-slate-900">
+                      {invoice.document}
+                    </span>
+                  </div>
+                  <Button variant="outline" onClick={handlePreviewDocument}>
+                    {t("invoices.details.document.open")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-col items-center justify-center gap-3 py-10 text-center">
+                  <FileX className="h-16 w-16 text-slate-300" strokeWidth={1.5} />
+                  <p className="text-sm text-slate-500">
+                    {t("invoices.details.document.empty")}
+                  </p>
+                  <Button variant="outline" className="mt-2">
+                    <Upload className="h-4 w-4" />
+                    {t("invoices.details.document.upload")}
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
+      </div>
     </RouteContent>
   );
 };

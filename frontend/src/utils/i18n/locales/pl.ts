@@ -389,6 +389,8 @@ const pl = {
       },
     },
     invoices: {
+      title: "Lista Twoich faktur",
+      addInvoice: "Dodaj nową fakturę",
       types: {
         rent: "Czynsz",
         electricity: "Prąd",
@@ -398,6 +400,43 @@ const pl = {
         heating: "Ogrzewanie",
         garbage: "Śmieci",
         other: "Inne",
+      },
+      status: {
+        paid: "Opłacona",
+        overdue: "Zaległa",
+        unpaid: "Nieopłacona",
+      },
+      details: {
+        back: "Wstecz",
+        title: "Faktura {{id}}",
+        amountWithCurrency: "{{value}} PLN",
+        fields: {
+          apartment: "Mieszkanie",
+          type: "Typ",
+          amount: "Kwota",
+          dueDate: "Termin płatności",
+          uploadDate: "Data dodania",
+          paidDate: "Data opłacenia",
+          empty: "—",
+        },
+        actions: {
+          edit: "Edytuj",
+          changeStatus: "Zmień status",
+          openStatusMenu: "Otwórz menu statusu",
+          markAsPaid: "Oznacz jako opłaconą",
+          markAsUnpaid: "Oznacz jako nieopłaconą",
+        },
+        document: {
+          title: "Dokument faktury",
+          empty: "Brak załączonego dokumentu",
+          upload: "Wgraj PDF",
+          open: "Otwórz dokument",
+        },
+        toasts: {
+          updateSuccess: "Status faktury został zaktualizowany",
+          updateError: "Nie udało się zaktualizować statusu faktury",
+          previewError: "Nie udało się wczytać dokumentu",
+        },
       },
       form: {
         fields: {

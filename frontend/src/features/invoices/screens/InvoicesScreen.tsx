@@ -3,6 +3,7 @@ import { Eye, Loader2, Plus, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 
 import { EmptyView, LoadingView, RouteContent, ErrorView } from "@components/common";
@@ -28,6 +29,7 @@ import { InvoicesFilters, InvoiceStatusChip } from "../components";
 const formatCurrency = (value: number) => `${value.toFixed(2)} PLN`;
 
 export const InvoicesScreen = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -121,7 +123,7 @@ export const InvoicesScreen = () => {
         <header className="mb-6 flex flex-row items-start justify-between">
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold text-slate-900">
-              List of your invoices
+              {t("invoices.title")}
             </h1>
             <p className="text-sm text-slate-500">
               Zarządzaj swoimi przychodami i monitoruj płatności
@@ -129,7 +131,7 @@ export const InvoicesScreen = () => {
           </div>
           <Button onClick={() => navigate("/invoices/new")}>
             <Plus />
-            Add new invoice
+            {t("invoices.addInvoice")}
           </Button>
         </header>
 
