@@ -152,14 +152,28 @@ const pl = {
       },
       tenantHome: {
         welcome: "Witaj, {{name}}",
-        subtitle: "Szybki dostęp do zasobów przypisanych do Twojego konta",
-        myApartmentTitle: "Moje mieszkanie",
-        myApartmentDescription:
-          "Zobacz mieszkanie przypisane do Twojego konta",
-        myInvoicesTitle: "Moje faktury",
-        myInvoicesDescription: "Sprawdź status płatności i terminy",
-        myDocumentsTitle: "Moje dokumenty",
-        myDocumentsDescription: "Pobierz umowy i faktury w PDF",
+        subtitle: "Najważniejsze informacje o Twoim wynajmie w jednym miejscu",
+        nextPayment: {
+          title: "Najbliższa płatność",
+          dueLabel_remaining:
+            "Termin zapłaty: {{date}} (zostało {{days}} dni)",
+          dueLabel_today: "Termin zapłaty: {{date}} (termin dzisiaj)",
+          dueLabel_overdue:
+            "Termin zapłaty: {{date}} ({{days}} dni po terminie)",
+          primaryCta: "+ Pobierz dane do przelewu",
+          paidState: "Wszystko opłacone! Brak zaległości.",
+        },
+        landlordContact: {
+          title: "Kontakt do wynajmującego",
+          name: "Jan Kowalski",
+          phone: "+48 123 456 789",
+          email: "jan.kowalski@example.com",
+        },
+        recentDocuments: {
+          title: "Ostatnie dokumenty i faktury",
+          viewAll: "Zobacz wszystkie",
+          download: "Pobierz",
+        },
         defaultName: "gościu",
       },
     },

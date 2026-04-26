@@ -3,16 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import {
   AlertTriangle,
+  CalendarDays,
+  CheckCircle2,
   Building2,
   FileText,
-  ReceiptText,
+  Mail,
+  Phone,
   TrendingUp,
   Users,
+  Wallet,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import dayjs from "dayjs";
 
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
 import { Badge } from "@components/ui/badge";
+import { Button } from "@components/ui/button";
 import { Card, CardContent } from "@components/ui/card";
 import api from "@services/api";
 import { ApartmentType } from "@features/apartments/types/apartment.type";
@@ -26,6 +31,10 @@ import {
   KpiCard,
   UpcomingPaymentsWidget,
 } from "@features/dashboard";
+import {
+  MyDocumentsResponse,
+  MyInvoicesResponse,
+} from "@features/tenant-portal/types";
 import { useCurrentUser } from "../hooks";
 
 const formatCurrency = (value: number) =>
@@ -43,26 +52,65 @@ const TenantHome = () => {
     user?.email?.split("@")[0] ||
     t("dashboard.tenantHome.defaultName");
 
-  const tiles = [
-    {
-      to: "/my-apartment",
-      title: t("dashboard.tenantHome.myApartmentTitle"),
-      description: t("dashboard.tenantHome.myApartmentDescription"),
-      icon: Building2,
+  const { data: invoicesData } = useQuery<MyInvoicesResponse>({
+    queryKey: ["me", "invoices"],
+    queryFn: async () => {
+      const result = await api.get<MyInvoicesResponse>("/me/invoices");
+      return result.data;
     },
-    {
-      to: "/my-invoices",
-      title: t("dashboard.tenantHome.myInvoicesTitle"),
-      description: t("dashboard.tenantHome.myInvoicesDescription"),
-      icon: ReceiptText,
+  });
+  const { data: documentsData } = useQuery<MyDocumentsResponse>({
+    queryKey: ["me", "documents"],
+    queryFn: async () => {
+      const result = await api.get<MyDocumentsResponse>("/me/documents");
+      return result.data;
     },
-    {
-      to: "/my-documents",
-      title: t("dashboard.tenantHome.myDocumentsTitle"),
-      description: t("dashboard.tenantHome.myDocumentsDescription"),
-      icon: FileText,
-    },
-  ];
+  });
+
+  const nextUnpaidInvoice = useMemo(() => {
+    const invoices = invoicesData?.invoices ?? [];
+    return invoices
+      .filter((invoice) => !invoice.isPaid)
+      .sort(
+        (a, b) => dayjs(a.dueDate).valueOf() - dayjs(b.dueDate).valueOf()
+      )[0];
+  }, [invoicesData?.invoices]);
+
+  const dueDateLabel = useMemo(() => {
+    if (!nextUnpaidInvoice) return "";
+    const dueDate = dayjs(nextUnpaidInvoice.dueDate);
+    const daysLeft = dueDate.startOf("day").diff(dayjs().startOf("day"), "day");
+    return t("dashboard.tenantHome.nextPayment.dueLabel", {
+      date: dueDate.format("D MMMM YYYY"),
+      days: Math.abs(daysLeft),
+      context:
+        daysLeft < 0 ? "overdue" : daysLeft === 0 ? "today" : "remaining",
+    });
+  }, [nextUnpaidInvoice, t]);
+
+  const recentDocuments = useMemo(() => {
+    if (!documentsData) {
+      return [
+        "Faktura_05_2026.pdf",
+        "Umowa_Najmu.pdf",
+        "Protokol_Zdawczo_Odbiorczy.pdf",
+      ];
+    }
+
+    const documents = [
+      ...documentsData.apartmentDocuments,
+      ...documentsData.rentalDocuments,
+      ...documentsData.invoiceDocuments
+        .map((invoice) => invoice.document)
+        .filter((document): document is string => Boolean(document)),
+    ];
+
+    if (documents.length === 0) {
+      return ["Faktura_05_2026.pdf", "Umowa_Najmu.pdf"];
+    }
+
+    return documents.slice(0, 3);
+  }, [documentsData]);
 
   return (
     <RouteContent>
@@ -75,23 +123,96 @@ const TenantHome = () => {
         </p>
       </header>
       <main className="flex flex-1 flex-col gap-6 overflow-y-auto p-8">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {tiles.map(({ to, title, description, icon: Icon }) => (
-            <Link key={to} to={to} className="no-underline">
-              <Card className="h-full transition-colors hover:border-primary/60 hover:shadow-md">
-                <CardContent className="flex flex-col gap-3 p-6">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Icon className="h-5 w-5" />
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2 border-slate-200 shadow-sm rounded-xl">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 text-slate-900">
+                <Wallet className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">
+                  {t("dashboard.tenantHome.nextPayment.title")}
+                </h2>
+              </div>
+
+              {nextUnpaidInvoice ? (
+                <div className="mt-5 space-y-4">
+                  <p className="text-4xl font-semibold tracking-tight text-slate-900">
+                    {formatCurrency(nextUnpaidInvoice.amount)}
+                  </p>
+                  <div className="flex items-center gap-2 text-sm font-medium text-amber-600">
+                    <CalendarDays className="h-4 w-4" />
+                    <span>{dueDateLabel}</span>
                   </div>
-                  <h3 className="text-base font-semibold text-slate-900">
-                    {title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{description}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                  <Button>{t("dashboard.tenantHome.nextPayment.primaryCta")}</Button>
+                </div>
+              ) : (
+                <div className="mt-5 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-600" />
+                  <p className="text-sm font-medium text-emerald-800">
+                    {t("dashboard.tenantHome.nextPayment.paidState")}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 shadow-sm rounded-xl">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-slate-900">
+                {t("dashboard.tenantHome.landlordContact.title")}
+              </h2>
+              <div className="mt-5 space-y-3">
+                <p className="text-base font-semibold text-slate-900">
+                  {t("dashboard.tenantHome.landlordContact.name")}
+                </p>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Phone className="h-4 w-4 text-slate-400" />
+                  <span>{t("dashboard.tenantHome.landlordContact.phone")}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  <Mail className="h-4 w-4 text-slate-400" />
+                  <span>{t("dashboard.tenantHome.landlordContact.email")}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-3 border-slate-200 shadow-sm rounded-xl">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {t("dashboard.tenantHome.recentDocuments.title")}
+                  </h2>
+                </div>
+                <Button variant="link" className="h-auto p-0 text-sm text-slate-500">
+                  {t("dashboard.tenantHome.recentDocuments.viewAll")}
+                </Button>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {recentDocuments.map((documentName) => (
+                  <div
+                    key={documentName}
+                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                      <span className="text-sm font-medium text-slate-800">
+                        {documentName}
+                      </span>
+                    </div>
+                    <Button variant="ghost" size="sm">
+                      {t("dashboard.tenantHome.recentDocuments.download")}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
       </main>
     </RouteContent>
   );
