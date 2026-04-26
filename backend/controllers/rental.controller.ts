@@ -93,6 +93,14 @@ export const createRental = async (req: Request, res: Response) => {
 
         try {
             const newRental = await RentalModel.create(data);
+
+            // Keep tenant assignment in sync with active rental so tenant portal
+            // can reliably resolve "my apartment" from the tenant record.
+            await TenantModel.updateOne(
+                { _id: tenantID, owner: userID },
+                { $set: { assignedApartmentID: apartmentID } }
+            );
+
             res.status(201).json(newRental);
         } catch (createError) {
             // Roll the apartment back to available so the lock isn't leaked
@@ -186,10 +194,20 @@ export const deleteRental = async (req: Request, res: Response) => {
 
         // M3.5: if the rental was active, the apartment was locked — release it
         if (deletedRental.isActive) {
-            await ApartmentModel.updateOne(
-                { _id: deletedRental.apartmentID, owner: userID },
-                { $set: { isAvailable: true } }
-            );
+            await Promise.all([
+                ApartmentModel.updateOne(
+                    { _id: deletedRental.apartmentID, owner: userID },
+                    { $set: { isAvailable: true } }
+                ),
+                TenantModel.updateOne(
+                    {
+                        _id: deletedRental.tenantID,
+                        owner: userID,
+                        assignedApartmentID: deletedRental.apartmentID,
+                    },
+                    { $set: { assignedApartmentID: null } }
+                ),
+            ]);
         }
 
         res.status(200).json({ message: 'Rental deleted successfully' });
@@ -237,10 +255,20 @@ export const endRental = async (req: Request, res: Response) => {
         rental.endDate = new Date();
         await rental.save();
 
-        await ApartmentModel.updateOne(
-            { _id: rental.apartmentID, owner: userID },
-            { $set: { isAvailable: true } }
-        );
+        await Promise.all([
+            ApartmentModel.updateOne(
+                { _id: rental.apartmentID, owner: userID },
+                { $set: { isAvailable: true } }
+            ),
+            TenantModel.updateOne(
+                {
+                    _id: rental.tenantID,
+                    owner: userID,
+                    assignedApartmentID: rental.apartmentID,
+                },
+                { $set: { assignedApartmentID: null } }
+            ),
+        ]);
 
         res.status(200).json({
             message: 'Rental ended successfully',

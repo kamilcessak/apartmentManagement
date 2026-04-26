@@ -131,16 +131,41 @@ export const getMyApartment = async (req: Request, res: Response) => {
         }
 
         const tenant = await resolveTenantForUser(userID);
-        if (!tenant || !tenant.assignedApartmentID) {
+        if (!tenant) {
             res.status(404).json({
                 error: 'No apartment is currently assigned to your account',
             });
             return;
         }
 
-        const apartment = await ApartmentModel.findById(
-            tenant.assignedApartmentID
-        ).lean();
+        let apartmentID = tenant.assignedApartmentID;
+
+        // Backward-compatibility for existing data: if assignment field is
+        // missing, recover apartment from the tenant's active rental.
+        if (!apartmentID) {
+            const activeRental = await RentalModel.findOne({
+                tenantID: tenant._id,
+                isActive: true,
+            })
+                .select('apartmentID')
+                .lean();
+
+            if (!activeRental?.apartmentID) {
+                res.status(404).json({
+                    error: 'No apartment is currently assigned to your account',
+                });
+                return;
+            }
+
+            apartmentID = activeRental.apartmentID;
+
+            await TenantModel.updateOne(
+                { _id: tenant._id, assignedApartmentID: null },
+                { $set: { assignedApartmentID: apartmentID } }
+            );
+        }
+
+        const apartment = await ApartmentModel.findById(apartmentID).lean();
 
         if (!apartment) {
             res.status(404).json({ error: 'Apartment not found' });
@@ -175,13 +200,29 @@ export const getMyInvoices = async (req: Request, res: Response) => {
         }
 
         const tenant = await resolveTenantForUser(userID);
-        if (!tenant || !tenant.assignedApartmentID) {
+        if (!tenant) {
+            res.status(200).json({ invoices: [], summary: null });
+            return;
+        }
+
+        let apartmentID = tenant.assignedApartmentID;
+        if (!apartmentID) {
+            const activeRental = await RentalModel.findOne({
+                tenantID: tenant._id,
+                isActive: true,
+            })
+                .select('apartmentID')
+                .lean();
+            apartmentID = activeRental?.apartmentID ?? null;
+        }
+
+        if (!apartmentID) {
             res.status(200).json({ invoices: [], summary: null });
             return;
         }
 
         const invoices = await InvoiceModel.find({
-            apartmentID: tenant.assignedApartmentID,
+            apartmentID,
         })
             .sort({ dueDate: -1 })
             .lean();
@@ -228,7 +269,27 @@ export const getMyDocuments = async (req: Request, res: Response) => {
         }
 
         const tenant = await resolveTenantForUser(userID);
-        if (!tenant || !tenant.assignedApartmentID) {
+        if (!tenant) {
+            res.status(200).json({
+                apartmentDocuments: [],
+                rentalDocuments: [],
+                invoiceDocuments: [],
+            });
+            return;
+        }
+
+        let apartmentID = tenant.assignedApartmentID;
+        if (!apartmentID) {
+            const activeRental = await RentalModel.findOne({
+                tenantID: tenant._id,
+                isActive: true,
+            })
+                .select('apartmentID')
+                .lean();
+            apartmentID = activeRental?.apartmentID ?? null;
+        }
+
+        if (!apartmentID) {
             res.status(200).json({
                 apartmentDocuments: [],
                 rentalDocuments: [],
@@ -238,20 +299,20 @@ export const getMyDocuments = async (req: Request, res: Response) => {
         }
 
         const [apartment, rental, invoices] = await Promise.all([
-            ApartmentModel.findById(tenant.assignedApartmentID)
+            ApartmentModel.findById(apartmentID)
                 .select(
                     'documents photos street buildingNumber apartmentNumber postalCode city'
                 )
                 .lean(),
             RentalModel.findOne({
                 tenantID: tenant._id,
-                apartmentID: tenant.assignedApartmentID,
+                apartmentID,
                 isActive: true,
             })
                 .select('documents photos startDate endDate')
                 .lean(),
             InvoiceModel.find({
-                apartmentID: tenant.assignedApartmentID,
+                apartmentID,
                 document: { $ne: null },
             })
                 .select('invoiceID invoiceType document dueDate amount')

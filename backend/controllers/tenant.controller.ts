@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { TenantModel, TenantSchemaType } from '../models/tenant.model';
+import { UserModel } from '../models/user.model';
 import { sendEmail } from '../services/email.service';
 import { FRONTEND_URL } from '../config';
 
@@ -128,8 +129,48 @@ export const getTenants = async (req: Request, res: Response) => {
             return;
         }
 
-        const tenants = await TenantModel.find({ owner: userID });
-        res.status(200).json(tenants);
+        const tenants = await TenantModel.find({ owner: userID }).lean();
+
+        const linkedUserIds = tenants
+            .map((tenant) => tenant.userID)
+            .filter((id): id is NonNullable<typeof id> => Boolean(id));
+
+        const linkedUsers = linkedUserIds.length
+            ? await UserModel.find({
+                  _id: { $in: linkedUserIds },
+              })
+                  .select('_id isEmailVerified')
+                  .lean()
+            : [];
+
+        const verificationByUserId = new Map(
+            linkedUsers.map((user) => [String(user._id), !!user.isEmailVerified])
+        );
+
+        // Keep legacy tenant statuses aligned with real account verification.
+        const normalizedTenants = tenants.map((tenant) => {
+            const verified = tenant.userID
+                ? verificationByUserId.get(String(tenant.userID))
+                : undefined;
+
+            return {
+                ...tenant,
+                isActive: verified ?? tenant.isActive,
+            };
+        });
+
+        const tenantsToActivate = normalizedTenants
+            .filter((tenant) => tenant.userID && tenant.isActive)
+            .map((tenant) => tenant._id);
+
+        if (tenantsToActivate.length > 0) {
+            await TenantModel.updateMany(
+                { _id: { $in: tenantsToActivate }, isActive: false },
+                { $set: { isActive: true } }
+            );
+        }
+
+        res.status(200).json(normalizedTenants);
     } catch (error) {
         console.error('[getTenants]', error);
         res.status(500).json({
