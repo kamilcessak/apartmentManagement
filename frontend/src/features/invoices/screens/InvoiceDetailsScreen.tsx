@@ -1,4 +1,4 @@
-import { FC, ReactNode, useMemo } from "react";
+import { FC, ReactNode, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ChevronLeft,
@@ -18,6 +18,10 @@ import api from "@services/api";
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
 import { getApartmentShortLabel } from "@utils/apartment";
 import { ApartmentType } from "@features/apartments/types/apartment.type";
+import {
+  FilePreviewModal,
+  type FilePreviewVariant,
+} from "@features/apartments/components/FilePreviewModal";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -36,6 +40,37 @@ type DataItemProps = {
   children: ReactNode;
   emphasized?: boolean;
 };
+
+function getStoredFileDisplayName(storedKey: string): string {
+  const uuidLen = 36;
+  if (storedKey.length > uuidLen + 1 && storedKey[uuidLen] === "-") {
+    return storedKey.slice(uuidLen + 1);
+  }
+  return storedKey;
+}
+
+function isLikelyImageFile(storedKey: string): boolean {
+  const name = getStoredFileDisplayName(storedKey).toLowerCase();
+  return /\.(jpe?g|png|gif|webp)$/i.test(name);
+}
+
+function isPdfFile(storedKey: string): boolean {
+  return /\.pdf$/i.test(getStoredFileDisplayName(storedKey));
+}
+
+function previewVariantForKey(fileKey: string): FilePreviewVariant {
+  if (isLikelyImageFile(fileKey)) return "image";
+  if (isPdfFile(fileKey)) return "pdf";
+  return "other";
+}
+
+function uploadKeyFromDocument(document: string): string {
+  if (document.includes("/uploads/")) {
+    const part = document.split("/uploads/").pop() ?? document;
+    return part.split("?")[0] ?? part;
+  }
+  return document;
+}
 
 const DataItem: FC<DataItemProps> = ({ label, children, emphasized }) => (
   <div className="flex flex-col gap-1">
@@ -57,6 +92,13 @@ export const InvoiceDetailsScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const [documentPreview, setDocumentPreview] = useState<{
+    url: string;
+    fileName: string;
+    variant: FilePreviewVariant;
+  } | null>(null);
+  const [previewBusy, setPreviewBusy] = useState(false);
 
   const handleGetInvoice = async () => {
     const result = await api.get<InvoiceType>(`/invoice/${id}`);
@@ -119,11 +161,30 @@ export const InvoiceDetailsScreen = () => {
 
   const handlePreviewDocument = async () => {
     if (!invoice?.document) return;
+    setPreviewBusy(true);
     try {
-      const response = await api.get(`/upload/${invoice.document}`);
-      window.open(response.data.url, "_blank");
+      const doc = invoice.document;
+      if (doc.startsWith("http://") || doc.startsWith("https://")) {
+        setDocumentPreview({
+          url: doc,
+          fileName: `${invoice.invoiceID} — ${getStoredFileDisplayName(doc)}`,
+          variant: previewVariantForKey(doc),
+        });
+        return;
+      }
+      const key = uploadKeyFromDocument(doc);
+      const response = await api.get<{ url: string }>(
+        `/upload/${encodeURIComponent(key)}`
+      );
+      setDocumentPreview({
+        url: response.data.url,
+        fileName: `${invoice.invoiceID} — ${getStoredFileDisplayName(key)}`,
+        variant: previewVariantForKey(key),
+      });
     } catch {
       toast(t("invoices.details.toasts.previewError"), { type: "error" });
+    } finally {
+      setPreviewBusy(false);
     }
   };
 
@@ -143,6 +204,19 @@ export const InvoiceDetailsScreen = () => {
 
   return (
     <RouteContent>
+      <FilePreviewModal
+        open={documentPreview !== null}
+        onClose={() => setDocumentPreview(null)}
+        url={documentPreview?.url ?? null}
+        fileName={documentPreview?.fileName ?? ""}
+        variant={documentPreview?.variant ?? "other"}
+        closeLabel={t("apartments.details.files.previewClose")}
+        iframeTitle={t("apartments.details.files.previewPdfFrameTitle")}
+        documentPlaceholder={t(
+          "apartments.details.files.previewDocumentPlaceholder"
+        )}
+        missingUrlMessage={t("apartments.details.files.previewOpenError")}
+      />
       <div className="flex h-full flex-col bg-slate-50">
         <div className="flex-1 overflow-y-auto px-8 py-8">
           <div className="mx-auto w-full max-w-5xl">
@@ -249,7 +323,15 @@ export const InvoiceDetailsScreen = () => {
                       {invoice.document}
                     </span>
                   </div>
-                  <Button variant="outline" onClick={handlePreviewDocument}>
+                  <Button
+                    variant="outline"
+                    onClick={handlePreviewDocument}
+                    disabled={previewBusy}
+                    className="gap-2"
+                  >
+                    {previewBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : null}
                     {t("invoices.details.document.open")}
                   </Button>
                 </div>

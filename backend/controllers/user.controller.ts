@@ -138,29 +138,33 @@ export const getMyApartment = async (req: Request, res: Response) => {
             return;
         }
 
-        let apartmentID = tenant.assignedApartmentID;
+        const activeRental = await RentalModel.findOne({
+            tenantID: tenant._id,
+            isActive: true,
+        })
+            .select('apartmentID')
+            .lean();
 
-        // Backward-compatibility for existing data: if assignment field is
-        // missing, recover apartment from the tenant's active rental.
+        // Prefer active rental (lease) as source of truth; fall back to legacy
+        // assignedApartmentID when there is no active rental row.
+        let apartmentID =
+            activeRental?.apartmentID ?? tenant.assignedApartmentID ?? null;
+
         if (!apartmentID) {
-            const activeRental = await RentalModel.findOne({
-                tenantID: tenant._id,
-                isActive: true,
-            })
-                .select('apartmentID')
-                .lean();
+            res.status(404).json({
+                error: 'No apartment is currently assigned to your account',
+            });
+            return;
+        }
 
-            if (!activeRental?.apartmentID) {
-                res.status(404).json({
-                    error: 'No apartment is currently assigned to your account',
-                });
-                return;
-            }
-
-            apartmentID = activeRental.apartmentID;
-
+        // Keep assignment field aligned with the resolved apartment when missing
+        // or stale relative to the active lease.
+        if (
+            !tenant.assignedApartmentID ||
+            String(tenant.assignedApartmentID) !== String(apartmentID)
+        ) {
             await TenantModel.updateOne(
-                { _id: tenant._id, assignedApartmentID: null },
+                { _id: tenant._id },
                 { $set: { assignedApartmentID: apartmentID } }
             );
         }
@@ -205,16 +209,17 @@ export const getMyInvoices = async (req: Request, res: Response) => {
             return;
         }
 
-        let apartmentID = tenant.assignedApartmentID;
-        if (!apartmentID) {
-            const activeRental = await RentalModel.findOne({
-                tenantID: tenant._id,
-                isActive: true,
-            })
-                .select('apartmentID')
-                .lean();
-            apartmentID = activeRental?.apartmentID ?? null;
-        }
+        // Prefer the active rental's apartment (source of truth for "my lease");
+        // fall back to assignedApartmentID for legacy or edge cases.
+        const activeRental = await RentalModel.findOne({
+            tenantID: tenant._id,
+            isActive: true,
+        })
+            .select('apartmentID')
+            .lean();
+
+        const apartmentID =
+            activeRental?.apartmentID ?? tenant.assignedApartmentID ?? null;
 
         if (!apartmentID) {
             res.status(200).json({ invoices: [], summary: null });
@@ -278,16 +283,17 @@ export const getMyDocuments = async (req: Request, res: Response) => {
             return;
         }
 
-        let apartmentID = tenant.assignedApartmentID;
-        if (!apartmentID) {
-            const activeRental = await RentalModel.findOne({
-                tenantID: tenant._id,
-                isActive: true,
-            })
-                .select('apartmentID')
-                .lean();
-            apartmentID = activeRental?.apartmentID ?? null;
-        }
+        const activeRentalForDocs = await RentalModel.findOne({
+            tenantID: tenant._id,
+            isActive: true,
+        })
+            .select('apartmentID')
+            .lean();
+
+        const apartmentID =
+            activeRentalForDocs?.apartmentID ??
+            tenant.assignedApartmentID ??
+            null;
 
         if (!apartmentID) {
             res.status(200).json({
