@@ -9,6 +9,7 @@ import {
   RouteContent,
 } from "@components/common";
 import api from "@services/api";
+import { formatApartmentFullAddress } from "@utils/apartment";
 
 import { MyApartmentResponse } from "../types";
 
@@ -78,7 +79,7 @@ export const MyApartmentScreen = () => {
           <div className="flex flex-row items-center gap-2">
             <MdApartment size={24} />
             <Typography variant="h6" className="font-semibold">
-              {apartment.address}
+              {formatApartmentFullAddress(apartment)}
             </Typography>
           </div>
           <div className="grid grid-cols-2 gap-4 mt-2">

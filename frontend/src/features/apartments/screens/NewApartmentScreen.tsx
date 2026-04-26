@@ -18,8 +18,14 @@ import { cn } from "@/lib/utils";
 import api from "@services/api";
 import { FilesDropzone } from "@components/files";
 
+const polishPostalCodePattern = /^\d{2}-\d{3}$/;
+
 type FormValues = {
-  address: string;
+  street: string;
+  buildingNumber: string;
+  apartmentNumber: string;
+  postalCode: string;
+  city: string;
   metric: number;
   roomCount: number;
   monthlyCost: number;
@@ -37,10 +43,29 @@ export const NewApartmentScreen = () => {
   const schema = useMemo(
     () =>
       yup.object().shape({
-        address: yup
+        street: yup
           .string()
           .trim()
-          .required(t("apartments.newApartment.validation.addressRequired")),
+          .required(t("apartments.newApartment.validation.streetRequired")),
+        buildingNumber: yup
+          .string()
+          .trim()
+          .required(
+            t("apartments.newApartment.validation.buildingNumberRequired")
+          ),
+        apartmentNumber: yup.string().trim(),
+        postalCode: yup
+          .string()
+          .trim()
+          .required(t("apartments.newApartment.validation.postalCodeRequired"))
+          .matches(
+            polishPostalCodePattern,
+            t("apartments.newApartment.validation.postalCodeFormat")
+          ),
+        city: yup
+          .string()
+          .trim()
+          .required(t("apartments.newApartment.validation.cityRequired")),
         metric: yup
           .number()
           .typeError(t("apartments.newApartment.validation.metricRequired"))
@@ -76,6 +101,13 @@ export const NewApartmentScreen = () => {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(schema),
+    defaultValues: {
+      street: "",
+      buildingNumber: "",
+      apartmentNumber: "",
+      postalCode: "",
+      city: "",
+    },
   });
 
   const handleAddPhotoToForm = (url: string) => {
@@ -105,7 +137,13 @@ export const NewApartmentScreen = () => {
   };
 
   const handlePostApartment = async (data: FormValues) => {
-    const result = await api.post("/apartment", data);
+    const { apartmentNumber, ...rest } = data;
+    const apt = (apartmentNumber ?? "").trim();
+    const payload = {
+      ...rest,
+      ...(apt ? { apartmentNumber: apt } : {}),
+    };
+    const result = await api.post("/apartment", payload);
     return result;
   };
 
@@ -161,30 +199,149 @@ export const NewApartmentScreen = () => {
           <Card className="rounded-xl border border-slate-200 shadow-sm">
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <CardContent className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2 lg:grid-cols-3 lg:p-8">
-                <div className="flex flex-col md:col-span-2 lg:col-span-3">
-                  <Label
-                    htmlFor="address"
-                    className="mb-1.5 text-sm font-medium text-slate-900"
-                  >
-                    {t("apartments.newApartment.fields.address.label")}
-                  </Label>
-                  <Input
-                    id="address"
-                    type="text"
-                    autoComplete="street-address"
-                    placeholder={t(
-                      "apartments.newApartment.fields.address.placeholder"
-                    )}
-                    aria-invalid={!!errors.address}
-                    disabled={isPending}
-                    className={cn(
-                      "placeholder:text-slate-400",
-                      errors.address &&
-                        "border-destructive focus-visible:ring-destructive"
-                    )}
-                    {...register("address")}
-                  />
-                  {renderError("address", errors.address?.message)}
+                <div className="flex flex-col gap-4 md:col-span-2 lg:col-span-3">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+                    <div className="flex flex-col md:col-span-7">
+                      <Label
+                        htmlFor="street"
+                        className="mb-1.5 text-sm font-medium text-slate-900"
+                      >
+                        {t("apartments.newApartment.fields.street.label")}
+                      </Label>
+                      <Input
+                        id="street"
+                        type="text"
+                        autoComplete="address-line1"
+                        placeholder={t(
+                          "apartments.newApartment.fields.street.placeholder"
+                        )}
+                        aria-invalid={!!errors.street}
+                        disabled={isPending}
+                        className={cn(
+                          "placeholder:text-slate-400",
+                          errors.street &&
+                            "border-destructive focus-visible:ring-destructive"
+                        )}
+                        {...register("street")}
+                      />
+                      {renderError("street", errors.street?.message)}
+                    </div>
+                    <div className="flex flex-col md:col-span-2">
+                      <Label
+                        htmlFor="buildingNumber"
+                        className="mb-1.5 text-sm font-medium text-slate-900"
+                      >
+                        {t(
+                          "apartments.newApartment.fields.buildingNumber.label"
+                        )}
+                      </Label>
+                      <Input
+                        id="buildingNumber"
+                        type="text"
+                        placeholder={t(
+                          "apartments.newApartment.fields.buildingNumber.placeholder"
+                        )}
+                        aria-invalid={!!errors.buildingNumber}
+                        disabled={isPending}
+                        className={cn(
+                          "placeholder:text-slate-400",
+                          errors.buildingNumber &&
+                            "border-destructive focus-visible:ring-destructive"
+                        )}
+                        {...register("buildingNumber")}
+                      />
+                      {renderError(
+                        "buildingNumber",
+                        errors.buildingNumber?.message
+                      )}
+                    </div>
+                    <div className="flex flex-col md:col-span-3">
+                      <Label
+                        htmlFor="apartmentNumber"
+                        className="mb-1.5 text-sm font-medium text-slate-900"
+                      >
+                        {t(
+                          "apartments.newApartment.fields.apartmentNumber.label"
+                        )}
+                        <span className="ml-1 font-normal text-slate-500">
+                          {t(
+                            "apartments.newApartment.fields.apartmentNumber.optional"
+                          )}
+                        </span>
+                      </Label>
+                      <Input
+                        id="apartmentNumber"
+                        type="text"
+                        placeholder={t(
+                          "apartments.newApartment.fields.apartmentNumber.placeholder"
+                        )}
+                        aria-invalid={!!errors.apartmentNumber}
+                        disabled={isPending}
+                        className={cn(
+                          "placeholder:text-slate-400",
+                          errors.apartmentNumber &&
+                            "border-destructive focus-visible:ring-destructive"
+                        )}
+                        {...register("apartmentNumber")}
+                      />
+                      {renderError(
+                        "apartmentNumber",
+                        errors.apartmentNumber?.message
+                      )}
+                    </div>
+                    <div className="flex flex-col md:col-span-4">
+                      <Label
+                        htmlFor="postalCode"
+                        className="mb-1.5 text-sm font-medium text-slate-900"
+                      >
+                        {t("apartments.newApartment.fields.postalCode.label")}
+                      </Label>
+                      <Input
+                        id="postalCode"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="postal-code"
+                        placeholder={t(
+                          "apartments.newApartment.fields.postalCode.placeholder"
+                        )}
+                        maxLength={6}
+                        aria-invalid={!!errors.postalCode}
+                        disabled={isPending}
+                        className={cn(
+                          "placeholder:text-slate-400",
+                          errors.postalCode &&
+                            "border-destructive focus-visible:ring-destructive"
+                        )}
+                        {...register("postalCode")}
+                      />
+                      {renderError("postalCode", errors.postalCode?.message)}
+                    </div>
+                    <div className="flex flex-col md:col-span-8">
+                      <Label
+                        htmlFor="city"
+                        className="mb-1.5 text-sm font-medium text-slate-900"
+                      >
+                        {t("apartments.newApartment.fields.city.label")}
+                      </Label>
+                      <Input
+                        id="city"
+                        type="text"
+                        autoComplete="address-level2"
+                        placeholder={t(
+                          "apartments.newApartment.fields.city.placeholder"
+                        )}
+                        aria-invalid={!!errors.city}
+                        disabled={isPending}
+                        className={cn(
+                          "placeholder:text-slate-400",
+                          errors.city &&
+                            "border-destructive focus-visible:ring-destructive"
+                        )}
+                        {...register("city")}
+                      />
+                      {renderError("city", errors.city?.message)}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex flex-col">

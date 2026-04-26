@@ -112,6 +112,7 @@ const en = {
         unassignedTenant: "Unassigned",
         unknownApartment: "Unknown apartment",
         empty: "No upcoming payments in the next 30 days",
+        emptyAction: "+ Add payment",
         dueToday: "Due today",
         daysLeft_one: "{{count}} day left",
         daysLeft_other: "{{count}} days left",
@@ -127,6 +128,7 @@ const en = {
         unassignedTenant: "Unassigned tenant",
         unknownApartment: "Unknown apartment",
         empty: "No leases ending in the next 30 days",
+        emptyAction: "+ Add first lease",
         endsToday: "Ends today",
         daysLeft_one: "{{count}} day left",
         daysLeft_other: "{{count}} days left",
@@ -477,6 +479,23 @@ const en = {
         successToast: "Invoice updated successfully",
         errorToast: "An error occurred during updating the invoice",
       },
+      apartmentSection: {
+        title: "Invoices",
+        addInvoice: "Add invoice",
+        summary: {
+          total: "Total",
+          paid: "Paid",
+          unpaid: "Unpaid",
+          overdue: "Overdue ({{count}})",
+        },
+        status: {
+          paid: "Paid",
+          unpaid: "Unpaid",
+          overdue: "Overdue",
+        },
+        emptyState: "No invoices for this apartment yet",
+        loadError: "Unable to load invoices for this apartment.",
+      },
     },
     apartments: {
       title: "Apartments",
@@ -509,6 +528,31 @@ const en = {
       },
       deleteSuccess: "Apartment deleted successfully",
       deleteError: "Unable to delete apartment",
+      details: {
+        files: {
+          photosTitle: "Photos",
+          documentsTitle: "Documents",
+          edit: "Edit",
+          closeEdit: "Finish editing",
+          addFile: "Add file",
+          view: "View",
+          download: "Download",
+          delete: "Delete",
+          emptyPhotos: "No photos yet. Turn on edit mode to add images.",
+          emptyDocuments:
+            "No documents yet. Turn on edit mode to add files (e.g. PDF).",
+          patchError: "Could not update apartment details",
+          uploadSuccess: "File uploaded successfully",
+          uploadError: "Upload failed. Please try again.",
+          deleteSuccess: "File removed successfully",
+          deleteError: "Could not remove file",
+          previewClose: "Close preview",
+          previewPdfFrameTitle: "PDF document preview",
+          previewDocumentPlaceholder:
+            "An in-browser preview is not available for this file type. Use “Download” to save the file.",
+          previewOpenError: "Could not open file preview",
+        },
+      },
       newApartment: {
         back: "Back",
         title: "Add new apartment",
@@ -518,9 +562,26 @@ const en = {
         successToast: "Apartment added successfully",
         errorToast: "An error occurred while adding a new apartment. Try again",
         fields: {
-          address: {
-            label: "Address",
-            placeholder: "e.g. 1 Main Street, 00-001 Springfield",
+          street: {
+            label: "Street",
+            placeholder: "e.g. Main Street",
+          },
+          buildingNumber: {
+            label: "Building no.",
+            placeholder: "e.g. 12A",
+          },
+          apartmentNumber: {
+            label: "Apartment no.",
+            optional: "(optional)",
+            placeholder: "e.g. 5",
+          },
+          postalCode: {
+            label: "Postal code",
+            placeholder: "e.g. 00-001",
+          },
+          city: {
+            label: "City",
+            placeholder: "e.g. Warsaw",
           },
           metric: {
             label: "Area",
@@ -551,7 +612,11 @@ const en = {
           uploading: "Uploading...",
         },
         validation: {
-          addressRequired: "Apartment address is required",
+          streetRequired: "Street is required",
+          buildingNumberRequired: "Building number is required",
+          postalCodeRequired: "Postal code is required",
+          postalCodeFormat: "Postal code must be in format XX-XXX (e.g. 00-001)",
+          cityRequired: "City is required",
           metricRequired: "Apartment area is required",
           roomCountRequired: "Rooms count is required",
           monthlyCostRequired: "Monthly cost is required",

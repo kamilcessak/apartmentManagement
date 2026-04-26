@@ -1,6 +1,10 @@
 export type ApartmentType = {
   _id: string;
-  address: string;
+  street: string;
+  buildingNumber: string;
+  apartmentNumber?: string;
+  postalCode: string;
+  city: string;
   description: string;
   documents: string[];
   equipment: string;
@@ -12,7 +16,12 @@ export type ApartmentType = {
   roomCount: number;
 };
 
-export type ApartmentListType = {
-  _id: string;
-  address: string;
-};
+export type ApartmentListType = Pick<
+  ApartmentType,
+  | "_id"
+  | "street"
+  | "buildingNumber"
+  | "apartmentNumber"
+  | "postalCode"
+  | "city"
+>;

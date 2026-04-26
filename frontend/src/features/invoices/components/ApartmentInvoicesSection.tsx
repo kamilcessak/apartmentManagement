@@ -1,13 +1,20 @@
 import { FC } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
-import { CheckCircle2, Eye, Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  Eye,
+  Loader2,
+  Plus,
+  Receipt,
+  Trash2,
+} from "lucide-react";
 
 import api from "@services/api";
 import { capitalizeFirstLetter } from "@utils/common";
-import { EmptyView } from "@components/common";
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,22 +39,28 @@ const formatCurrency = (value: number) => `${value.toFixed(2)} PLN`;
 const InvoiceStatusBadge: FC<{ invoice: Pick<InvoiceType, "isPaid" | "dueDate"> }> = ({
   invoice,
 }) => {
+  const { t } = useTranslation();
+
   if (invoice.isPaid) {
     return (
       <Badge className="bg-emerald-600 text-white hover:bg-emerald-600/90">
-        Paid
+        {t("invoices.apartmentSection.status.paid")}
       </Badge>
     );
   }
 
   const isOverdue = dayjs(invoice.dueDate).isBefore(dayjs(), "day");
   if (isOverdue) {
-    return <Badge variant="destructive">Overdue</Badge>;
+    return (
+      <Badge variant="destructive">
+        {t("invoices.apartmentSection.status.overdue")}
+      </Badge>
+    );
   }
 
   return (
     <Badge className="bg-amber-500 text-white hover:bg-amber-500/90">
-      Unpaid
+      {t("invoices.apartmentSection.status.unpaid")}
     </Badge>
   );
 };
@@ -64,6 +77,7 @@ const SummaryItem: FC<{ label: string; value: string; accent?: string }> = ({
 );
 
 export const ApartmentInvoicesSection: FC<Props> = ({ apartmentID }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -112,15 +126,18 @@ export const ApartmentInvoicesSection: FC<Props> = ({ apartmentID }) => {
   });
 
   return (
-    <Card className="p-6 mb-6">
+    <Card className="p-6 border-slate-200 shadow-sm">
       <div className="flex flex-row items-center justify-between">
-        <h3 className="text-lg font-semibold text-slate-900">Invoices</h3>
+        <h3 className="text-lg font-semibold text-slate-900">
+          {t("invoices.apartmentSection.title")}
+        </h3>
         <Button
           variant="default"
+          className="gap-2"
           onClick={() => navigate(`/invoices/new?apartmentID=${apartmentID}`)}
         >
-          <Plus />
-          Add invoice
+          <Plus className="size-4" />
+          {t("invoices.apartmentSection.addInvoice")}
         </Button>
       </div>
 
@@ -130,24 +147,29 @@ export const ApartmentInvoicesSection: FC<Props> = ({ apartmentID }) => {
         </div>
       ) : isError || !data ? (
         <p className="text-sm text-destructive mt-6">
-          Unable to load invoices for this apartment.
+          {t("invoices.apartmentSection.loadError")}
         </p>
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-            <SummaryItem label="Total" value={formatCurrency(data.summary.total)} />
             <SummaryItem
-              label="Paid"
+              label={t("invoices.apartmentSection.summary.total")}
+              value={formatCurrency(data.summary.total)}
+            />
+            <SummaryItem
+              label={t("invoices.apartmentSection.summary.paid")}
               value={formatCurrency(data.summary.paidAmount)}
               accent="text-emerald-700"
             />
             <SummaryItem
-              label="Unpaid"
+              label={t("invoices.apartmentSection.summary.unpaid")}
               value={formatCurrency(data.summary.unpaidAmount)}
               accent="text-amber-700"
             />
             <SummaryItem
-              label={`Overdue (${data.summary.overdueCount})`}
+              label={t("invoices.apartmentSection.summary.overdue", {
+                count: data.summary.overdueCount,
+              })}
               value={formatCurrency(data.summary.overdueAmount)}
               accent="text-rose-700"
             />
@@ -237,8 +259,11 @@ export const ApartmentInvoicesSection: FC<Props> = ({ apartmentID }) => {
                 </TableBody>
               </Table>
             ) : (
-              <div className="bg-white">
-                <EmptyView message="No invoices for this apartment yet" />
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-100 rounded-lg bg-gray-50 py-8 px-4">
+                <Receipt className="size-8 shrink-0 text-gray-400" strokeWidth={1.5} />
+                <p className="text-sm text-gray-500 mt-2 text-center">
+                  {t("invoices.apartmentSection.emptyState")}
+                </p>
               </div>
             )}
           </div>

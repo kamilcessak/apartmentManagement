@@ -2,7 +2,7 @@ import { FC, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
-import { CalendarClock, ChevronRight } from "lucide-react";
+import { CalendarClock, CalendarDays, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -13,8 +13,7 @@ import {
   CardTitle,
 } from "@components/ui/card";
 import { Badge } from "@components/ui/badge";
-import { EmptyView } from "@components/common";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import { DashboardWidgetEmptyState } from "./DashboardWidgetEmptyState";
 
 import { ExpiringLease } from "../types";
 
@@ -22,7 +21,7 @@ type TenantInfo = { firstName: string; lastName: string };
 
 type Props = {
   leases: ExpiringLease[];
-  apartmentsById: Record<string, { _id: string; address: string }>;
+  apartmentsById: Record<string, { _id: string; shortLabel: string }>;
   tenantsById?: Record<string, TenantInfo>;
 };
 
@@ -72,7 +71,7 @@ export const ExpiringLeasesWidget: FC<Props> = ({
   };
 
   return (
-    <Card>
+    <Card className="flex h-full flex-col">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <div className="flex flex-col gap-1">
           <CardTitle className="text-base font-semibold">
@@ -91,14 +90,15 @@ export const ExpiringLeasesWidget: FC<Props> = ({
           {t("dashboard.leases.expiringBadge", { count: leases.length })}
         </Badge>
       </CardHeader>
-      <CardContent>
+      <CardContent
+        className={cn(!sorted.length && "flex flex-1 flex-col min-h-[150px]")}
+      >
         {sorted.length ? (
           <ul className="flex flex-col gap-3">
             {sorted.map((lease) => {
               const apartment = apartmentsById[lease.apartmentID];
-              const apartmentLabel = apartment?.address
-                ? getApartmentIdFromAddress(apartment.address)
-                : t("dashboard.leases.unknownApartment");
+              const apartmentLabel =
+                apartment?.shortLabel ?? t("dashboard.leases.unknownApartment");
               const tenant = tenantsById[lease.tenantID];
               const tenantName = tenant
                 ? `${tenant.firstName} ${tenant.lastName}`.trim()
@@ -156,7 +156,12 @@ export const ExpiringLeasesWidget: FC<Props> = ({
             })}
           </ul>
         ) : (
-          <EmptyView message={t("dashboard.leases.empty")} />
+          <DashboardWidgetEmptyState
+            icon={CalendarDays}
+            message={t("dashboard.leases.empty")}
+            actionLabel={t("dashboard.leases.emptyAction")}
+            onAction={() => navigate("/rentals/new")}
+          />
         )}
       </CardContent>
     </Card>

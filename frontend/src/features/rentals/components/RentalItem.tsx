@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import api from "@services/api";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import { getApartmentShortLabel } from "@utils/apartment";
 
 import { RentalType } from "../types/rental.types";
 import { RentalItemSkeleton } from "./RentalItemSkeleton";
@@ -72,9 +72,10 @@ export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
   }
 
   const unassignedLabel = t("rentals.unassigned");
-  const addressLabel = apartmentData?.address
-    ? getApartmentIdFromAddress(apartmentData.address)
-    : unassignedLabel;
+  const addressLabel =
+    apartmentData?.street && apartmentData?.buildingNumber
+      ? getApartmentShortLabel(apartmentData)
+      : unassignedLabel;
   const tenantLabel = tenantData
     ? `${tenantData.firstName ?? ""} ${tenantData.lastName ?? ""}`.trim() ||
       unassignedLabel

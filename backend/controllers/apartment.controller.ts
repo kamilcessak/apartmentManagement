@@ -10,16 +10,34 @@ export const createApartment = async (req: Request, res: Response) => {
             return;
         }
 
-        const { address, metric, roomCount, monthlyCost, description } =
-            req.body;
-        const data = {
-            address,
+        const {
+            street,
+            buildingNumber,
+            apartmentNumber,
+            postalCode,
+            city,
+            metric,
+            roomCount,
+            monthlyCost,
+            description,
+        } = req.body;
+
+        const data: Record<string, unknown> = {
+            street: String(street ?? '').trim(),
+            buildingNumber: String(buildingNumber ?? '').trim(),
+            postalCode: String(postalCode ?? '').trim(),
+            city: String(city ?? '').trim(),
             metric,
             roomCount,
             monthlyCost,
             description,
             owner: userID,
         };
+
+        const apt = String(apartmentNumber ?? '').trim();
+        if (apt) {
+            data.apartmentNumber = apt;
+        }
 
         if (req.body.photos && Array.isArray(req.body.photos)) {
             Object.assign(data, { photos: req.body.photos });
@@ -67,7 +85,12 @@ export const getApartmentsList = async (req: Request, res: Response) => {
             return;
         }
 
-        const apartments = await ApartmentModel.find({owner: userID, isAvailable: true}).select('_id address');
+        const apartments = await ApartmentModel.find({
+            owner: userID,
+            isAvailable: true,
+        }).select(
+            '_id street buildingNumber apartmentNumber postalCode city'
+        );
         res.status(200).json(apartments);
     } catch (error) {
         res.status(500).json({

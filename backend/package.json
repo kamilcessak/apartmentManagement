@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --watch './**/*.ts' --exec tsx server.ts"
+    "start": "nodemon --watch './**/*.ts' --exec tsx server.ts",
+    "migrate:apartment-address": "tsx scripts/migrate-apartment-address.ts"
   },
   "keywords": [],
   "author": "",

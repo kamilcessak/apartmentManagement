@@ -1,5 +1,7 @@
 import { FC, useMemo } from "react";
 import dayjs from "dayjs";
+import { Receipt } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
@@ -20,8 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@components/ui/table";
-import { EmptyView } from "@components/common";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import { DashboardWidgetEmptyState } from "./DashboardWidgetEmptyState";
 import { capitalizeFirstLetter } from "@utils/common";
 
 import { UpcomingPayment } from "../types";
@@ -30,7 +31,7 @@ type TenantInfo = { firstName: string; lastName: string };
 
 type Props = {
   payments: UpcomingPayment[];
-  apartmentsById: Record<string, { _id: string; address: string }>;
+  apartmentsById: Record<string, { _id: string; shortLabel: string }>;
   tenantsById?: Record<string, TenantInfo>;
   tenantByApartmentId?: Record<string, TenantInfo>;
 };
@@ -48,6 +49,7 @@ export const UpcomingPaymentsWidget: FC<Props> = ({
   tenantByApartmentId = {},
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const sorted = useMemo(
     () =>
@@ -84,7 +86,7 @@ export const UpcomingPaymentsWidget: FC<Props> = ({
   };
 
   return (
-    <Card>
+    <Card className="flex h-full flex-col">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <div className="flex flex-col gap-1">
           <CardTitle className="text-base font-semibold">
@@ -98,7 +100,11 @@ export const UpcomingPaymentsWidget: FC<Props> = ({
           {t("dashboard.upcoming.countBadge", { count: payments.length })}
         </Badge>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent
+        className={cn(
+          sorted.length ? "p-0" : "flex flex-1 flex-col min-h-[150px]"
+        )}
+      >
         {sorted.length ? (
           <Table>
             <TableHeader>
@@ -120,9 +126,9 @@ export const UpcomingPaymentsWidget: FC<Props> = ({
             <TableBody>
               {sorted.map((payment) => {
                 const apartment = apartmentsById[payment.apartmentID];
-                const apartmentLabel = apartment?.address
-                  ? getApartmentIdFromAddress(apartment.address)
-                  : t("dashboard.upcoming.unknownApartment");
+                const apartmentLabel =
+                  apartment?.shortLabel ??
+                  t("dashboard.upcoming.unknownApartment");
 
                 const tenant =
                   payment.kind === "rental"
@@ -200,9 +206,12 @@ export const UpcomingPaymentsWidget: FC<Props> = ({
             </TableBody>
           </Table>
         ) : (
-          <div className="p-6">
-            <EmptyView message={t("dashboard.upcoming.empty")} />
-          </div>
+          <DashboardWidgetEmptyState
+            icon={Receipt}
+            message={t("dashboard.upcoming.empty")}
+            actionLabel={t("dashboard.upcoming.emptyAction")}
+            onAction={() => navigate("/invoices/new")}
+          />
         )}
       </CardContent>
     </Card>

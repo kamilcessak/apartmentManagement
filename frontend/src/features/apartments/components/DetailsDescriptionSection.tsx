@@ -84,7 +84,7 @@ export const DetailsDescriptionSection = ({
   const onSubmit = (formData: FormType) => mutate(formData);
 
   return (
-    <Card className="mb-6 border-slate-200 shadow-sm">
+    <Card className="border-slate-200 shadow-sm">
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 py-4">
           <CardTitle className="text-lg text-slate-900">Description</CardTitle>

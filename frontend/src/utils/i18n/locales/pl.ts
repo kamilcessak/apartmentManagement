@@ -121,6 +121,7 @@ const pl = {
         unassignedTenant: "Nieprzypisany",
         unknownApartment: "Nieznane mieszkanie",
         empty: "Brak nadchodzących płatności w ciągu 30 dni",
+        emptyAction: "+ Dodaj płatność",
         dueToday: "Termin dziś",
         daysLeft_one: "zostaje {{count}} dzień",
         daysLeft_few: "zostają {{count}} dni",
@@ -142,6 +143,7 @@ const pl = {
         unassignedTenant: "Nieprzypisany najemca",
         unknownApartment: "Nieznane mieszkanie",
         empty: "Brak umów kończących się w ciągu 30 dni",
+        emptyAction: "+ Dodaj pierwszą umowę",
         endsToday: "Kończy się dziś",
         daysLeft_one: "zostaje {{count}} dzień",
         daysLeft_few: "zostają {{count}} dni",
@@ -495,6 +497,23 @@ const pl = {
         successToast: "Faktura została zaktualizowana",
         errorToast: "Wystąpił błąd podczas aktualizacji faktury",
       },
+      apartmentSection: {
+        title: "Faktury",
+        addInvoice: "Dodaj fakturę",
+        summary: {
+          total: "Razem",
+          paid: "Opłacone",
+          unpaid: "Nieopłacone",
+          overdue: "Zaległe ({{count}})",
+        },
+        status: {
+          paid: "Opłacone",
+          unpaid: "Nieopłacone",
+          overdue: "Zaległe",
+        },
+        emptyState: "Brak faktur dla tego mieszkania",
+        loadError: "Nie udało się wczytać faktur dla tego mieszkania.",
+      },
     },
     apartments: {
       title: "Mieszkania",
@@ -529,6 +548,32 @@ const pl = {
       },
       deleteSuccess: "Mieszkanie zostało usunięte",
       deleteError: "Nie udało się usunąć mieszkania",
+      details: {
+        files: {
+          photosTitle: "Zdjęcia",
+          documentsTitle: "Dokumenty",
+          edit: "Edytuj",
+          closeEdit: "Zakończ edycję",
+          addFile: "Dodaj plik",
+          view: "Podgląd",
+          download: "Pobierz",
+          delete: "Usuń",
+          emptyPhotos:
+            "Brak zdjęć. Włącz tryb edycji, aby dodać zdjęcia mieszkania.",
+          emptyDocuments:
+            "Brak dokumentów. Włącz tryb edycji, aby dodać pliki (np. PDF).",
+          patchError: "Nie udało się zapisać zmian",
+          uploadSuccess: "Plik został przesłany",
+          uploadError: "Błąd przesyłania. Spróbuj ponownie.",
+          deleteSuccess: "Plik został usunięty",
+          deleteError: "Nie udało się usunąć pliku",
+          previewClose: "Zamknij podgląd",
+          previewPdfFrameTitle: "Podgląd dokumentu PDF",
+          previewDocumentPlaceholder:
+            "Podgląd tego typu pliku w przeglądarce nie jest dostępny. Użyj przycisku „Pobierz”, aby zapisać plik na dysku.",
+          previewOpenError: "Nie udało się otworzyć podglądu pliku",
+        },
+      },
       newApartment: {
         back: "Wróć",
         title: "Dodaj nowe mieszkanie",
@@ -540,9 +585,26 @@ const pl = {
         errorToast:
           "Wystąpił błąd podczas dodawania nowego mieszkania. Spróbuj ponownie",
         fields: {
-          address: {
-            label: "Adres",
-            placeholder: "np. ul. Marszałkowska 1, 00-001 Warszawa",
+          street: {
+            label: "Ulica",
+            placeholder: "np. Marszałkowska",
+          },
+          buildingNumber: {
+            label: "Nr budynku",
+            placeholder: "np. 12A",
+          },
+          apartmentNumber: {
+            label: "Nr lokalu",
+            optional: "(opcjonalnie)",
+            placeholder: "np. 5",
+          },
+          postalCode: {
+            label: "Kod pocztowy",
+            placeholder: "np. 00-001",
+          },
+          city: {
+            label: "Miasto",
+            placeholder: "np. Warszawa",
           },
           metric: {
             label: "Metraż",
@@ -573,7 +635,11 @@ const pl = {
           uploading: "Wysyłanie...",
         },
         validation: {
-          addressRequired: "Adres mieszkania jest wymagany",
+          streetRequired: "Ulica jest wymagana",
+          buildingNumberRequired: "Numer budynku jest wymagany",
+          postalCodeRequired: "Kod pocztowy jest wymagany",
+          postalCodeFormat: "Kod pocztowy musi być w formacie XX-XXX (np. 00-001)",
+          cityRequired: "Miasto jest wymagane",
           metricRequired: "Metraż mieszkania jest wymagany",
           roomCountRequired: "Liczba pokoi jest wymagana",
           monthlyCostRequired: "Miesięczny czynsz jest wymagany",

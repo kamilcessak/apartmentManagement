@@ -19,6 +19,8 @@ import {
 import { TableCell, TableRow } from "@components/ui/table";
 import api from "@services/api";
 
+import { formatApartmentStreetLine } from "@utils/apartment";
+
 import { ApartmentType } from "../types/apartment.type";
 
 type Props = {
@@ -66,7 +68,7 @@ export const ApartmentItem: FC<Props> = ({ apartment }) => {
             </AvatarFallback>
           </Avatar>
           <span className="text-sm font-medium text-slate-900">
-            {apartment.address}
+            {formatApartmentStreetLine(apartment)}
           </span>
         </div>
       </TableCell>

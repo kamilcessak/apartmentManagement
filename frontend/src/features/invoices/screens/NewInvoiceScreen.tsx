@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 
 import api from "@services/api";
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
-import { ApartmentListType } from "@features/apartments/types/apartment.type";
+import { fetchLandlordApartmentsForSelect } from "@features/apartments/fetchLandlordApartmentsForSelect";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,11 +22,6 @@ export const NewInvoiceScreen = () => {
 
   const prefilledApartmentID = searchParams.get("apartmentID") ?? undefined;
 
-  const handleGetApartments = async () => {
-    const result = await api.get<ApartmentListType[]>("/apartmentsList");
-    return result.data;
-  };
-
   const {
     data: apartments,
     isLoading,
@@ -34,8 +29,8 @@ export const NewInvoiceScreen = () => {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["apartments", "ids", "LIST"],
-    queryFn: handleGetApartments,
+    queryKey: ["apartments", "select", "all-owned"],
+    queryFn: fetchLandlordApartmentsForSelect,
   });
 
   const handleCreateInvoice = async (values: InvoiceFormValues) => {

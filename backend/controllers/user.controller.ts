@@ -26,7 +26,9 @@ export const getUser = async (req: Request, res: Response) => {
 
         if (user.role === 'Landlord') {
             const apartments = await ApartmentModel.find({ owner: userID })
-                .select('address isAvailable roomCount monthlyCost')
+                .select(
+                    'street buildingNumber apartmentNumber postalCode city isAvailable roomCount monthlyCost'
+                )
                 .lean();
             res.status(200).json({
                 ...user,
@@ -237,7 +239,9 @@ export const getMyDocuments = async (req: Request, res: Response) => {
 
         const [apartment, rental, invoices] = await Promise.all([
             ApartmentModel.findById(tenant.assignedApartmentID)
-                .select('documents photos address')
+                .select(
+                    'documents photos street buildingNumber apartmentNumber postalCode city'
+                )
                 .lean(),
             RentalModel.findOne({
                 tenantID: tenant._id,

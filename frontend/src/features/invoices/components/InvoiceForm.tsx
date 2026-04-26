@@ -15,7 +15,7 @@ import {
 
 import api from "@services/api";
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import { getApartmentShortLabel } from "@utils/apartment";
 
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
@@ -209,7 +209,7 @@ export const InvoiceForm: FC<Props> = ({
                   <SelectContent>
                     {apartments.map((apartment) => (
                       <SelectItem key={apartment._id} value={apartment._id}>
-                        {getApartmentIdFromAddress(apartment.address)}
+                        {getApartmentShortLabel(apartment)}
                       </SelectItem>
                     ))}
                   </SelectContent>

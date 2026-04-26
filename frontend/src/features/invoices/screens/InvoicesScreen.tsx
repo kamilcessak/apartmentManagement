@@ -8,8 +8,8 @@ import dayjs from "dayjs";
 
 import { EmptyView, RouteContent, ErrorView } from "@components/common";
 import api from "@services/api";
-import { ApartmentListType } from "@features/apartments/types/apartment.type";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import { fetchLandlordApartmentsForSelect } from "@features/apartments/fetchLandlordApartmentsForSelect";
+import { getApartmentShortLabel } from "@utils/apartment";
 import { capitalizeFirstLetter } from "@utils/common";
 
 import { Card } from "@/components/ui/card";
@@ -59,11 +59,6 @@ export const InvoicesScreen = () => {
     return result.data;
   };
 
-  const handleGetApartments = async () => {
-    const result = await api.get<ApartmentListType[]>("/apartmentsList");
-    return result.data;
-  };
-
   const {
     data: invoices,
     isLoading: isInvoicesLoading,
@@ -76,14 +71,14 @@ export const InvoicesScreen = () => {
   });
 
   const { data: apartmentsList } = useQuery({
-    queryKey: ["apartments", "ids", "LIST"],
-    queryFn: handleGetApartments,
+    queryKey: ["apartments", "select", "all-owned"],
+    queryFn: fetchLandlordApartmentsForSelect,
   });
 
   const apartmentLabelById = useMemo(() => {
     const map = new Map<string, string>();
     (apartmentsList ?? []).forEach((apartment) => {
-      map.set(apartment._id, getApartmentIdFromAddress(apartment.address));
+      map.set(apartment._id, getApartmentShortLabel(apartment));
     });
     return map;
   }, [apartmentsList]);

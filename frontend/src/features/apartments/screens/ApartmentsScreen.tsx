@@ -17,6 +17,8 @@ import {
 import { ErrorView, RouteContent } from "@components/common";
 import api from "@services/api";
 
+import { formatApartmentFullAddress } from "@utils/apartment";
+
 import { ApartmentType } from "../types/apartment.type";
 import {
   ApartmentItem,
@@ -51,7 +53,7 @@ export const ApartmentsScreen = () => {
     if (!query) return data;
     return data.filter((apartment) => {
       const haystack = [
-        apartment.address,
+        formatApartmentFullAddress(apartment),
         apartment.description,
         apartment.equipment,
       ]

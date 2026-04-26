@@ -16,7 +16,7 @@ import api from "@services/api";
 
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
 import { TenantsListType } from "@features/tenants/types/tenant.type";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import { getApartmentShortLabel } from "@utils/apartment";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -415,7 +415,7 @@ export const NewRentalScreen = () => {
                             <SelectContent>
                               {apartmentsList.map((e) => (
                                 <SelectItem key={e._id} value={e._id}>
-                                  {getApartmentIdFromAddress(e.address)}
+                                  {getApartmentShortLabel(e)}
                                 </SelectItem>
                               ))}
                             </SelectContent>

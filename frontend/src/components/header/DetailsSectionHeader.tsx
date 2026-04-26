@@ -9,6 +9,10 @@ type Props = {
   onClickButton?: () => void;
   editModeButton?: React.ReactNode;
   hideEditButton?: boolean;
+  /** Overrides default "Edit" label */
+  editOpenLabel?: string;
+  /** Overrides default "Close edit" label */
+  editCloseLabel?: string;
 };
 
 export const DetailsSectionHeader: FC<Props> = ({
@@ -17,6 +21,8 @@ export const DetailsSectionHeader: FC<Props> = ({
   editMode,
   editModeButton,
   hideEditButton,
+  editOpenLabel = "Edit",
+  editCloseLabel = "Close edit",
 }) => {
   return (
     <div className="flex flex-1 flex-row items-center justify-between">
@@ -32,12 +38,12 @@ export const DetailsSectionHeader: FC<Props> = ({
             {editMode ? (
               <>
                 <X />
-                Close edit
+                {editCloseLabel}
               </>
             ) : (
               <>
                 <Pencil />
-                Edit
+                {editOpenLabel}
               </>
             )}
           </Button>

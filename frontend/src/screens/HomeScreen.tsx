@@ -16,6 +16,7 @@ import { Badge } from "@components/ui/badge";
 import { Card, CardContent } from "@components/ui/card";
 import api from "@services/api";
 import { ApartmentType } from "@features/apartments/types/apartment.type";
+import { getApartmentShortLabel } from "@utils/apartment";
 import { RentalType } from "@features/rentals/types/rental.types";
 import { TenantsListType } from "@features/tenants/types/tenant.type";
 import {
@@ -142,13 +143,15 @@ const LandlordHome = () => {
 
   const apartmentsById = useMemo(() => {
     if (!apartments) return {};
-    return apartments.reduce<Record<string, { _id: string; address: string }>>(
-      (acc, apartment) => {
-        acc[apartment._id] = { _id: apartment._id, address: apartment.address };
-        return acc;
-      },
-      {}
-    );
+    return apartments.reduce<
+      Record<string, { _id: string; shortLabel: string }>
+    >((acc, apartment) => {
+      acc[apartment._id] = {
+        _id: apartment._id,
+        shortLabel: getApartmentShortLabel(apartment),
+      };
+      return acc;
+    }, {});
   }, [apartments]);
 
   const tenantsById = useMemo(() => {
@@ -265,7 +268,7 @@ const LandlordHome = () => {
         </section>
 
         <section className="grid gap-6 xl:grid-cols-5">
-          <div className="xl:col-span-3">
+          <div className="flex min-h-0 h-full flex-col xl:col-span-3">
             <UpcomingPaymentsWidget
               payments={upcomingPayments}
               apartmentsById={apartmentsById}
@@ -273,7 +276,7 @@ const LandlordHome = () => {
               tenantByApartmentId={tenantByApartmentId}
             />
           </div>
-          <div className="xl:col-span-2">
+          <div className="flex min-h-0 h-full flex-col xl:col-span-2">
             <ExpiringLeasesWidget
               leases={expiringLeases}
               apartmentsById={apartmentsById}

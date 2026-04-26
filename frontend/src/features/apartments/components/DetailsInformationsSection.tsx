@@ -26,11 +26,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import {
+  formatApartmentFullAddress,
+  getApartmentShortLabel,
+} from "@utils/apartment";
 import api from "@services/api";
 
+const polishPostalCodePattern = /^\d{2}-\d{3}$/;
+
 const schema = yup.object().shape({
-  address: yup.string().required("Field is required"),
+  street: yup.string().trim().required("Field is required"),
+  buildingNumber: yup.string().trim().required("Field is required"),
+  apartmentNumber: yup.string().trim(),
+  postalCode: yup
+    .string()
+    .trim()
+    .required("Field is required")
+    .matches(polishPostalCodePattern, "Use format XX-XXX"),
+  city: yup.string().trim().required("Field is required"),
   metric: yup.number().required("Field is required"),
   roomCount: yup.number().required("Field is required"),
   monthlyCost: yup.number().required("Field is required"),
@@ -38,7 +51,11 @@ const schema = yup.object().shape({
 });
 
 type FormType = {
-  address: string;
+  street: string;
+  buildingNumber: string;
+  apartmentNumber: string;
+  postalCode: string;
+  city: string;
   metric: number;
   roomCount: number;
   monthlyCost: number;
@@ -95,7 +112,11 @@ export const DetailsInformationsSection = ({
   } = useForm<FormType>({
     resolver: yupResolver(schema),
     defaultValues: {
-      address: data?.address || "",
+      street: data?.street || "",
+      buildingNumber: data?.buildingNumber || "",
+      apartmentNumber: data?.apartmentNumber || "",
+      postalCode: data?.postalCode || "",
+      city: data?.city || "",
       metric: data?.metric || 0,
       roomCount: data?.roomCount || 0,
       monthlyCost: data?.monthlyCost || 0,
@@ -105,7 +126,11 @@ export const DetailsInformationsSection = ({
 
   const handlePatchApartment = async (formData: FormType) => {
     try {
-      const result = await api.patch(`/apartment/${data._id}`, formData);
+      const payload = {
+        ...formData,
+        apartmentNumber: formData.apartmentNumber.trim(),
+      };
+      const result = await api.patch(`/apartment/${data._id}`, payload);
       return result;
     } catch (error) {
       console.error(error);
@@ -131,7 +156,11 @@ export const DetailsInformationsSection = ({
     setEditMode((prev) => {
       if (!prev) {
         reset({
-          address: data?.address || "",
+          street: data?.street || "",
+          buildingNumber: data?.buildingNumber || "",
+          apartmentNumber: data?.apartmentNumber || "",
+          postalCode: data?.postalCode || "",
+          city: data?.city || "",
           metric: data?.metric || 0,
           roomCount: data?.roomCount || 0,
           monthlyCost: data?.monthlyCost || 0,
@@ -145,7 +174,7 @@ export const DetailsInformationsSection = ({
   const onSubmit = (formData: FormType) => mutate(formData);
 
   return (
-    <Card className="mb-6 border-slate-200 shadow-sm">
+    <Card className="border-slate-200 shadow-sm">
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 py-4">
           <CardTitle className="text-lg text-slate-900">
@@ -170,9 +199,12 @@ export const DetailsInformationsSection = ({
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
               <InfoCell
                 label="Apartment ID"
-                value={getApartmentIdFromAddress(data.address)}
+                value={getApartmentShortLabel(data)}
               />
-              <InfoCell label="Address" value={data.address} />
+              <InfoCell
+                label="Address"
+                value={formatApartmentFullAddress(data)}
+              />
               <InfoCell label="Metric" value={`${data.metric} m²`} />
               <InfoCell label="Rooms count" value={`${data.roomCount}`} />
               <InfoCell label="Monthly cost" value={`${data.monthlyCost} zł`} />
@@ -191,27 +223,114 @@ export const DetailsInformationsSection = ({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Controller
-                control={control}
-                name="address"
-                render={({ field }) => (
-                  <FieldWrapper
-                    id="address"
-                    label="Address"
-                    error={errors.address?.message}
-                    className="col-span-full"
-                  >
-                    <Input
-                      id="address"
-                      disabled={isPending}
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                  </FieldWrapper>
-                )}
-              />
+              <div className="col-span-full grid grid-cols-1 gap-4 md:grid-cols-12">
+                <Controller
+                  control={control}
+                  name="street"
+                  render={({ field }) => (
+                    <FieldWrapper
+                      id="street"
+                      label="Street"
+                      error={errors.street?.message}
+                      className="md:col-span-7"
+                    >
+                      <Input
+                        id="street"
+                        disabled={isPending}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                    </FieldWrapper>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="buildingNumber"
+                  render={({ field }) => (
+                    <FieldWrapper
+                      id="buildingNumber"
+                      label="Building no."
+                      error={errors.buildingNumber?.message}
+                      className="md:col-span-2"
+                    >
+                      <Input
+                        id="buildingNumber"
+                        disabled={isPending}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                    </FieldWrapper>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="apartmentNumber"
+                  render={({ field }) => (
+                    <FieldWrapper
+                      id="apartmentNumber"
+                      label="Apartment no. (optional)"
+                      error={errors.apartmentNumber?.message}
+                      className="md:col-span-3"
+                    >
+                      <Input
+                        id="apartmentNumber"
+                        disabled={isPending}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                    </FieldWrapper>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="postalCode"
+                  render={({ field }) => (
+                    <FieldWrapper
+                      id="postalCode"
+                      label="Postal code"
+                      error={errors.postalCode?.message}
+                      className="md:col-span-4"
+                    >
+                      <Input
+                        id="postalCode"
+                        disabled={isPending}
+                        maxLength={6}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                    </FieldWrapper>
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="city"
+                  render={({ field }) => (
+                    <FieldWrapper
+                      id="city"
+                      label="City"
+                      error={errors.city?.message}
+                      className="md:col-span-8"
+                    >
+                      <Input
+                        id="city"
+                        disabled={isPending}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
+                    </FieldWrapper>
+                  )}
+                />
+              </div>
               <Controller
                 control={control}
                 name="metric"

@@ -14,7 +14,11 @@ export type CurrentUserTenant = {
 
 export type CurrentUserApartment = {
   _id: string;
-  address: string;
+  street: string;
+  buildingNumber: string;
+  apartmentNumber?: string;
+  postalCode: string;
+  city: string;
   isAvailable: boolean;
   roomCount: number;
   monthlyCost: number;

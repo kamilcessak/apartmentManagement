@@ -16,7 +16,7 @@ import dayjs from "dayjs";
 
 import api from "@services/api";
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import { getApartmentShortLabel } from "@utils/apartment";
 import { ApartmentType } from "@features/apartments/types/apartment.type";
 
 import { Button } from "@/components/ui/button";
@@ -128,8 +128,9 @@ export const InvoiceDetailsScreen = () => {
   };
 
   const apartmentLabel = useMemo(() => {
-    if (!apartment?.address) return t("invoices.details.fields.empty");
-    return getApartmentIdFromAddress(apartment.address);
+    if (!apartment?.street || !apartment?.buildingNumber)
+      return t("invoices.details.fields.empty");
+    return getApartmentShortLabel(apartment);
   }, [apartment, t]);
 
   if (isLoading) return <LoadingView />;

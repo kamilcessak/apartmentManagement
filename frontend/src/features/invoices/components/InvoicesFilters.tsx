@@ -2,7 +2,7 @@ import { FC } from "react";
 import { Search, X } from "lucide-react";
 
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import { getApartmentShortLabel } from "@utils/apartment";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,7 @@ export const InvoicesFilters: FC<Props> = ({
             <SelectItem value={ALL_APARTMENTS}>Wszystkie mieszkania</SelectItem>
             {apartments.map((apartment) => (
               <SelectItem key={apartment._id} value={apartment._id}>
-                {getApartmentIdFromAddress(apartment.address)}
+                {getApartmentShortLabel(apartment)}
               </SelectItem>
             ))}
           </SelectContent>

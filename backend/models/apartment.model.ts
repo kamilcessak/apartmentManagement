@@ -1,8 +1,12 @@
 import mongoose, { Schema, model, Document } from 'mongoose';
-import { addressRegex } from '../utils/regexs';
+import { polishPostalCodeRegex } from '../utils/regexs';
 
 export type ApartmentType = {
-    address: string;
+    street: string;
+    buildingNumber: string;
+    apartmentNumber?: string;
+    postalCode: string;
+    city: string;
     metric: number;
     isAvailable?: boolean;
     roomCount: number;
@@ -18,14 +22,19 @@ export type ApartmentSchemaType = Document & ApartmentType;
 
 const apartmentSchema = new Schema<ApartmentSchemaType>(
     {
-        address: {
+        street: { type: String, required: true, trim: true },
+        buildingNumber: { type: String, required: true, trim: true },
+        apartmentNumber: { type: String, trim: true },
+        postalCode: {
             type: String,
             required: true,
+            trim: true,
             validate: {
-                validator: (value: string) => addressRegex.test(value),
-                message: 'Address must be in format "ul.Ulica 1, 00-000 Miasto"',
+                validator: (value: string) => polishPostalCodeRegex.test(value),
+                message: 'Postal code must be in format XX-XXX (e.g. 00-001)',
             },
         },
+        city: { type: String, required: true, trim: true },
         metric: { type: Number, required: true },
         isAvailable: { type: Boolean, default: true },
         roomCount: { type: Number, required: true },

@@ -12,7 +12,7 @@ import { ApartmentType } from "../types/apartment.type";
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
 import { Button } from "@/components/ui/button";
 import api from "@services/api";
-import { getApartmentIdFromAddress } from "@utils/apartment";
+import { getApartmentShortLabel } from "@utils/apartment";
 import { capitalizeFirstLetter } from "@utils/common";
 import { ApartmentInvoicesSection } from "@features/invoices/components";
 
@@ -54,14 +54,14 @@ export const ApartmentDetailsScreen = () => {
           </Button>
           <div className="flex flex-col">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-              {capitalizeFirstLetter(getApartmentIdFromAddress(data.address))}
+              {capitalizeFirstLetter(getApartmentShortLabel(data))}
             </h1>
             <p className="text-sm text-slate-500">
               Edytuj szczegóły i parametry mieszkania
             </p>
           </div>
         </header>
-        <main className="flex flex-1 flex-col w-full overflow-y-auto scrollbar-hide p-8">
+        <main className="flex flex-1 flex-col gap-6 w-full overflow-y-auto scrollbar-hide p-8">
           <DetailsInformationsSection data={data} />
           <DetailsDescriptionSection
             description={data.description}
@@ -71,10 +71,8 @@ export const ApartmentDetailsScreen = () => {
             files={data.photos}
             id={data._id}
             type="photos"
-            title="Photos"
           />
           <DetailsPhotosSection
-            title="Documents"
             files={data.documents}
             id={data._id}
             type="documents"
