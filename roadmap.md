@@ -224,3 +224,7 @@ Cel: dokończyć model ról — obecnie model wspiera `Tenant`, ale nie ma dedyk
 **Sprint 3 (zamknięty):** ~~M4.1–M4.5~~ **[done]** — rola w JWT + `requireRole` na wszystkich routerach, flow zaproszenia Tenanta (auto-mail z `invitationCode` + `?invitationCode=...&email=...` w `RegisterScreen`), portal Tenanta (`/my-apartment`, `/my-invoices`, `/my-documents`), role-aware `Navigation`/`HomeScreen`, hook `useCurrentUser`, endpointy `GET/PATCH /me` + `GET /me/*`. Aplikacja obsługuje obie persony end-to-end; Tenant nie ma ścieżki do danych innych najemców.
 
 **Sprint 4 (zamknięty — M5 P0):** ~~M5.1–M5.5, M5.7, M5.8 (smoke)~~ **[done]** — Zod na POST/PATCH (+ query lista faktur), CORS whitelist, rate limiting na auth, Helmet, chronione pliki (`GET /api/v1/files/...`, rejestr `UploadedFile`, brak publicznego `/uploads`), Vitest+Supertest, `backend/.env.example`, hasło rejestracji min. 8 znaków (FE+BE). **Otwarte:** M5.6 (refresh + httpOnly), M5.9–M5.10, pełny coverage testów. **MVP v0.97** — pozostaje M6 (prod readiness) + opcjonalnie domknięcie M5 P1.
+
+## TODO:
+1. w dodawaniu najemcy rozdzielić pola do adresu zameldowania i dodać pole do numeru dokumentu
+2. jakis ladniejszy kalendarz w dodawaniu najmu i na liście faktur
