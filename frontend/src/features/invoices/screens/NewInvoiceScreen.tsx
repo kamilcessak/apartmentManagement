@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 import { InvoiceForm, InvoiceFormValues } from "../components";
+import { getInvoiceApiErrorMessage } from "../utils/invoiceApiErrors";
 
 export const NewInvoiceScreen = () => {
   const { t } = useTranslation();
@@ -62,8 +63,11 @@ export const NewInvoiceScreen = () => {
         navigate(-1);
       }
     },
-    onError: () => {
-      toast(t("invoices.newInvoice.errorToast"), { type: "error" });
+    onError: (error: unknown) => {
+      toast(
+        getInvoiceApiErrorMessage(error, t, "invoices.newInvoice.errorToast"),
+        { type: "error" }
+      );
     },
   });
 

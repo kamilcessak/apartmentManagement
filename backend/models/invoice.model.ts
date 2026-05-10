@@ -2,6 +2,8 @@ import mongoose, { Schema, model, Document } from 'mongoose';
 
 export interface InvoiceSchemaType extends Document {
     apartmentID: mongoose.Types.ObjectId;
+    tenantID: mongoose.Types.ObjectId | null;
+    rentalID: mongoose.Types.ObjectId | null;
     invoiceType: string;
     amount: number;
     dueDate: Date;
@@ -19,6 +21,16 @@ const invoiceSchema = new Schema<InvoiceSchemaType>(
             type: Schema.Types.ObjectId,
             ref: 'Apartment',
             required: true,
+        },
+        tenantID: {
+            type: Schema.Types.ObjectId,
+            ref: 'Tenant',
+            default: null,
+        },
+        rentalID: {
+            type: Schema.Types.ObjectId,
+            ref: 'Rentals',
+            default: null,
         },
         invoiceType: { type: String, required: true },
         amount: { type: Number, required: true },

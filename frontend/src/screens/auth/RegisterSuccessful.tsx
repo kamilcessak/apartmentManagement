@@ -53,7 +53,8 @@ export const RegisterSuccessful = () => {
             </div>
           ) : (
             <div
-              className="h-[250px] w-[250px] animate-pulse rounded-md bg-slate-100/80"
+              className="h-[250px] w-[250px]"
+              aria-busy="true"
               aria-hidden
             />
           )}

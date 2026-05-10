@@ -12,6 +12,8 @@ export type UpcomingInvoicePayment = {
   _id: string;
   kind: "invoice";
   apartmentID: string;
+  /** Present when invoice is tied to a tenant (due date within lease) */
+  tenantID?: string;
   amount: number;
   dueDate: string;
   invoiceID: string;

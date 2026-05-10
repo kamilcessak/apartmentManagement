@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -7,6 +7,13 @@ import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TableCell, TableRow } from "@/components/ui/table";
 import api from "@services/api";
 import { getApartmentShortLabel } from "@utils/apartment";
@@ -65,6 +72,8 @@ export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
     },
   });
 
+  const goToDetails = () => navigate(`/rental/${rental._id}`);
+
   const isLoading = isApartmentDataLoading || isTenantDataLoading;
 
   if (isLoading) {
@@ -101,32 +110,36 @@ export const RentalItem: FC<Props> = ({ rental, searchQuery = "" }) => {
       </TableCell>
 
       <TableCell className="py-3 pr-6 text-right">
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t("rentals.actions.edit")}
-            title={t("rentals.actions.edit")}
-            onClick={() => navigate(`/rental/${rental._id}`)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t("rentals.actions.delete")}
-            title={t("rentals.actions.delete")}
-            disabled={isDeleting}
-            onClick={() => deleteRental(rental._id)}
-            className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-          >
-            {isDeleting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={isDeleting}
+              aria-label={t("rentals.columns.actions")}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={goToDetails}>
+              <Eye className="h-4 w-4" />
+              <span>{t("rentals.actions.details")}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={goToDetails}>
+              <Pencil className="h-4 w-4" />
+              <span>{t("rentals.actions.edit")}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => deleteRental(rental._id)}
+              className="text-rose-600 focus:bg-rose-50 focus:text-rose-700"
+            >
               <Trash2 className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+              <span>{t("rentals.actions.delete")}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </TableCell>
     </TableRow>
   );

@@ -1,5 +1,6 @@
 import * as yup from "yup";
-import { FC, ReactNode, useState } from "react";
+import { FC, ReactNode, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -33,22 +34,6 @@ import {
 import api from "@services/api";
 
 const polishPostalCodePattern = /^\d{2}-\d{3}$/;
-
-const schema = yup.object().shape({
-  street: yup.string().trim().required("Field is required"),
-  buildingNumber: yup.string().trim().required("Field is required"),
-  apartmentNumber: yup.string().trim(),
-  postalCode: yup
-    .string()
-    .trim()
-    .required("Field is required")
-    .matches(polishPostalCodePattern, "Use format XX-XXX"),
-  city: yup.string().trim().required("Field is required"),
-  metric: yup.number().required("Field is required"),
-  roomCount: yup.number().required("Field is required"),
-  monthlyCost: yup.number().required("Field is required"),
-  isAvailable: yup.boolean().required("Field is required"),
-});
 
 type FormType = {
   street: string;
@@ -101,8 +86,49 @@ export const DetailsInformationsSection = ({
 }: {
   data: ApartmentType;
 }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
+
+  const schema = useMemo(
+    () =>
+      yup.object().shape({
+        street: yup
+          .string()
+          .trim()
+          .required(t("apartments.details.information.validation.required")),
+        buildingNumber: yup
+          .string()
+          .trim()
+          .required(t("apartments.details.information.validation.required")),
+        apartmentNumber: yup.string().trim(),
+        postalCode: yup
+          .string()
+          .trim()
+          .required(t("apartments.details.information.validation.required"))
+          .matches(
+            polishPostalCodePattern,
+            t("apartments.details.information.validation.postalCodeFormat")
+          ),
+        city: yup
+          .string()
+          .trim()
+          .required(t("apartments.details.information.validation.required")),
+        metric: yup
+          .number()
+          .required(t("apartments.details.information.validation.required")),
+        roomCount: yup
+          .number()
+          .required(t("apartments.details.information.validation.required")),
+        monthlyCost: yup
+          .number()
+          .required(t("apartments.details.information.validation.required")),
+        isAvailable: yup
+          .boolean()
+          .required(t("apartments.details.information.validation.required")),
+      }),
+    [t]
+  );
 
   const {
     handleSubmit,
@@ -143,10 +169,12 @@ export const DetailsInformationsSection = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apartment", `${data._id}`] });
       setEditMode(false);
-      toast("Successfully modified apartment details", { type: "success" });
+      toast(t("apartments.details.information.toastSuccess"), {
+        type: "success",
+      });
     },
     onError: () => {
-      toast("An error occurred during modifying apartment details", {
+      toast(t("apartments.details.information.toastError"), {
         type: "error",
       });
     },
@@ -178,7 +206,7 @@ export const DetailsInformationsSection = ({
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 py-4">
           <CardTitle className="text-lg text-slate-900">
-            Main information
+            {t("apartments.details.information.title")}
           </CardTitle>
           {!editMode ? (
             <Button
@@ -189,7 +217,7 @@ export const DetailsInformationsSection = ({
               className="text-slate-600 hover:text-slate-900"
             >
               <Pencil className="h-4 w-4" />
-              Edit
+              {t("apartments.details.information.edit")}
             </Button>
           ) : null}
         </CardHeader>
@@ -198,25 +226,44 @@ export const DetailsInformationsSection = ({
           {!editMode ? (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
               <InfoCell
-                label="Apartment ID"
+                label={t("apartments.details.information.view.apartmentId")}
                 value={getApartmentShortLabel(data)}
               />
               <InfoCell
-                label="Address"
+                label={t("apartments.details.information.view.address")}
                 value={formatApartmentFullAddress(data)}
               />
-              <InfoCell label="Metric" value={`${data.metric} m²`} />
-              <InfoCell label="Rooms count" value={`${data.roomCount}`} />
-              <InfoCell label="Monthly cost" value={`${data.monthlyCost} zł`} />
+              <InfoCell
+                label={t("apartments.details.information.view.metric")}
+                value={`${data.metric} ${t(
+                  "apartments.details.information.view.metricSuffix"
+                )}`}
+              />
+              <InfoCell
+                label={t("apartments.details.information.view.roomsCount")}
+                value={`${data.roomCount}`}
+              />
+              <InfoCell
+                label={t("apartments.details.information.view.monthlyCost")}
+                value={`${data.monthlyCost} zł`}
+              />
               <div className="flex flex-col gap-1 min-w-0">
-                <span className="text-sm text-slate-500">Status</span>
+                <span className="text-sm text-slate-500">
+                  {t("apartments.details.information.view.status")}
+                </span>
                 <div>
                   {data.isAvailable ? (
                     <Badge className="bg-emerald-600 text-white hover:bg-emerald-600/90">
-                      Available
+                      {t(
+                        "apartments.details.information.view.statusAvailable"
+                      )}
                     </Badge>
                   ) : (
-                    <Badge variant="destructive">Unavailable</Badge>
+                    <Badge variant="destructive">
+                      {t(
+                        "apartments.details.information.view.statusUnavailable"
+                      )}
+                    </Badge>
                   )}
                 </div>
               </div>
@@ -230,7 +277,7 @@ export const DetailsInformationsSection = ({
                   render={({ field }) => (
                     <FieldWrapper
                       id="street"
-                      label="Street"
+                      label={t("apartments.details.information.fields.street")}
                       error={errors.street?.message}
                       className="md:col-span-7"
                     >
@@ -251,7 +298,9 @@ export const DetailsInformationsSection = ({
                   render={({ field }) => (
                     <FieldWrapper
                       id="buildingNumber"
-                      label="Building no."
+                      label={t(
+                        "apartments.details.information.fields.buildingNumber"
+                      )}
                       error={errors.buildingNumber?.message}
                       className="md:col-span-2"
                     >
@@ -272,7 +321,9 @@ export const DetailsInformationsSection = ({
                   render={({ field }) => (
                     <FieldWrapper
                       id="apartmentNumber"
-                      label="Apartment no. (optional)"
+                      label={t(
+                        "apartments.details.information.fields.apartmentNumber"
+                      )}
                       error={errors.apartmentNumber?.message}
                       className="md:col-span-3"
                     >
@@ -293,7 +344,9 @@ export const DetailsInformationsSection = ({
                   render={({ field }) => (
                     <FieldWrapper
                       id="postalCode"
-                      label="Postal code"
+                      label={t(
+                        "apartments.details.information.fields.postalCode"
+                      )}
                       error={errors.postalCode?.message}
                       className="md:col-span-4"
                     >
@@ -315,7 +368,7 @@ export const DetailsInformationsSection = ({
                   render={({ field }) => (
                     <FieldWrapper
                       id="city"
-                      label="City"
+                      label={t("apartments.details.information.fields.city")}
                       error={errors.city?.message}
                       className="md:col-span-8"
                     >
@@ -337,7 +390,7 @@ export const DetailsInformationsSection = ({
                 render={({ field }) => (
                   <FieldWrapper
                     id="metric"
-                    label="Metric (m²)"
+                    label={t("apartments.details.information.fields.metric")}
                     error={errors.metric?.message}
                   >
                     <Input
@@ -364,7 +417,7 @@ export const DetailsInformationsSection = ({
                 render={({ field }) => (
                   <FieldWrapper
                     id="roomCount"
-                    label="Room count"
+                    label={t("apartments.details.information.fields.roomCount")}
                     error={errors.roomCount?.message}
                   >
                     <Input
@@ -391,7 +444,9 @@ export const DetailsInformationsSection = ({
                 render={({ field }) => (
                   <FieldWrapper
                     id="monthlyCost"
-                    label="Monthly cost (zł)"
+                    label={t(
+                      "apartments.details.information.fields.monthlyCost"
+                    )}
                     error={errors.monthlyCost?.message}
                   >
                     <Input
@@ -418,7 +473,9 @@ export const DetailsInformationsSection = ({
                 render={({ field }) => (
                   <FieldWrapper
                     id="isAvailable"
-                    label="Is available"
+                    label={t(
+                      "apartments.details.information.fields.isAvailable"
+                    )}
                     error={errors.isAvailable?.message}
                   >
                     <Select
@@ -429,11 +486,23 @@ export const DetailsInformationsSection = ({
                       }
                     >
                       <SelectTrigger id="isAvailable">
-                        <SelectValue placeholder="Select status" />
+                        <SelectValue
+                          placeholder={t(
+                            "apartments.details.information.fields.selectStatusPlaceholder"
+                          )}
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="true">Available</SelectItem>
-                        <SelectItem value="false">Not available</SelectItem>
+                        <SelectItem value="true">
+                          {t(
+                            "apartments.details.information.fields.selectAvailable"
+                          )}
+                        </SelectItem>
+                        <SelectItem value="false">
+                          {t(
+                            "apartments.details.information.fields.selectUnavailable"
+                          )}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </FieldWrapper>
@@ -452,11 +521,11 @@ export const DetailsInformationsSection = ({
               disabled={isPending}
             >
               <X className="h-4 w-4" />
-              Close edit
+              {t("apartments.details.information.closeEdit")}
             </Button>
             <Button type="submit" variant="default" disabled={isPending}>
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Save
+              {t("apartments.details.information.save")}
             </Button>
           </CardFooter>
         ) : null}

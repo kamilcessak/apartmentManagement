@@ -10,12 +10,22 @@ export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export const DEFAULT_LANGUAGE: SupportedLanguage = "pl";
 export const FALLBACK_LANGUAGE: SupportedLanguage = "en";
 
+const STORAGE_KEY = "app_language";
+
+const getInitialLanguage = (): SupportedLanguage => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored && (SUPPORTED_LANGUAGES as readonly string[]).includes(stored)) {
+    return stored as SupportedLanguage;
+  }
+  return DEFAULT_LANGUAGE;
+};
+
 i18n.use(initReactI18next).init({
   resources: {
     en,
     pl,
   },
-  lng: DEFAULT_LANGUAGE,
+  lng: getInitialLanguage(),
   fallbackLng: FALLBACK_LANGUAGE,
   supportedLngs: SUPPORTED_LANGUAGES,
   interpolation: {

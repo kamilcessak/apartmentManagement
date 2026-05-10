@@ -11,6 +11,13 @@ export interface UserSchemaType extends Document {
     comparePassword(candidatePassword: string): Promise<boolean>;
     firstName?: string;
     lastName?: string;
+    street?: string;
+    buildingNumber?: string;
+    apartmentNumber?: string;
+    postalCode?: string;
+    city?: string;
+    bankAccountIban?: string;
+    bankName?: string;
 }
 
 const userSchema = new Schema<UserSchemaType>(
@@ -23,6 +30,13 @@ const userSchema = new Schema<UserSchemaType>(
         isEmailVerified: { type: Boolean, default: false },
         firstName: { type: String },
         lastName: { type: String },
+        street: { type: String },
+        buildingNumber: { type: String },
+        apartmentNumber: { type: String },
+        postalCode: { type: String },
+        city: { type: String },
+        bankAccountIban: { type: String },
+        bankName: { type: String },
     },
     { timestamps: true }
 );

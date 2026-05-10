@@ -482,6 +482,15 @@ export const NewApartmentScreen = () => {
                     uploadingLabel={t(
                       "apartments.newApartment.uploads.uploading"
                     )}
+                    uploadSuccessSingle={t(
+                      "apartments.newApartment.uploads.uploadSuccessSingle"
+                    )}
+                    uploadSuccessBatch={t(
+                      "apartments.newApartment.uploads.uploadSuccessBatch"
+                    )}
+                    uploadError={t(
+                      "apartments.newApartment.uploads.uploadError"
+                    )}
                     accept="image/*"
                     disabled={isPending}
                     handleAddForm={handleAddPhotoToForm}
@@ -500,6 +509,15 @@ export const NewApartmentScreen = () => {
                     )}
                     uploadingLabel={t(
                       "apartments.newApartment.uploads.uploading"
+                    )}
+                    uploadSuccessSingle={t(
+                      "apartments.newApartment.uploads.uploadSuccessSingle"
+                    )}
+                    uploadSuccessBatch={t(
+                      "apartments.newApartment.uploads.uploadSuccessBatch"
+                    )}
+                    uploadError={t(
+                      "apartments.newApartment.uploads.uploadError"
                     )}
                     accept=".pdf,application/pdf"
                     disabled={isPending}

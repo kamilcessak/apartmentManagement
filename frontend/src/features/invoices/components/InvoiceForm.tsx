@@ -181,7 +181,7 @@ export const InvoiceForm: FC<Props> = ({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      <CardContent className="p-6">
+      <CardContent className="min-w-0 p-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-6">
           <Controller
             control={control}
@@ -421,10 +421,10 @@ export const InvoiceForm: FC<Props> = ({
               />
             </div>
             {currentDocument ? (
-              <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2">
-                <div className="flex min-w-0 items-center gap-2">
+              <div className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 py-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                   <FileText className="h-4 w-4 shrink-0 text-slate-500" />
-                  <span className="truncate text-sm text-slate-700">
+                  <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
                     {currentDocument}
                   </span>
                 </div>
@@ -434,7 +434,7 @@ export const InvoiceForm: FC<Props> = ({
                   size="sm"
                   onClick={handleRemoveDocument}
                   disabled={isSubmitting || isUploading}
-                  className="text-destructive hover:text-destructive"
+                  className="shrink-0 text-destructive hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
                   {t("invoices.form.upload.remove")}

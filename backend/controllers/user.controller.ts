@@ -78,7 +78,7 @@ export const updateUser = async (req: Request, res: Response) => {
             ...allowedUpdates
         } = updateData;
         const updates = Object.keys(allowedUpdates);
-        const allowedFields = ['firstName', 'lastName', 'phoneNumber'];
+        const allowedFields = ['firstName', 'lastName', 'phoneNumber', 'street', 'buildingNumber', 'apartmentNumber', 'postalCode', 'city', 'bankAccountIban', 'bankName'];
         const isValidOperation = updates.every((update) =>
             allowedFields.includes(update)
         );
@@ -142,7 +142,9 @@ export const getMyApartment = async (req: Request, res: Response) => {
             tenantID: tenant._id,
             isActive: true,
         })
-            .select('apartmentID')
+            .select(
+                'apartmentID endDate documents monthlyCost rentalPaymentDay startDate'
+            )
             .lean();
 
         // Prefer active rental (lease) as source of truth; fall back to legacy
@@ -176,6 +178,10 @@ export const getMyApartment = async (req: Request, res: Response) => {
             return;
         }
 
+        const landlord = await UserModel.findById(apartment.owner)
+            .select('firstName lastName email phoneNumber street buildingNumber apartmentNumber postalCode city bankAccountIban bankName')
+            .lean();
+
         res.status(200).json({
             apartment,
             tenant: {
@@ -186,6 +192,30 @@ export const getMyApartment = async (req: Request, res: Response) => {
                 phoneNumber: tenant.phoneNumber,
                 address: tenant.address,
             },
+            landlord: landlord
+                ? {
+                      firstName: landlord.firstName ?? null,
+                      lastName: landlord.lastName ?? null,
+                      email: landlord.email,
+                      phoneNumber: landlord.phoneNumber,
+                      street: landlord.street ?? null,
+                      buildingNumber: landlord.buildingNumber ?? null,
+                      apartmentNumber: landlord.apartmentNumber ?? null,
+                      postalCode: landlord.postalCode ?? null,
+                      city: landlord.city ?? null,
+                      bankAccountIban: landlord.bankAccountIban ?? null,
+                      bankName: landlord.bankName ?? null,
+                  }
+                : null,
+            rental: activeRental
+                ? {
+                      startDate: activeRental.startDate,
+                      endDate: activeRental.endDate,
+                      documents: activeRental.documents ?? [],
+                      monthlyCost: activeRental.monthlyCost,
+                      rentalPaymentDay: activeRental.rentalPaymentDay,
+                  }
+                : null,
         });
     } catch (error) {
         console.error('[getMyApartment]', error);
@@ -228,6 +258,11 @@ export const getMyInvoices = async (req: Request, res: Response) => {
 
         const invoices = await InvoiceModel.find({
             apartmentID,
+            $or: [
+                { tenantID: tenant._id },
+                { tenantID: null },
+                { tenantID: { $exists: false } },
+            ],
         })
             .sort({ dueDate: -1 })
             .lean();

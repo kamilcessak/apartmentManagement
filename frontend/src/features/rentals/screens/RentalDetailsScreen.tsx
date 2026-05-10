@@ -168,10 +168,8 @@ export const RentalDetailsScreen = () => {
             files={data.photos}
             id={data._id}
             type="photos"
-            title={t("rentals.rentalDetails.files.photos")}
           />
           <DetailsFilesSection
-            title={t("rentals.rentalDetails.files.documents")}
             files={data.documents}
             id={data._id}
             type="documents"

@@ -61,6 +61,15 @@ export const getDashboard = async (req: Request, res: Response) => {
             0
         );
 
+        /** Fallback tenant when invoice.tenantID is missing (legacy rows / vacancy invoices) */
+        const tenantIdByActiveApartment = new Map<string, string>();
+        for (const r of activeRentals) {
+            const aptId = String(r.apartmentID);
+            if (!tenantIdByActiveApartment.has(aptId)) {
+                tenantIdByActiveApartment.set(aptId, String(r.tenantID));
+            }
+        }
+
         const unpaidInvoices = invoices.filter((i) => !i.isPaid);
         const overdueInvoices = unpaidInvoices.filter(
             (i) => i.dueDate && new Date(i.dueDate) < now
@@ -76,15 +85,24 @@ export const getDashboard = async (req: Request, res: Response) => {
                 const due = new Date(i.dueDate);
                 return due >= now && due <= upcomingUntil;
             })
-            .map((i) => ({
-                _id: String(i._id),
-                kind: 'invoice' as const,
-                apartmentID: String(i.apartmentID),
-                amount: i.amount,
-                dueDate: i.dueDate,
-                invoiceID: i.invoiceID,
-                invoiceType: i.invoiceType,
-            }));
+            .map((i) => {
+                const fromInvoice = i.tenantID ? String(i.tenantID) : undefined;
+                const fromLease = tenantIdByActiveApartment.get(
+                    String(i.apartmentID)
+                );
+                const tenantID = fromInvoice ?? fromLease;
+
+                return {
+                    _id: String(i._id),
+                    kind: 'invoice' as const,
+                    apartmentID: String(i.apartmentID),
+                    tenantID,
+                    amount: i.amount,
+                    dueDate: i.dueDate,
+                    invoiceID: i.invoiceID,
+                    invoiceType: i.invoiceType,
+                };
+            });
 
         const upcomingRentalPayments = activeRentals
             .map((r) => {
@@ -112,11 +130,15 @@ export const getDashboard = async (req: Request, res: Response) => {
                 new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
         );
 
+        const startOfToday = new Date(now);
+        startOfToday.setHours(0, 0, 0, 0);
+
+        /** Active leases with an end date on or after today, sorted by endDate (no 30-day cap). */
         const expiringLeases = activeRentals
             .filter((r) => {
                 if (!r.endDate) return false;
                 const end = new Date(r.endDate);
-                return end >= now && end <= upcomingUntil;
+                return end >= startOfToday;
             })
             .map((r) => ({
                 _id: String(r._id),

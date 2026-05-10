@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/card";
 
 import { InvoiceForm, InvoiceFormValues } from "../components";
 import { InvoiceType } from "../types";
+import { getInvoiceApiErrorMessage } from "../utils/invoiceApiErrors";
 
 export const EditInvoiceScreen = () => {
   const { t } = useTranslation();
@@ -77,8 +78,11 @@ export const EditInvoiceScreen = () => {
       toast(t("invoices.editInvoice.successToast"), { type: "success" });
       navigate(`/invoice/${id}`);
     },
-    onError: () => {
-      toast(t("invoices.editInvoice.errorToast"), { type: "error" });
+    onError: (error: unknown) => {
+      toast(
+        getInvoiceApiErrorMessage(error, t, "invoices.editInvoice.errorToast"),
+        { type: "error" }
+      );
     },
   });
 

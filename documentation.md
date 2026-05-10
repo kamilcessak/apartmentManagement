@@ -158,7 +158,7 @@ Statyczne pliki: `GET /uploads/:filename` (poza prefiksem `/api/v1`, bez sprawdz
 `GET /api/v1/dashboard` — agregat dla `HomeScreen`:
 - `kpi`: `apartmentsCount`, `occupiedCount`, `occupancyRate`, `activeRentalsCount`, `mrr` (suma `monthlyCost` aktywnych wynajmów), `overdueAmount`, `overdueCount`.
 - `upcomingPayments[]` (30 dni): połączone faktury (`kind: "invoice"`) i płatności czynszu (`kind: "rental"`, z wyliczonym `nextPaymentDate` z `rentalPaymentDay`).
-- `expiringLeases[]`: aktywne wynajmy z `endDate` w najbliższych 30 dniach.
+- `expiringLeases[]`: aktywne wynajmy z ustawionym `endDate` od dziś w przyszłość, posortowane po `endDate` rosnąco (bez limitu 30 dni).
 
 ### 3.5 Modele danych (Mongoose)
 

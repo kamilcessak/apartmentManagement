@@ -8,7 +8,6 @@ import {
   Building2,
   KeyRound,
   ReceiptText,
-  FileText,
   Settings,
   LogOut,
   LucideIcon,
@@ -62,11 +61,6 @@ const tenantNavItems: NavItemConfig[] = [
     links: ["/my-invoices"],
     labelKey: "navigation.myInvoices",
     icon: ReceiptText,
-  },
-  {
-    links: ["/my-documents"],
-    labelKey: "navigation.myDocuments",
-    icon: FileText,
   },
 ];
 

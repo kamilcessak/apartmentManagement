@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 
 import api from "@services/api";
+import { getPublicUploadsFileUrl } from "@utils/uploadsUrl";
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
 import { getApartmentShortLabel } from "@utils/apartment";
 import { ApartmentType } from "@features/apartments/types/apartment.type";
@@ -34,6 +35,7 @@ import {
 
 import { InvoiceCategory, InvoiceType } from "../types";
 import { InvoiceStatusChip } from "../components";
+import { formatInvoiceTenantLabel } from "../utils/invoiceTenantDisplay";
 
 type DataItemProps = {
   label: string;
@@ -98,8 +100,6 @@ export const InvoiceDetailsScreen = () => {
     fileName: string;
     variant: FilePreviewVariant;
   } | null>(null);
-  const [previewBusy, setPreviewBusy] = useState(false);
-
   const handleGetInvoice = async () => {
     const result = await api.get<InvoiceType>(`/invoice/${id}`);
     return result.data;
@@ -159,33 +159,16 @@ export const InvoiceDetailsScreen = () => {
     },
   });
 
-  const handlePreviewDocument = async () => {
+  const handlePreviewDocument = () => {
     if (!invoice?.document) return;
-    setPreviewBusy(true);
-    try {
-      const doc = invoice.document;
-      if (doc.startsWith("http://") || doc.startsWith("https://")) {
-        setDocumentPreview({
-          url: doc,
-          fileName: `${invoice.invoiceID} — ${getStoredFileDisplayName(doc)}`,
-          variant: previewVariantForKey(doc),
-        });
-        return;
-      }
-      const key = uploadKeyFromDocument(doc);
-      const response = await api.get<{ url: string }>(
-        `/upload/${encodeURIComponent(key)}`
-      );
-      setDocumentPreview({
-        url: response.data.url,
-        fileName: `${invoice.invoiceID} — ${getStoredFileDisplayName(key)}`,
-        variant: previewVariantForKey(key),
-      });
-    } catch {
-      toast(t("invoices.details.toasts.previewError"), { type: "error" });
-    } finally {
-      setPreviewBusy(false);
-    }
+    const doc = invoice.document;
+    const key = uploadKeyFromDocument(doc);
+    const url = getPublicUploadsFileUrl(doc);
+    setDocumentPreview({
+      url,
+      fileName: `${invoice.invoiceID} — ${getStoredFileDisplayName(key)}`,
+      variant: previewVariantForKey(key),
+    });
   };
 
   const apartmentLabel = useMemo(() => {
@@ -193,6 +176,11 @@ export const InvoiceDetailsScreen = () => {
       return t("invoices.details.fields.empty");
     return getApartmentShortLabel(apartment);
   }, [apartment, t]);
+
+  const tenantLabel = useMemo(
+    () => (invoice ? formatInvoiceTenantLabel(invoice) : null),
+    [invoice]
+  );
 
   if (isLoading) return <LoadingView />;
   if (isError || !invoice)
@@ -285,6 +273,10 @@ export const InvoiceDetailsScreen = () => {
                 <DataItem label={t("invoices.details.fields.apartment")}>
                   {apartmentLabel}
                 </DataItem>
+                <DataItem label={t("invoices.details.fields.tenant")}>
+                  {tenantLabel ??
+                    t("invoices.details.fields.tenantNotAssigned")}
+                </DataItem>
                 <DataItem label={t("invoices.details.fields.type")}>
                   {typeLabel}
                 </DataItem>
@@ -316,22 +308,18 @@ export const InvoiceDetailsScreen = () => {
               </h2>
 
               {invoice.document ? (
-                <div className="mt-4 flex flex-row items-center justify-between gap-4 rounded-md border border-slate-200 p-4">
-                  <div className="flex min-w-0 flex-row items-center gap-3">
+                <div className="mt-4 flex min-w-0 flex-row items-center justify-between gap-4 rounded-md border border-slate-200 p-4">
+                  <div className="flex min-w-0 flex-1 flex-row items-center gap-3">
                     <FileText className="h-5 w-5 shrink-0 text-slate-500" />
-                    <span className="truncate text-sm text-slate-900">
-                      {invoice.document}
+                    <span className="min-w-0 flex-1 truncate text-sm text-slate-900">
+                      {getStoredFileDisplayName(uploadKeyFromDocument(invoice.document))}
                     </span>
                   </div>
                   <Button
                     variant="outline"
                     onClick={handlePreviewDocument}
-                    disabled={previewBusy}
-                    className="gap-2"
+                    className="shrink-0 gap-2"
                   >
-                    {previewBusy ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : null}
                     {t("invoices.details.document.open")}
                   </Button>
                 </div>

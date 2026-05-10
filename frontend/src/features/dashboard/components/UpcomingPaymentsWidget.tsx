@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@components/ui/table";
 import { DashboardWidgetEmptyState } from "./DashboardWidgetEmptyState";
-import { capitalizeFirstLetter } from "@utils/common";
+import { getInvoiceTypeLabel } from "@features/invoices/utils/invoiceTypeLabel";
 
 import { UpcomingPayment } from "../types";
 
@@ -125,16 +125,24 @@ export const UpcomingPaymentsWidget: FC<Props> = ({
             </TableHeader>
             <TableBody>
               {sorted.map((payment) => {
-                const apartment = apartmentsById[payment.apartmentID];
+                const aptKey = String(payment.apartmentID);
+                const apartment = apartmentsById[aptKey];
                 const apartmentLabel =
                   apartment?.shortLabel ??
                   t("dashboard.upcoming.unknownApartment");
 
+                const tenantIdKey =
+                  "tenantID" in payment && payment.tenantID
+                    ? String(payment.tenantID)
+                    : "";
+
                 const tenant =
                   payment.kind === "rental"
-                    ? tenantsById[payment.tenantID] ??
-                      tenantByApartmentId[payment.apartmentID]
-                    : tenantByApartmentId[payment.apartmentID];
+                    ? tenantsById[String(payment.tenantID)] ??
+                      tenantByApartmentId[aptKey]
+                    : tenantIdKey
+                      ? tenantsById[tenantIdKey]
+                      : tenantByApartmentId[aptKey];
 
                 const tenantName = tenant
                   ? `${tenant.firstName} ${tenant.lastName}`.trim()
@@ -143,7 +151,7 @@ export const UpcomingPaymentsWidget: FC<Props> = ({
                 const description =
                   payment.kind === "invoice"
                     ? t("dashboard.upcoming.invoiceDescription", {
-                        type: capitalizeFirstLetter(payment.invoiceType),
+                        type: getInvoiceTypeLabel(t, payment.invoiceType),
                         id: payment.invoiceID,
                       })
                     : t("dashboard.upcoming.rentDescription", {

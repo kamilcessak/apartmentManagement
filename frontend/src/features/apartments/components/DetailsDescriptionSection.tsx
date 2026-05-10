@@ -1,5 +1,6 @@
 import * as yup from "yup";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,10 +19,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import api from "@services/api";
 
-const schema = yup.object().shape({
-  description: yup.string().required("Field is required"),
-});
-
 type FormType = {
   description: string;
 };
@@ -33,8 +30,19 @@ export const DetailsDescriptionSection = ({
   description: string;
   id: string;
 }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(false);
+
+  const schema = useMemo(
+    () =>
+      yup.object().shape({
+        description: yup
+          .string()
+          .required(t("apartments.details.description.validationRequired")),
+      }),
+    [t]
+  );
 
   const {
     handleSubmit,
@@ -63,10 +71,12 @@ export const DetailsDescriptionSection = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["apartment", `${id}`] });
       setEditMode(false);
-      toast("Successfully modified apartment details", { type: "success" });
+      toast(t("apartments.details.description.toastSuccess"), {
+        type: "success",
+      });
     },
     onError: () => {
-      toast("An error occurred during modifying apartment details", {
+      toast(t("apartments.details.description.toastError"), {
         type: "error",
       });
     },
@@ -87,7 +97,9 @@ export const DetailsDescriptionSection = ({
     <Card className="border-slate-200 shadow-sm">
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 py-4">
-          <CardTitle className="text-lg text-slate-900">Description</CardTitle>
+          <CardTitle className="text-lg text-slate-900">
+            {t("apartments.details.description.title")}
+          </CardTitle>
           {!editMode ? (
             <Button
               type="button"
@@ -97,7 +109,7 @@ export const DetailsDescriptionSection = ({
               className="text-slate-600 hover:text-slate-900"
             >
               <Pencil className="h-4 w-4" />
-              Edit
+              {t("apartments.details.description.edit")}
             </Button>
           ) : null}
         </CardHeader>
@@ -117,7 +129,7 @@ export const DetailsDescriptionSection = ({
                     htmlFor="description"
                     className="text-sm font-medium text-slate-900 mb-1.5"
                   >
-                    Description
+                    {t("apartments.details.description.label")}
                   </Label>
                   <Textarea
                     id="description"
@@ -148,11 +160,11 @@ export const DetailsDescriptionSection = ({
               disabled={isPending}
             >
               <X className="h-4 w-4" />
-              Close edit
+              {t("apartments.details.description.closeEdit")}
             </Button>
             <Button type="submit" variant="default" disabled={isPending}>
               {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Save
+              {t("apartments.details.description.save")}
             </Button>
           </CardFooter>
         ) : null}

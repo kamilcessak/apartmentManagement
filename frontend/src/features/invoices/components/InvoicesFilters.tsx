@@ -1,5 +1,6 @@
 import { FC } from "react";
 import { Search, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
 import { getApartmentShortLabel } from "@utils/apartment";
@@ -14,7 +15,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { InvoiceFilters } from "../types";
+import {
+  INVOICE_TYPES,
+  InvoiceCategory,
+  InvoiceFilters,
+} from "../types";
 
 type Props = {
   value: InvoiceFilters;
@@ -23,15 +28,19 @@ type Props = {
 };
 
 const ALL_APARTMENTS = "__ALL_APARTMENTS__";
+const ALL_INVOICE_TYPES = "__ALL_INVOICE_TYPES__";
 
 export const InvoicesFilters: FC<Props> = ({
   value,
   onChange,
   apartments,
 }) => {
+  const { t } = useTranslation();
+
   const hasActiveFilters =
     Boolean(value.search?.trim()) ||
     Boolean(value.apartmentID) ||
+    Boolean(value.invoiceType) ||
     (value.isPaid && value.isPaid !== "all") ||
     Boolean(value.dueDateFrom) ||
     Boolean(value.dueDateTo);
@@ -40,6 +49,7 @@ export const InvoicesFilters: FC<Props> = ({
     onChange({
       search: "",
       apartmentID: undefined,
+      invoiceType: undefined,
       isPaid: "all",
       dueDateFrom: undefined,
       dueDateTo: undefined,
@@ -54,7 +64,7 @@ export const InvoicesFilters: FC<Props> = ({
         />
         <Input
           type="search"
-          placeholder="Szukaj po numerze faktury..."
+          placeholder={t("invoices.filters.searchPlaceholder")}
           value={value.search ?? ""}
           onChange={(event) =>
             onChange({ ...value, search: event.target.value })
@@ -74,13 +84,40 @@ export const InvoicesFilters: FC<Props> = ({
           }
         >
           <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Mieszkanie" />
+            <SelectValue placeholder={t("invoices.filters.apartmentPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_APARTMENTS}>Wszystkie mieszkania</SelectItem>
+            <SelectItem value={ALL_APARTMENTS}>
+              {t("invoices.filters.allApartments")}
+            </SelectItem>
             {apartments.map((apartment) => (
               <SelectItem key={apartment._id} value={apartment._id}>
                 {getApartmentShortLabel(apartment)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={value.invoiceType ?? ALL_INVOICE_TYPES}
+          onValueChange={(next) =>
+            onChange({
+              ...value,
+              invoiceType:
+                next === ALL_INVOICE_TYPES ? undefined : next,
+            })
+          }
+        >
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder={t("invoices.filters.typePlaceholder")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_INVOICE_TYPES}>
+              {t("invoices.filters.allTypes")}
+            </SelectItem>
+            {INVOICE_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>
+                {t(`invoices.types.${type as InvoiceCategory}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -96,20 +133,22 @@ export const InvoicesFilters: FC<Props> = ({
           }
         >
           <SelectTrigger className="w-full sm:w-[160px]">
-            <SelectValue placeholder="Status" />
+            <SelectValue placeholder={t("invoices.filters.statusPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Wszystkie statusy</SelectItem>
-            <SelectItem value="paid">Opłacone</SelectItem>
-            <SelectItem value="unpaid">Nieopłacone</SelectItem>
+            <SelectItem value="all">{t("invoices.filters.allStatuses")}</SelectItem>
+            <SelectItem value="paid">{t("invoices.filters.paid")}</SelectItem>
+            <SelectItem value="unpaid">{t("invoices.filters.unpaid")}</SelectItem>
           </SelectContent>
         </Select>
 
         <div className="flex items-center gap-2 rounded-md border border-input px-2 py-1 shadow-sm">
-          <span className="text-xs font-medium text-slate-500">Termin</span>
+          <span className="text-xs font-medium text-slate-500">
+            {t("invoices.filters.dueRangeLabel")}
+          </span>
           <Input
             type="date"
-            aria-label="Termin od"
+            aria-label={t("invoices.filters.dueFromAria")}
             value={value.dueDateFrom ? value.dueDateFrom.slice(0, 10) : ""}
             onChange={(event) =>
               onChange({
@@ -124,7 +163,7 @@ export const InvoicesFilters: FC<Props> = ({
           <span className="text-slate-400">—</span>
           <Input
             type="date"
-            aria-label="Termin do"
+            aria-label={t("invoices.filters.dueToAria")}
             value={value.dueDateTo ? value.dueDateTo.slice(0, 10) : ""}
             onChange={(event) =>
               onChange({
@@ -146,7 +185,7 @@ export const InvoicesFilters: FC<Props> = ({
             className="text-slate-500 hover:text-slate-900"
           >
             <X />
-            Wyczyść
+            {t("invoices.filters.clear")}
           </Button>
         ) : null}
       </div>

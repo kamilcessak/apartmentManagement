@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
 import { Controller, useForm } from "react-hook-form";
@@ -6,12 +6,12 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { AxiosError } from "axios";
-import { ChevronLeft, Loader2, Plus } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
-import { FileItem } from "@components/files";
+import { FilesDropzone } from "@components/files";
 import api from "@services/api";
 
 import { ApartmentListType } from "@features/apartments/types/apartment.type";
@@ -77,13 +77,6 @@ type FormValues = {
   photos?: string[];
 };
 
-type FileEntry = {
-  name: string;
-  type: string;
-  fileName?: string;
-  url?: string;
-};
-
 const toDateInputValue = (value: Date | string | null | undefined): string => {
   if (!value) return "";
   if (typeof value === "string") {
@@ -100,103 +93,6 @@ const toIsoString = (value: Date | string | null | undefined): string => {
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return "";
   return d.toISOString();
-};
-
-const RentalFilesBlock: FC<{
-  title: string;
-  addLabel: string;
-  successMessage: string;
-  errorMessage: string;
-  onAdd: (fileName: string) => void;
-  onRemove: (fileName: string) => void;
-}> = ({ title, addLabel, successMessage, errorMessage, onAdd, onRemove }) => {
-  const [files, setFiles] = useState<FileEntry[]>([]);
-  const [uploadProgress, setUploadProgress] = useState(100);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleUploadFile = async (file: File) => {
-    setUploadProgress(0);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    setFiles((prev) => [...prev, { name: file.name, type: file.type }]);
-
-    const response = await api.post("/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-      onUploadProgress: (progressEvent) => {
-        const total = progressEvent.total ?? 1;
-        setUploadProgress(Math.round((progressEvent.loaded / total) * 100));
-      },
-    });
-    return response;
-  };
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: handleUploadFile,
-    onSuccess: ({ data: { originalName, fileName, url } }) => {
-      onAdd(fileName);
-      setFiles((prev) =>
-        prev.map((e) =>
-          e.name === originalName ? { ...e, fileName, url } : e
-        )
-      );
-      toast(successMessage, { type: "success" });
-    },
-    onError: () =>
-      toast(errorMessage, {
-        type: "error",
-      }),
-  });
-
-  return (
-    <section className="grid gap-3 rounded-md border border-slate-200 p-4">
-      <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium text-slate-900">{title}</Label>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={isPending}
-          onClick={() => inputRef.current?.click()}
-        >
-          {isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Plus className="h-4 w-4" />
-          )}
-          {addLabel}
-        </Button>
-        <input
-          ref={inputRef}
-          type="file"
-          className="hidden"
-          onChange={(event) => {
-            if (event.target.files?.length) {
-              mutate(event.target.files[0]);
-            }
-            event.target.value = "";
-          }}
-        />
-      </div>
-      {files.length ? (
-        <div className="flex flex-row flex-wrap gap-4">
-          {files.map((file, index) => (
-            <FileItem
-              key={`${title}-${file.name}-${index}`}
-              {...file}
-              isPhoto={
-                file.type.includes("jpeg") || file.type.includes("png")
-              }
-              isDocument={file.type.includes("pdf")}
-              uploadProgress={uploadProgress}
-              setfiles={setFiles}
-              handleRemoveForm={onRemove}
-            />
-          ))}
-        </div>
-      ) : null}
-    </section>
-  );
 };
 
 export const NewRentalScreen = () => {
@@ -653,22 +549,56 @@ export const NewRentalScreen = () => {
                   )}
                 />
 
-                <RentalFilesBlock
+                <FilesDropzone
                   title={t("rentals.newRental.uploads.photosTitle")}
-                  addLabel={t("rentals.newRental.uploads.addButton")}
-                  successMessage={t("rentals.newRental.uploads.uploadSuccess")}
-                  errorMessage={t("rentals.newRental.uploads.uploadError")}
-                  onAdd={handleAddPhotoToForm}
-                  onRemove={handleRemovePhotoFromForm}
+                  dropzoneTitle={t(
+                    "rentals.newRental.uploads.dropzoneTitle"
+                  )}
+                  dropzoneHint={t(
+                    "rentals.newRental.uploads.dropzoneHintPhotos"
+                  )}
+                  uploadingLabel={t(
+                    "rentals.newRental.uploads.uploading"
+                  )}
+                  uploadSuccessSingle={t(
+                    "rentals.newRental.uploads.uploadSuccessSingle"
+                  )}
+                  uploadSuccessBatch={t(
+                    "rentals.newRental.uploads.uploadSuccessBatch"
+                  )}
+                  uploadError={t(
+                    "rentals.newRental.uploads.uploadError"
+                  )}
+                  accept="image/*"
+                  disabled={isPending}
+                  handleAddForm={handleAddPhotoToForm}
+                  handleRemoveForm={handleRemovePhotoFromForm}
                 />
 
-                <RentalFilesBlock
+                <FilesDropzone
                   title={t("rentals.newRental.uploads.documentsTitle")}
-                  addLabel={t("rentals.newRental.uploads.addButton")}
-                  successMessage={t("rentals.newRental.uploads.uploadSuccess")}
-                  errorMessage={t("rentals.newRental.uploads.uploadError")}
-                  onAdd={handleAddDocumentToForm}
-                  onRemove={handleRemoveDocumentFromForm}
+                  dropzoneTitle={t(
+                    "rentals.newRental.uploads.dropzoneTitle"
+                  )}
+                  dropzoneHint={t(
+                    "rentals.newRental.uploads.dropzoneHintDocuments"
+                  )}
+                  uploadingLabel={t(
+                    "rentals.newRental.uploads.uploading"
+                  )}
+                  uploadSuccessSingle={t(
+                    "rentals.newRental.uploads.uploadSuccessSingle"
+                  )}
+                  uploadSuccessBatch={t(
+                    "rentals.newRental.uploads.uploadSuccessBatch"
+                  )}
+                  uploadError={t(
+                    "rentals.newRental.uploads.uploadError"
+                  )}
+                  accept=".pdf,application/pdf"
+                  disabled={isPending}
+                  handleAddForm={handleAddDocumentToForm}
+                  handleRemoveForm={handleRemoveDocumentFromForm}
                 />
               </CardContent>
 

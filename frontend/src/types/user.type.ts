@@ -30,6 +30,13 @@ export type CurrentUser = {
   phoneNumber: string;
   firstName?: string;
   lastName?: string;
+  street?: string;
+  buildingNumber?: string;
+  apartmentNumber?: string;
+  postalCode?: string;
+  city?: string;
+  bankAccountIban?: string;
+  bankName?: string;
   role: UserRole;
   isEmailVerified: boolean;
   invitationCode?: string;

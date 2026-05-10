@@ -6,13 +6,11 @@ import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 
-import { EmptyView, RouteContent, ErrorView } from "@components/common";
+import { RouteContent, ErrorView } from "@components/common";
 import api from "@services/api";
 import { fetchLandlordApartmentsForSelect } from "@features/apartments/fetchLandlordApartmentsForSelect";
 import { getApartmentShortLabel } from "@utils/apartment";
-import { capitalizeFirstLetter } from "@utils/common";
 
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -29,6 +27,8 @@ import {
   InvoiceStatusChip,
   InvoicesScreenSkeleton,
 } from "../components";
+import { formatInvoiceTenantLabel } from "../utils/invoiceTenantDisplay";
+import { getInvoiceTypeLabel } from "../utils/invoiceTypeLabel";
 
 const formatCurrency = (value: number) => `${value.toFixed(2)} PLN`;
 
@@ -50,6 +50,8 @@ export const InvoicesScreen = () => {
     }
     if (filters.dueDateFrom) params.append("dueDateFrom", filters.dueDateFrom);
     if (filters.dueDateTo) params.append("dueDateTo", filters.dueDateTo);
+    if (filters.invoiceType)
+      params.append("invoiceType", filters.invoiceType);
     const value = params.toString();
     return value ? `?${value}` : "";
   }, [filters]);
@@ -61,13 +63,14 @@ export const InvoicesScreen = () => {
 
   const {
     data: invoices,
-    isLoading: isInvoicesLoading,
+    isPending: isInvoicesPending,
     isError,
     error,
     refetch,
   } = useQuery({
     queryKey: ["invoices", "list", queryParams],
     queryFn: handleGetInvoices,
+    placeholderData: (previousData) => previousData,
   });
 
   const { data: apartmentsList } = useQuery({
@@ -113,93 +116,143 @@ export const InvoicesScreen = () => {
     );
   }, [invoices, filters.search]);
 
-  if (isInvoicesLoading) return <InvoicesScreenSkeleton />;
-  if (isError) return <ErrorView message={error?.message} onClick={refetch} />;
+  const hasActiveListFilters = useMemo(
+    () =>
+      Boolean(
+        filters.apartmentID ||
+          filters.invoiceType ||
+          filters.isPaid !== "all" ||
+          filters.dueDateFrom ||
+          filters.dueDateTo
+      ),
+    [filters]
+  );
+
+  const emptyListMessage = useMemo(() => {
+    const listLength = invoices?.length ?? 0;
+    const hasResults = filteredInvoices.length > 0;
+    if (hasResults) return null;
+    if (listLength > 0 && filters.search?.trim()) {
+      return t("invoices.emptySearch");
+    }
+    if (listLength === 0 && hasActiveListFilters) {
+      return t("invoices.emptyFiltered");
+    }
+    return t("invoices.empty");
+  }, [
+    invoices?.length,
+    filteredInvoices.length,
+    filters.search,
+    hasActiveListFilters,
+    t,
+  ]);
+
+  if (isInvoicesPending && invoices === undefined) {
+    return <InvoicesScreenSkeleton />;
+  }
+  if (isError && invoices === undefined) {
+    return <ErrorView message={error?.message} onClick={refetch} />;
+  }
 
   return (
-    <RouteContent>
-      <main className="flex h-full flex-col gap-6 overflow-y-auto bg-slate-50 p-8 scrollbar-hide">
-        <header className="mb-6 flex flex-row items-start justify-between">
+    <RouteContent sectionStyle={{ flexDirection: "column" }}>
+      <div className="flex h-full flex-col overflow-hidden bg-slate-50 p-6 lg:p-8">
+        <header className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-slate-900">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
               {t("invoices.title")}
             </h1>
-            <p className="text-sm text-slate-500">
-              Zarządzaj swoimi przychodami i monitoruj płatności
-            </p>
+            <p className="text-sm text-slate-500">{t("invoices.subtitle")}</p>
           </div>
-          <Button onClick={() => navigate("/invoices/new")}>
-            <Plus />
+          <Button
+            variant="default"
+            onClick={() => navigate("/invoices/new")}
+            className="self-start sm:self-auto"
+          >
+            <Plus className="mr-2 h-4 w-4" />
             {t("invoices.addInvoice")}
           </Button>
         </header>
 
-        <Card className="p-6">
-          <InvoicesFilters
-            value={filters}
-            onChange={setFilters}
-            apartments={apartmentsList ?? []}
-          />
+        <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 px-6 py-4">
+            <InvoicesFilters
+              value={filters}
+              onChange={setFilters}
+              apartments={apartmentsList ?? []}
+            />
+          </div>
 
-          <div className="mt-6 overflow-hidden rounded-lg border border-slate-200">
-            {filteredInvoices.length ? (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50 hover:bg-slate-50">
-                    <TableHead className="px-4 text-slate-900">
-                      Nr faktury
-                    </TableHead>
-                    <TableHead className="px-4 text-slate-900">
-                      Mieszkanie
-                    </TableHead>
-                    <TableHead className="px-4 text-slate-900">Typ</TableHead>
-                    <TableHead className="px-4 text-slate-900">
-                      Kwota
-                    </TableHead>
-                    <TableHead className="px-4 text-slate-900">
-                      Termin
-                    </TableHead>
-                    <TableHead className="px-4 text-slate-900">
-                      Status
-                    </TableHead>
-                    <TableHead className="px-4 text-right text-slate-900">
-                      Akcje
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredInvoices.map((invoice) => {
+          <div className="flex-1 overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b border-slate-200 hover:bg-transparent">
+                  <TableHead className="pl-6 text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {t("invoices.list.columns.invoiceNumber")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {t("invoices.list.columns.apartment")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {t("invoices.list.columns.tenant")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {t("invoices.list.columns.type")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {t("invoices.list.columns.amount")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {t("invoices.list.columns.dueDate")}
+                  </TableHead>
+                  <TableHead className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {t("invoices.list.columns.status")}
+                  </TableHead>
+                  <TableHead className="pr-6 text-right text-xs font-medium uppercase tracking-wide text-slate-500">
+                    {t("invoices.list.columns.actions")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInvoices.length ? (
+                  filteredInvoices.map((invoice) => {
                     const apartmentLabel =
                       apartmentLabelById.get(invoice.apartmentID) ??
-                      "Unknown apartment";
+                      t("invoices.list.unknownApartment");
+                    const tenantLabel =
+                      formatInvoiceTenantLabel(invoice) ??
+                      t("invoices.list.noTenant");
 
                     return (
                       <TableRow key={`invoice-row-${invoice._id}`}>
-                        <TableCell className="px-4 py-3 font-medium text-slate-900">
+                        <TableCell className="pl-6 py-3 font-medium text-slate-900">
                           {invoice.invoiceID}
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-slate-500">
+                        <TableCell className="py-3 text-slate-500">
                           {apartmentLabel}
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-slate-700">
-                          {capitalizeFirstLetter(invoice.invoiceType)}
+                        <TableCell className="py-3 text-slate-600">
+                          {tenantLabel}
                         </TableCell>
-                        <TableCell className="px-4 py-3 font-medium text-slate-900">
+                        <TableCell className="py-3 text-slate-700">
+                          {getInvoiceTypeLabel(t, invoice.invoiceType)}
+                        </TableCell>
+                        <TableCell className="py-3 font-medium text-slate-900">
                           {formatCurrency(invoice.amount)}
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-slate-700">
+                        <TableCell className="py-3 text-slate-700">
                           {dayjs(invoice.dueDate).format("DD.MM.YYYY")}
                         </TableCell>
-                        <TableCell className="px-4 py-3">
+                        <TableCell className="py-3">
                           <InvoiceStatusChip invoice={invoice} />
                         </TableCell>
-                        <TableCell className="px-4 py-3">
+                        <TableCell className="pr-6 py-3">
                           <div className="flex flex-row items-center justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              aria-label="Szczegóły"
-                              title="Szczegóły"
+                              aria-label={t("invoices.list.actions.details")}
+                              title={t("invoices.list.actions.details")}
                               onClick={() =>
                                 navigate(`/invoice/${invoice._id}`)
                               }
@@ -209,8 +262,8 @@ export const InvoicesScreen = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              aria-label="Usuń fakturę"
-                              title="Usuń fakturę"
+                              aria-label={t("invoices.list.actions.delete")}
+                              title={t("invoices.list.actions.delete")}
                               disabled={isDeleting}
                               onClick={() =>
                                 deleteInvoice({
@@ -230,17 +283,22 @@ export const InvoicesScreen = () => {
                         </TableCell>
                       </TableRow>
                     );
-                  })}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="bg-white py-10">
-                <EmptyView message="No invoices found" />
-              </div>
-            )}
+                  })
+                ) : (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell
+                      colSpan={8}
+                      className="py-12 text-center text-sm text-slate-500"
+                    >
+                      {emptyListMessage}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </Card>
-      </main>
+        </div>
+      </div>
     </RouteContent>
   );
 };

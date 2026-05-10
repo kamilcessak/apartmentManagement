@@ -1,6 +1,28 @@
 import { ApartmentType } from "@features/apartments/types/apartment.type";
 import { InvoiceType, InvoicesSummary } from "@features/invoices/types";
 
+export type LandlordContact = {
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  phoneNumber: string;
+  street: string | null;
+  buildingNumber: string | null;
+  apartmentNumber: string | null;
+  postalCode: string | null;
+  city: string | null;
+  bankAccountIban: string | null;
+  bankName: string | null;
+};
+
+export type TenantActiveRental = {
+  startDate: string;
+  endDate: string;
+  documents: string[];
+  monthlyCost: number;
+  rentalPaymentDay: number;
+};
+
 export type MyApartmentResponse = {
   apartment: ApartmentType;
   tenant: {
@@ -11,6 +33,9 @@ export type MyApartmentResponse = {
     phoneNumber: string;
     address: string;
   };
+  landlord: LandlordContact | null;
+  /** Active lease for this tenant, if any. */
+  rental: TenantActiveRental | null;
 };
 
 export type MyInvoicesResponse = {

@@ -48,25 +48,27 @@ export const ExpiringLeasesWidget: FC<Props> = ({
   );
 
   const getSeverity = (daysLeft: number) => {
+    const endsInLabel =
+      daysLeft <= 0
+        ? t("dashboard.leases.endsToday")
+        : t("dashboard.leases.endsIn", { count: daysLeft });
+
     if (daysLeft <= 7)
       return {
         accent: "border-l-destructive bg-destructive/5",
         badgeClass: "bg-destructive text-destructive-foreground",
-        badgeLabel:
-          daysLeft <= 0
-            ? t("dashboard.leases.endsToday")
-            : t("dashboard.leases.daysLeft", { count: daysLeft }),
+        badgeLabel: endsInLabel,
       };
     if (daysLeft <= 14)
       return {
         accent: "border-l-warning bg-warning/5",
         badgeClass: "bg-warning text-warning-foreground",
-        badgeLabel: t("dashboard.leases.daysLeft", { count: daysLeft }),
+        badgeLabel: endsInLabel,
       };
     return {
       accent: "border-l-slate-300 bg-slate-50/60",
       badgeClass: "bg-muted text-muted-foreground",
-      badgeLabel: t("dashboard.leases.daysLeft", { count: daysLeft }),
+      badgeLabel: endsInLabel,
     };
   };
 

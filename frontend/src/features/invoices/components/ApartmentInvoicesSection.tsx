@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 import api from "@services/api";
-import { capitalizeFirstLetter } from "@utils/common";
+import { getInvoiceTypeLabel } from "../utils/invoiceTypeLabel";
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/table";
 
 import { ApartmentInvoicesResponse, InvoiceType } from "../types";
+import { formatInvoiceTenantLabel } from "../utils/invoiceTenantDisplay";
 
 type Props = {
   apartmentID: string;
@@ -180,11 +181,24 @@ export const ApartmentInvoicesSection: FC<Props> = ({ apartmentID }) => {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50 hover:bg-slate-50">
-                    <TableHead className="px-4">Description / ID</TableHead>
-                    <TableHead className="px-4">Amount</TableHead>
-                    <TableHead className="px-4">Due date</TableHead>
-                    <TableHead className="px-4">Status</TableHead>
-                    <TableHead className="px-4 text-right">Actions</TableHead>
+                    <TableHead className="px-4">
+                      {t("invoices.apartmentSection.columns.invoice")}
+                    </TableHead>
+                    <TableHead className="px-4">
+                      {t("invoices.apartmentSection.columns.tenant")}
+                    </TableHead>
+                    <TableHead className="px-4">
+                      {t("invoices.apartmentSection.columns.amount")}
+                    </TableHead>
+                    <TableHead className="px-4">
+                      {t("invoices.apartmentSection.columns.dueDate")}
+                    </TableHead>
+                    <TableHead className="px-4">
+                      {t("invoices.apartmentSection.columns.status")}
+                    </TableHead>
+                    <TableHead className="px-4 text-right">
+                      {t("invoices.apartmentSection.columns.actions")}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -196,9 +210,13 @@ export const ApartmentInvoicesSection: FC<Props> = ({ apartmentID }) => {
                             {invoice.invoiceID}
                           </span>
                           <span className="text-xs text-slate-500">
-                            {capitalizeFirstLetter(invoice.invoiceType)}
+                            {getInvoiceTypeLabel(t, invoice.invoiceType)}
                           </span>
                         </div>
+                      </TableCell>
+                      <TableCell className="px-4 py-3 text-slate-600">
+                        {formatInvoiceTenantLabel(invoice) ??
+                          t("invoices.list.noTenant")}
                       </TableCell>
                       <TableCell className="px-4 py-3 font-medium text-slate-900">
                         {formatCurrency(invoice.amount)}

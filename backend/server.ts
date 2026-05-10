@@ -16,6 +16,7 @@ import filesRoutes from './routes/files.routes';
 import userRoutes from './routes/user.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import { initializeDatabase } from './db/connection';
+import { initBillingCron } from './services/cron.service';
 
 const app = express();
 app.use(cors());
@@ -26,6 +27,8 @@ const API_PREFIX = '/api/v1';
 const startServer = async () => {
     try {
         await initializeDatabase();
+
+        initBillingCron();
 
         app.use(API_PREFIX, authRoutes);
         app.use(API_PREFIX, apartmentRoutes);

@@ -11,9 +11,26 @@ export const INVOICE_TYPES = [
 
 export type InvoiceCategory = (typeof INVOICE_TYPES)[number];
 
+/** Populated `tenantID` from GET invoice(s) */
+export type InvoiceTenantPopulate = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+};
+
+/** Populated `rentalID` from GET invoice */
+export type InvoiceRentalPopulate = {
+  _id: string;
+  startDate: string;
+  endDate: string;
+};
+
 export type InvoiceType = {
   _id: string;
   apartmentID: string;
+  tenantID?: string | InvoiceTenantPopulate | null;
+  rentalID?: string | InvoiceRentalPopulate | null;
   invoiceType: InvoiceCategory | string;
   amount: number;
   dueDate: string;
@@ -43,6 +60,8 @@ export type ApartmentInvoicesResponse = {
 export type InvoiceFilters = {
   search?: string;
   apartmentID?: string;
+  /** undefined = all types */
+  invoiceType?: string;
   isPaid?: "all" | "paid" | "unpaid";
   dueDateFrom?: string;
   dueDateTo?: string;
