@@ -14,7 +14,8 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        const uniqueFilename = `${uuidv4()}-${file.originalname}`;
+        const base = path.basename(file.originalname || 'file');
+        const uniqueFilename = `${uuidv4()}-${base}`;
         cb(null, uniqueFilename);
     },
 });
@@ -33,5 +34,5 @@ const fileFilter = (req, file, cb) => {
 export const upload = multer({
     storage,
     fileFilter,
-    limits: { fileSize: 100 * 1024 * 1024 },
+    limits: { fileSize: 10 * 1024 * 1024 },
 });

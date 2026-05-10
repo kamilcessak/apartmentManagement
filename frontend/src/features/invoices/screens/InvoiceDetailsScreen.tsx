@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import dayjs from "dayjs";
 
 import api from "@services/api";
-import { getPublicUploadsFileUrl } from "@utils/uploadsUrl";
+import { createUploadObjectUrl } from "@utils/uploadsUrl";
 import { ErrorView, LoadingView, RouteContent } from "@components/common";
 import { getApartmentShortLabel } from "@utils/apartment";
 import { ApartmentType } from "@features/apartments/types/apartment.type";
@@ -159,16 +159,20 @@ export const InvoiceDetailsScreen = () => {
     },
   });
 
-  const handlePreviewDocument = () => {
+  const handlePreviewDocument = async () => {
     if (!invoice?.document) return;
     const doc = invoice.document;
     const key = uploadKeyFromDocument(doc);
-    const url = getPublicUploadsFileUrl(doc);
-    setDocumentPreview({
-      url,
-      fileName: `${invoice.invoiceID} — ${getStoredFileDisplayName(key)}`,
-      variant: previewVariantForKey(key),
-    });
+    try {
+      const url = await createUploadObjectUrl(doc);
+      setDocumentPreview({
+        url,
+        fileName: `${invoice.invoiceID} — ${getStoredFileDisplayName(key)}`,
+        variant: previewVariantForKey(key),
+      });
+    } catch {
+      toast.error(t("apartments.details.files.previewOpenError"));
+    }
   };
 
   const apartmentLabel = useMemo(() => {
@@ -194,7 +198,14 @@ export const InvoiceDetailsScreen = () => {
     <RouteContent>
       <FilePreviewModal
         open={documentPreview !== null}
-        onClose={() => setDocumentPreview(null)}
+        onClose={() => {
+          setDocumentPreview((prev) => {
+            if (prev?.url) {
+              URL.revokeObjectURL(prev.url);
+            }
+            return null;
+          });
+        }}
         url={documentPreview?.url ?? null}
         fileName={documentPreview?.fileName ?? ""}
         variant={documentPreview?.variant ?? "other"}

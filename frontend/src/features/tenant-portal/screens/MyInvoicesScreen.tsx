@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import api from "@services/api";
 import { capitalizeFirstLetter } from "@utils/common";
-import { getPublicUploadsFileUrl } from "@utils/uploadsUrl";
+import { createUploadObjectUrl } from "@utils/uploadsUrl";
 
 import {
   FilePreviewModal,
@@ -84,14 +84,6 @@ function uploadKeyFromDocument(document: string): string {
   return document;
 }
 
-function resolveInvoiceDocumentUrl(document: string): string {
-  const trimmed = document.trim();
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-    return trimmed.split("?")[0] ?? trimmed;
-  }
-  return getPublicUploadsFileUrl(trimmed);
-}
-
 export const MyInvoicesScreen = () => {
   const { t } = useTranslation();
   const [documentPreview, setDocumentPreview] = useState<{
@@ -119,7 +111,7 @@ export const MyInvoicesScreen = () => {
       },
     });
 
-  const openDocumentPreview = (invoice: InvoiceType) => {
+  const openDocumentPreview = async (invoice: InvoiceType) => {
     const doc = invoice.document;
     if (!doc) {
       toast.error(t("tenantPortal.invoices.previewMissingFile"));
@@ -127,7 +119,7 @@ export const MyInvoicesScreen = () => {
     }
     try {
       const key = uploadKeyFromDocument(doc);
-      const url = resolveInvoiceDocumentUrl(doc);
+      const url = await createUploadObjectUrl(doc);
       setDocumentPreview({
         url,
         fileName: `${invoice.invoiceID} — ${getStoredFileDisplayName(key)}`,
@@ -158,7 +150,14 @@ export const MyInvoicesScreen = () => {
       />
       <FilePreviewModal
         open={documentPreview !== null}
-        onClose={() => setDocumentPreview(null)}
+        onClose={() => {
+          setDocumentPreview((prev) => {
+            if (prev?.url) {
+              URL.revokeObjectURL(prev.url);
+            }
+            return null;
+          });
+        }}
         url={documentPreview?.url ?? null}
         fileName={documentPreview?.fileName ?? ""}
         variant={documentPreview?.variant ?? "other"}

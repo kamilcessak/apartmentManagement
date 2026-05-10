@@ -148,22 +148,36 @@ Cel: dokończyć model ról — obecnie model wspiera `Tenant`, ale nie ma dedyk
 
 ---
 
-### M5 — Bezpieczeństwo i jakość (must-have przed prod, 2 tyg.)
+### M5 — Bezpieczeństwo i jakość (must-have przed prod, 2 tyg.) — **ZAMKNIĘTE (P0)**
 
-| #    | Zadanie                                                                                                                  | Priorytet |
-| ---- | ------------------------------------------------------------------------------------------------------------------------ | --------- |
-| 5.1  | Walidacja wejścia na backendzie (zod lub express-validator) na wszystkich endpointach POST/PATCH                         | P0        |
-| 5.2  | CORS whitelist (`FRONTEND_URL`) zamiast `cors()`                                                                         | P0        |
-| 5.3  | Rate limiting (`express-rate-limit`) na `/login`, `/register`, `/activate-account`                                       | P0        |
-| 5.4  | Helmet + sane defaults (CSP, HSTS)                                                                                       | P0        |
-| 5.5  | Autoryzacja statyków `/uploads` — middleware sprawdzający czy user jest ownerem zasobu (lub podpisane URL-e)             | P0        |
-| 5.6  | Refresh token + przejście z `sessionStorage` na httpOnly cookie (pod flagą, jeśli zbyt duży scope → zostawić na M6)      | P1        |
-| 5.7  | Rotacja `JWT_SECRET` + dokumentacja w `.env.example`                                                                     | P1        |
-| 5.8  | Testy backendu: Jest + Supertest — happy path + auth (min. 60% coverage dla controllerów)                                | P0        |
-| 5.9  | Testy frontendu: Vitest + React Testing Library — formularze i guardy routingu                                           | P1        |
-| 5.10 | E2E smoke test: Playwright — register → login → create apartment → create rental → logout                                | P1        |
+| #    | Zadanie                                                                                                                  | Priorytet | Status |
+| ---- | ------------------------------------------------------------------------------------------------------------------------ | --------- | ------ |
+| 5.1  | Walidacja wejścia na backendzie (zod lub express-validator) na wszystkich endpointach POST/PATCH                         | P0        | done   |
+| 5.2  | CORS whitelist (`FRONTEND_URL`) zamiast `cors()`                                                                         | P0        | done   |
+| 5.3  | Rate limiting (`express-rate-limit`) na `/login`, `/register`, `/activate-account`                                       | P0        | done   |
+| 5.4  | Helmet + sane defaults (CSP, HSTS)                                                                                       | P0        | done   |
+| 5.5  | Autoryzacja statyków `/uploads` — middleware sprawdzający czy user na uprawnienia do zasobu (owner lub tenant z trwającą umową najmu) (lub podpisane URL-e)             | P0        | done   |
+| 5.6  | Refresh token + przejście z `sessionStorage` na httpOnly cookie (pod flagą, jeśli zbyt duży scope → zostawić na M6)      | P1        | open   |
+| 5.7  | Rotacja `JWT_SECRET` + dokumentacja w `.env.example`                                                                     | P1        | done   |
+| 5.8  | Testy backendu: Jest + Supertest — happy path + auth (min. 60% coverage dla controllerów)                                | P0        | done†  |
+| 5.9  | Testy frontendu: Vitest + React Testing Library — formularze i guardy routingu                                           | P1        | open   |
+| 5.10 | E2E smoke test: Playwright — register → login → create apartment → create rental → logout                                | P1        | open   |
 
-**Definition of Done:** audyt bezpieczeństwa (`npm audit`, OWASP checklist) bez krytyków; CI przechodzi testy.
+† **5.8:** zaimplementowano **Vitest + Supertest** (lepsze wsparcie ESM niż Jest w tym repo) — smoke testy walidacji (login/register/activate), brak auth na `/files/:filename`; pełne 60% coverage controllerów pozostaje jako dalszy increment (np. z `mongodb-memory-server`).
+
+**Definition of Done (P0):** backend waliduje wejście na POST/PATCH, CORS jest ograniczony do zaufanych originów, auth routes mają rate limit, odpowiedzi API przechodzą przez Helmet (CSP wyłączone dla czystego JSON API), pliki nie są już serwowane jako publiczny `express.static` — dostęp przez `GET /api/v1/files/:filename` z JWT + regułą właściciela/rekordu oraz rejestrem `UploadedFile`; Landlord-only na `DELETE /upload/:filename`; limit rozmiaru uploadu **10MB** (zgodnie z dokumentacją); `npm test` w `backend/` przechodzi.
+
+#### Szczegóły implementacji (M5 changelog)
+
+- **5.1:** `zod` + `middlewares/validate.middleware.ts` (`validateBody`, `validateQuery` z normalizacją query). Schematy w `validation/schemas.ts` dla auth, apartment, tenant, rental, invoice, user PATCH, lista faktur (query). `PATCH /rental` odrzuca `isActive` na poziomie schematu (strict).
+- **5.2 / 5.7:** `config.ts` — `getCorsAllowedOrigins()` (`CORS_ORIGINS` CSV lub domyślnie Vite localhost + `FRONTEND_URL`). Dodany `backend/.env.example` z opisem rotacji `JWT_SECRET`. `docker-compose.yml` ustawia `FRONTEND_URL` dla serwisu backend.
+- **5.3:** `middlewares/rateLimit.middleware.ts` — `loginRouteLimiter` (25/15 min) na `POST /login`, `authRouteLimiter` (60/15 min) na `POST /register` i `GET /activate-account`.
+- **5.4:** `helmet` w `app.ts` (`contentSecurityPolicy: false`, `crossOriginResourcePolicy: cross-origin` dla fetch SPA).
+- **5.5:** Model `UploadedFile` (filename + owner); przy uploadzie rejestrowany wpis; `services/filesAccess.service.ts` — dostęp Landlord (rejestr lub referencja w Invoice/Apartment/Rental) oraz Tenant (faktura / mieszkanie / aktywny wynajem dla przypisanego lokalu). `GET /api/v1/files/:filename` streamuje plik; usunięto publiczne `express.static('/uploads')`. Frontend: `fetchUploadFileBlob` / `createUploadObjectUrl`, hook `useUploadBlobUrl`, aktualizacja `FileItem`, `DetailsPhotosSection`, `DetailsFilesSection`, portal Tenanta i faktury — podgląd/pobieranie przez blob + Authorization.
+- **5.8:** `vitest` + `supertest`, `tests/m5-security.test.ts`.
+- **Architektura:** `app.ts` eksportuje `createApp()` (middleware + trasy + 404 + error handler z obsługą `MulterError`); `server.ts` tylko `initializeDatabase`, `initBillingCron`, `listen`.
+
+**Następne kroki (poza zamkniętym P0):** M5.6 (cookie + refresh), M5.9–5.10, rozbudowa testów integracyjnych pod coverage, audyt `npm audit` przed produkcją.
 
 ---
 
@@ -194,7 +208,7 @@ Cel: dokończyć model ról — obecnie model wspiera `Tenant`, ale nie ma dedyk
 | M2 Invoices UI                | **Zamknięcie głównego gapu funkcjonalnego**       | 2 tyg.    | niskie             |
 | M3 Dashboard + logika wynajmu | Aplikacja staje się użyteczna, nie CRUD           | 2 tyg.    | średnie            |
 | M4 Role/Tenant flow           | Druga persona = 2× wartość produktu               | 1–2 tyg.  | średnie            |
-| M5 Security & QA              | Brak tego = brak produkcji                        | 2 tyg.    | wysokie (security) |
+| M5 Security & QA              | P0 zamknięte (walidacja, CORS, limiter, Helmet, pliki, testy smoke) | 2 tyg.    | wysokie (security) |
 | M6 Prod readiness             | Wdrożenie + utrzymanie                            | 2 tyg.    | średnie            |
 
 **Łączny czas MVP:** ~10–12 tygodni (1 full-stack dev), **~6–8 tygodni** przy 2 devach równolegle (M2+M3 oraz M4+M5 można zrównoleglić).
@@ -207,4 +221,6 @@ Cel: dokończyć model ról — obecnie model wspiera `Tenant`, ale nie ma dedyk
 
 **Sprint 2 (zamknięty):** ~~M3.1–M3.6~~ **[done]** (dashboard z KPI + 2 widgety, guard na tworzenie wynajmu, auto-toggle `Apartment.isAvailable`, „End rental" + sprzątanie na delete), bug `patchRental` (walidacja tenanta przez `TenantModel`) naprawiony. Pozostaje M3.7 (generator faktur miesięcznych, P1) — domknięcie razem z M5 / M6.
 
-**Sprint 3 (zamknięty):** ~~M4.1–M4.5~~ **[done]** — rola w JWT + `requireRole` na wszystkich routerach, flow zaproszenia Tenanta (auto-mail z `invitationCode` + `?invitationCode=...&email=...` w `RegisterScreen`), portal Tenanta (`/my-apartment`, `/my-invoices`, `/my-documents`), role-aware `Navigation`/`HomeScreen`, hook `useCurrentUser`, endpointy `GET/PATCH /me` + `GET /me/*`. Aplikacja obsługuje obie persony end-to-end; Tenant nie ma ścieżki do danych innych najemców. **MVP v0.95** — pozostaje M5 (security/QA) i M6 (prod readiness).
+**Sprint 3 (zamknięty):** ~~M4.1–M4.5~~ **[done]** — rola w JWT + `requireRole` na wszystkich routerach, flow zaproszenia Tenanta (auto-mail z `invitationCode` + `?invitationCode=...&email=...` w `RegisterScreen`), portal Tenanta (`/my-apartment`, `/my-invoices`, `/my-documents`), role-aware `Navigation`/`HomeScreen`, hook `useCurrentUser`, endpointy `GET/PATCH /me` + `GET /me/*`. Aplikacja obsługuje obie persony end-to-end; Tenant nie ma ścieżki do danych innych najemców.
+
+**Sprint 4 (zamknięty — M5 P0):** ~~M5.1–M5.5, M5.7, M5.8 (smoke)~~ **[done]** — Zod na POST/PATCH (+ query lista faktur), CORS whitelist, rate limiting na auth, Helmet, chronione pliki (`GET /api/v1/files/...`, rejestr `UploadedFile`, brak publicznego `/uploads`), Vitest+Supertest, `backend/.env.example`, hasło rejestracji min. 8 znaków (FE+BE). **Otwarte:** M5.6 (refresh + httpOnly), M5.9–M5.10, pełny coverage testów. **MVP v0.97** — pozostaje M6 (prod readiness) + opcjonalnie domknięcie M5 P1.

@@ -45,7 +45,7 @@ const pl = {
           emailRequired: "Adres e-mail jest wymagany",
           emailInvalid: "Nieprawidłowy adres e-mail",
           passwordRequired: "Hasło jest wymagane",
-          passwordMin: "Hasło musi mieć co najmniej 6 znaków",
+          passwordMin: "Hasło musi mieć co najmniej 8 znaków",
           phoneRequired: "Numer telefonu jest wymagany",
           phoneInvalid: "Nieprawidłowy numer telefonu",
         },

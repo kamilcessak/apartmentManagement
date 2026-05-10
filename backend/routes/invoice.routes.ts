@@ -2,6 +2,12 @@ import { Router } from 'express';
 
 import { authenticate } from '../middlewares/auth.middleware';
 import { requireRole } from '../middlewares/role.middleware';
+import { validateBody, validateQuery } from '../middlewares/validate.middleware';
+import {
+    invoiceCreateBodySchema,
+    invoicePatchBodySchema,
+    invoicesListQuerySchema,
+} from '../validation/schemas';
 import {
     createInvoice,
     deleteInvoice,
@@ -13,8 +19,20 @@ import {
 
 const router = Router();
 
-router.post('/invoice', authenticate, requireRole('Landlord'), createInvoice);
-router.get('/invoices', authenticate, requireRole('Landlord'), getInvoices);
+router.post(
+    '/invoice',
+    authenticate,
+    requireRole('Landlord'),
+    validateBody(invoiceCreateBodySchema),
+    createInvoice
+);
+router.get(
+    '/invoices',
+    authenticate,
+    requireRole('Landlord'),
+    validateQuery(invoicesListQuerySchema),
+    getInvoices
+);
 router.get('/invoice/:id', authenticate, requireRole('Landlord'), getInvoice);
 router.delete(
     '/invoice/:id',
@@ -26,6 +44,7 @@ router.patch(
     '/invoice/:id',
     authenticate,
     requireRole('Landlord'),
+    validateBody(invoicePatchBodySchema),
     patchInvoice
 );
 router.get(

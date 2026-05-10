@@ -2,6 +2,11 @@ import { Router } from 'express';
 
 import { authenticate } from '../middlewares/auth.middleware';
 import { requireRole } from '../middlewares/role.middleware';
+import { validateBody } from '../middlewares/validate.middleware';
+import {
+    rentalCreateBodySchema,
+    rentalPatchBodySchema,
+} from '../validation/schemas';
 import {
     createRental,
     deleteRental,
@@ -13,7 +18,13 @@ import {
 
 const router = Router();
 
-router.post('/rental', authenticate, requireRole('Landlord'), createRental);
+router.post(
+    '/rental',
+    authenticate,
+    requireRole('Landlord'),
+    validateBody(rentalCreateBodySchema),
+    createRental
+);
 router.get('/rentals', authenticate, requireRole('Landlord'), getRentals);
 router.get('/rental/:id', authenticate, requireRole('Landlord'), getRental);
 router.delete(
@@ -26,6 +37,7 @@ router.patch(
     '/rental/:id',
     authenticate,
     requireRole('Landlord'),
+    validateBody(rentalPatchBodySchema),
     patchRental
 );
 router.post(

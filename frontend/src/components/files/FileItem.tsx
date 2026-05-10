@@ -8,6 +8,7 @@ import {
   MdVisibility,
 } from "react-icons/md";
 import api from "../../services/api";
+import { createUploadObjectUrl } from "@utils/uploadsUrl";
 import { FileType } from "./FilesSection";
 
 type Props = {
@@ -40,18 +41,17 @@ export const FileItem: FC<Props> = ({
   const theme = useTheme();
 
   const handleGetFileToPreview = async () => {
-    try {
-      const response = await api.get(`/upload/${fileName}`);
-      return response.data;
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
+    if (!fileName) throw new Error("Missing file name");
+    const objectUrl = await createUploadObjectUrl(fileName);
+    window.open(objectUrl, "_blank", "noopener,noreferrer");
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 120_000);
   };
 
   const handleDeleteFile = async () => {
     try {
-      const response = await api.delete(`/upload/${fileName}`);
+      const response = await api.delete(
+        `/upload/${encodeURIComponent(fileName!)}`
+      );
       return response;
     } catch (error) {
       console.error(error);
@@ -61,9 +61,6 @@ export const FileItem: FC<Props> = ({
 
   const { mutate: previewFile, isPending: isPreviewFilePending } = useMutation({
     mutationFn: handleGetFileToPreview,
-    onSuccess: (data) => {
-      window.open(data.url, "_blank");
-    },
   });
 
   const { mutate: deleteFile, isPending: isDeleteFilePending } = useMutation({

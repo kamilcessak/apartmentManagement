@@ -51,7 +51,7 @@ export const RegisterScreen = () => {
           .required(t("auth.register.validation.emailRequired")),
         password: yup
           .string()
-          .min(6, t("auth.register.validation.passwordMin"))
+          .min(8, t("auth.register.validation.passwordMin"))
           .required(t("auth.register.validation.passwordRequired")),
         phoneNumber: yup
           .string()

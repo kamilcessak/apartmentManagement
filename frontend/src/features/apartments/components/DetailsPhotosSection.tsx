@@ -15,6 +15,11 @@ import {
 import { DetailsSectionHeader } from "@components/header";
 import { Button } from "@/components/ui/button";
 import api from "@services/api";
+import {
+  createUploadObjectUrl,
+  fetchUploadFileBlob,
+  normalizeUploadFileKey,
+} from "@utils/uploadsUrl";
 
 import {
   FilePreviewModal,
@@ -225,7 +230,8 @@ export const DetailsPhotosSection: FC<Props> = ({ files, id, type }) => {
     variables: deleteTargetKey,
   } = useMutation({
     mutationFn: async (fileKey: string) => {
-      await api.delete(`/upload/${fileKey}`);
+      const key = normalizeUploadFileKey(fileKey);
+      await api.delete(`/upload/${encodeURIComponent(key)}`);
       await handleDetachFile(fileKey);
     },
     onSuccess: () => {
@@ -254,12 +260,11 @@ export const DetailsPhotosSection: FC<Props> = ({ files, id, type }) => {
     variables: downloadTargetKey,
   } = useMutation({
     mutationFn: async (fileKey: string) => {
-      const response = await api.get<{ url: string }>(
-        `/upload/${fileKey}`
-      );
+      const blob = await fetchUploadFileBlob(fileKey);
+      const url = URL.createObjectURL(blob);
       return {
-        url: response.data.url,
-        name: getStoredFileDisplayName(fileKey),
+        url,
+        name: getStoredFileDisplayName(normalizeUploadFileKey(fileKey)),
       };
     },
     onSuccess: ({ url, name }) => {
@@ -270,18 +275,17 @@ export const DetailsPhotosSection: FC<Props> = ({ files, id, type }) => {
       document.body.appendChild(a);
       a.click();
       a.remove();
+      URL.revokeObjectURL(url);
     },
   });
 
   const openPreview = async (fileKey: string) => {
     setPreviewLoadingKey(fileKey);
     try {
-      const response = await api.get<{ url: string }>(
-        `/upload/${fileKey}`
-      );
+      const url = await createUploadObjectUrl(fileKey);
       setPreview({
-        url: response.data.url,
-        fileName: getStoredFileDisplayName(fileKey),
+        url,
+        fileName: getStoredFileDisplayName(normalizeUploadFileKey(fileKey)),
         variant: previewVariantForKey(fileKey),
       });
     } catch {
@@ -291,7 +295,14 @@ export const DetailsPhotosSection: FC<Props> = ({ files, id, type }) => {
     }
   };
 
-  const closePreview = () => setPreview(null);
+  const closePreview = () => {
+    setPreview((prev) => {
+      if (prev?.url?.startsWith("blob:")) {
+        URL.revokeObjectURL(prev.url);
+      }
+      return null;
+    });
+  };
 
   const uploadBusy = isFileUploading || isApartmentPatching;
 

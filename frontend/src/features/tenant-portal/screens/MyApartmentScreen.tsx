@@ -26,7 +26,12 @@ import {
 import { Button } from "@/components/ui/button";
 import api from "@services/api";
 import { formatApartmentFullAddress } from "@utils/apartment";
-import { getPublicUploadsFileUrl } from "@utils/uploadsUrl";
+import {
+  createUploadObjectUrl,
+  fetchUploadFileBlob,
+  normalizeUploadFileKey,
+} from "@utils/uploadsUrl";
+import { useUploadBlobUrl } from "../../../hooks";
 
 import {
   FilePreviewModal,
@@ -75,6 +80,37 @@ type PreviewState = {
   variant: FilePreviewVariant;
 };
 
+const ApartmentPhotoThumb: FC<{
+  photo: string;
+  index: number;
+  titleBase: string;
+  onOpen: (key: string) => void;
+}> = ({ photo, index, titleBase, onOpen }) => {
+  const { url, failed } = useUploadBlobUrl(photo);
+  return (
+    <button
+      type="button"
+      className="group relative aspect-square overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200/80 transition-shadow hover:ring-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+      onClick={() => onOpen(photo)}
+    >
+      {url ? (
+        <img
+          src={url}
+          alt={`${titleBase} ${index + 1}`}
+          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-slate-200 text-xs text-slate-500">
+          {failed ? "!" : "…"}
+        </div>
+      )}
+      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 transition-colors group-hover:bg-slate-900/20">
+        <Eye className="size-5 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+      </div>
+    </button>
+  );
+};
+
 export const MyApartmentScreen = () => {
   const { t } = useTranslation();
   const tk = (key: string) => t(`dashboard.myApartment.${key}`);
@@ -91,20 +127,21 @@ export const MyApartmentScreen = () => {
       retry: false,
     });
 
-  const resolveFileUrl = (fileKey: string) => {
-    const trimmed = fileKey.trim();
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-      return trimmed.split("?")[0] ?? trimmed;
-    }
-    return getPublicUploadsFileUrl(fileKey);
-  };
-
-  const openPreview = (fileKey: string) => {
+  const openPreview = async (fileKey: string) => {
     try {
-      const url = resolveFileUrl(fileKey);
+      const trimmed = fileKey.trim();
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        setPreview({
+          url: trimmed.split("?")[0] ?? trimmed,
+          fileName: getStoredFileDisplayName(fileKey),
+          variant: previewVariantForKey(fileKey),
+        });
+        return;
+      }
+      const url = await createUploadObjectUrl(fileKey);
       setPreview({
         url,
-        fileName: getStoredFileDisplayName(fileKey),
+        fileName: getStoredFileDisplayName(normalizeUploadFileKey(fileKey)),
         variant: previewVariantForKey(fileKey),
       });
     } catch {
@@ -112,16 +149,29 @@ export const MyApartmentScreen = () => {
     }
   };
 
-  const triggerDownload = (fileKey: string) => {
+  const triggerDownload = async (fileKey: string) => {
     try {
-      const url = resolveFileUrl(fileKey);
+      const trimmed = fileKey.trim();
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        const a = document.createElement("a");
+        a.href = trimmed.split("?")[0] ?? trimmed;
+        a.download = getStoredFileDisplayName(fileKey);
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
+      const blob = await fetchUploadFileBlob(fileKey);
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = getStoredFileDisplayName(fileKey);
+      a.download = getStoredFileDisplayName(normalizeUploadFileKey(fileKey));
       a.rel = "noopener noreferrer";
       document.body.appendChild(a);
       a.click();
       a.remove();
+      URL.revokeObjectURL(url);
     } catch {
       toast(tk("documents.previewOpenError"), { type: "error" });
     }
@@ -223,7 +273,14 @@ export const MyApartmentScreen = () => {
     <RouteContent>
       <FilePreviewModal
         open={preview !== null}
-        onClose={() => setPreview(null)}
+        onClose={() => {
+          setPreview((prev) => {
+            if (prev?.url && !prev.url.startsWith("http")) {
+              URL.revokeObjectURL(prev.url);
+            }
+            return null;
+          });
+        }}
         url={preview?.url ?? null}
         fileName={preview?.fileName ?? ""}
         variant={preview?.variant ?? "other"}
@@ -373,21 +430,13 @@ export const MyApartmentScreen = () => {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                   {photos.map((photo, index) => (
-                    <button
+                    <ApartmentPhotoThumb
                       key={photo}
-                      type="button"
-                      className="group relative aspect-square overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200/80 transition-shadow hover:ring-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      onClick={() => openPreview(photo)}
-                    >
-                      <img
-                        src={getPublicUploadsFileUrl(photo)}
-                        alt={`${tk("photos.title")} ${index + 1}`}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-slate-900/0 transition-colors group-hover:bg-slate-900/20">
-                        <Eye className="size-5 text-white opacity-0 transition-opacity group-hover:opacity-100" />
-                      </div>
-                    </button>
+                      photo={photo}
+                      index={index}
+                      titleBase={tk("photos.title")}
+                      onOpen={openPreview}
+                    />
                   ))}
                 </div>
               )}

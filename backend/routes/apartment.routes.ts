@@ -9,6 +9,11 @@ import {
 } from '../controllers/apartment.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { requireRole } from '../middlewares/role.middleware';
+import { validateBody } from '../middlewares/validate.middleware';
+import {
+    apartmentCreateBodySchema,
+    apartmentPatchBodySchema,
+} from '../validation/schemas';
 
 const router = Router();
 
@@ -16,6 +21,7 @@ router.post(
     '/apartment',
     authenticate,
     requireRole('Landlord'),
+    validateBody(apartmentCreateBodySchema),
     createApartment
 );
 router.get('/apartments', authenticate, requireRole('Landlord'), getApartments);
@@ -41,6 +47,7 @@ router.patch(
     '/apartment/:id',
     authenticate,
     requireRole('Landlord'),
+    validateBody(apartmentPatchBodySchema),
     patchApartment
 );
 

@@ -44,7 +44,7 @@ const en = {
           emailRequired: "Email is required",
           emailInvalid: "Invalid email address",
           passwordRequired: "Password is required",
-          passwordMin: "Password must be at least 6 characters",
+          passwordMin: "Password must be at least 8 characters",
           phoneRequired: "Phone number is required",
           phoneInvalid: "Invalid phone number",
         },
